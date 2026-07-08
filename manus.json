@@ -1,0 +1,4 @@
+{
+  "spa": true,
+  "spaFallback": "/index.html"
+}

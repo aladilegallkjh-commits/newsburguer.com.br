@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: newsburguer
+    env: node
+    buildCommand: pnpm install && pnpm build && pnpm db:push
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # O usuário vai preencher no painel do Render
