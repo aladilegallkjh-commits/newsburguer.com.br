@@ -36,6 +36,29 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+
+  // DEBUG ENDPOINT
+  app.get("/api/test-db", async (req, res) => {
+    try {
+      const { getDb } = await import("../db");
+      const { adminUsers } = await import("../../drizzle/schema");
+      const db = await getDb();
+      if (!db) {
+        return res.json({ error: "Database not available", url: process.env.DATABASE_URL, token: !!process.env.DATABASE_AUTH_TOKEN });
+      }
+      const result = await db.select().from(adminUsers);
+      return res.json({ success: true, count: result.length, url: process.env.DATABASE_URL, token: !!process.env.DATABASE_AUTH_TOKEN });
+    } catch (error: any) {
+      return res.json({ 
+        error: error.message, 
+        cause: error.cause?.message || error.cause,
+        code: error.code,
+        url: process.env.DATABASE_URL, 
+        token: !!process.env.DATABASE_AUTH_TOKEN 
+      });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
