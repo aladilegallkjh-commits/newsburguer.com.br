@@ -10,7 +10,10 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db) {
     try {
-      const client = createClient({ url: process.env.DATABASE_URL || "file:./local.db" });
+      const client = createClient({ 
+        url: process.env.DATABASE_URL || "file:./local.db",
+        authToken: process.env.DATABASE_AUTH_TOKEN,
+      });
       _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
