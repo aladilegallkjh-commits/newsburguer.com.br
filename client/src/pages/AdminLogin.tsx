@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { trpc } from '../_core/trpc';
-import toast from 'react-hot-toast';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 import { Lock, AlertCircle } from 'lucide-react';
-import { LOGO_URL } from '../_core/const';
+
+const LOGO_URL = '/logo.png';
 
 export default function AdminLogin() {
   const [, setLocation] = useLocation();
