@@ -1,80 +1,48 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useLocation } from 'wouter';
+import { trpc } from '../_core/trpc';
+import toast from 'react-hot-toast';
 import { Lock, AlertCircle } from 'lucide-react';
-import { trpc } from '@/lib/trpc';
-import { toast } from 'sonner';
-
-const LOGO_URL = '/logo.png';
+import { LOGO_URL } from '../_core/const';
 
 export default function AdminLogin() {
+  const [, setLocation] = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-  const [registerName, setRegisterName] = useState('');
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
 
   const loginMutation = trpc.adminAuth.login.useMutation();
-  const registerMutation = trpc.adminAuth.register.useMutation();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!email || !password) {
-      setError('Preencha email e senha');
+      setError('Preencha todos os campos');
       return;
     }
 
     setIsLoading(true);
     try {
       const result = await loginMutation.mutateAsync({ email, password });
-      if (result.success) {
+      
+      if (result && result.success) {
         localStorage.setItem('adminEmail', result.admin.email);
-        localStorage.setItem('adminToken', 'token-' + Date.now());
+        localStorage.setItem('adminName', result.admin.name);
+        
+        // Em vez de recarregar a pgina interia, fora atualizao do status logado
+        localStorage.setItem('adminToken', 'logged_in_' + Date.now());
+        
         toast.success('Login realizado com sucesso!');
-        window.location.reload();
+        setLocation('/admin');
+        window.location.reload(); // Forar reload completo para atualizar as rotas se necessrio
+      } else {
+        setError('Login invlido');
       }
     } catch (error: any) {
       setError(error.message || 'Email ou senha incorretos');
       toast.error('Erro ao fazer login');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!registerName || !registerEmail || !registerPassword) {
-      setError('Preencha todos os campos');
-      return;
-    }
-
-    if (registerPassword.length < 6) {
-      setError('Senha deve ter pelo menos 6 caracteres');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await registerMutation.mutateAsync({
-        name: registerName,
-        email: registerEmail,
-        password: registerPassword,
-      });
-      toast.success('Conta criada! Faça login para continuar');
-      setShowRegister(false);
-      setEmail(registerEmail);
-      setPassword(registerPassword);
-      setRegisterName('');
-      setRegisterEmail('');
-      setRegisterPassword('');
-    } catch (error: any) {
-      setError(error.message || 'Erro ao criar conta');
-      toast.error('Erro ao criar conta');
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +74,7 @@ export default function AdminLogin() {
         </p>
 
         {/* Form */}
-        <form onSubmit={showRegister ? handleRegister : handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           {/* Error message */}
           {error && (
             <div
@@ -118,134 +86,61 @@ export default function AdminLogin() {
             </div>
           )}
 
-          {!showRegister ? (
-            <>
-              <div>
-                <label
-                  className="block text-sm font-semibold mb-2"
-                  style={{ color: '#F5F0E8' }}
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  className="w-full px-4 py-3 rounded-sm text-sm transition-all duration-200"
-                  style={{
-                    background: '#0D1A14',
-                    color: '#F5F0E8',
-                    border: '1px solid rgba(201,162,39,0.2)',
-                  }}
-                  disabled={isLoading}
-                />
-              </div>
+          <div>
+            <label
+              className="block text-sm font-semibold mb-2"
+              style={{ color: '#F5F0E8' }}
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu@email.com"
+              className="w-full px-4 py-3 rounded-sm text-sm transition-all duration-200"
+              style={{
+                background: '#0D1A14',
+                color: '#F5F0E8',
+                border: '1px solid rgba(201,162,39,0.2)',
+              }}
+              disabled={isLoading}
+            />
+          </div>
 
-              <div>
-                <label
-                  className="block text-sm font-semibold mb-2"
-                  style={{ color: '#F5F0E8' }}
-                >
-                  Senha
-                </label>
-                <div className="relative">
-                  <Lock
-                    size={18}
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2"
-                    style={{ color: '#C9A227' }}
-                  />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="sua senha"
-                    className="w-full pl-10 pr-4 py-3 rounded-sm text-sm transition-all duration-200"
-                    style={{
-                      background: '#0D1A14',
-                      color: '#F5F0E8',
-                      border: '1px solid rgba(201,162,39,0.2)',
-                    }}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <label
-                  className="block text-sm font-semibold mb-2"
-                  style={{ color: '#F5F0E8' }}
-                >
-                  Nome
-                </label>
-                <input
-                  type="text"
-                  value={registerName}
-                  onChange={(e) => setRegisterName(e.target.value)}
-                  placeholder="seu nome"
-                  className="w-full px-4 py-3 rounded-sm text-sm transition-all duration-200"
-                  style={{
-                    background: '#0D1A14',
-                    color: '#F5F0E8',
-                    border: '1px solid rgba(201,162,39,0.2)',
-                  }}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label
-                  className="block text-sm font-semibold mb-2"
-                  style={{ color: '#F5F0E8' }}
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={registerEmail}
-                  onChange={(e) => setRegisterEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  className="w-full px-4 py-3 rounded-sm text-sm transition-all duration-200"
-                  style={{
-                    background: '#0D1A14',
-                    color: '#F5F0E8',
-                    border: '1px solid rgba(201,162,39,0.2)',
-                  }}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label
-                  className="block text-sm font-semibold mb-2"
-                  style={{ color: '#F5F0E8' }}
-                >
-                  Senha (mín. 6 caracteres)
-                </label>
-                <input
-                  type="password"
-                  value={registerPassword}
-                  onChange={(e) => setRegisterPassword(e.target.value)}
-                  placeholder="sua senha"
-                  className="w-full px-4 py-3 rounded-sm text-sm transition-all duration-200"
-                  style={{
-                    background: '#0D1A14',
-                    color: '#F5F0E8',
-                    border: '1px solid rgba(201,162,39,0.2)',
-                  }}
-                  disabled={isLoading}
-                />
-              </div>
-            </>
-          )}
+          <div>
+            <label
+              className="block text-sm font-semibold mb-2"
+              style={{ color: '#F5F0E8' }}
+            >
+              Senha
+            </label>
+            <div className="relative">
+              <Lock
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                style={{ color: '#C9A227' }}
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="sua senha"
+                className="w-full pl-10 pr-4 py-3 rounded-sm text-sm transition-all duration-200"
+                style={{
+                  background: '#0D1A14',
+                  color: '#F5F0E8',
+                  border: '1px solid rgba(201,162,39,0.2)',
+                }}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
 
           <button
             type="submit"
-            onClick={showRegister ? handleRegister : handleLogin}
             disabled={isLoading}
-            className="w-full py-3 rounded-sm font-semibold text-sm transition-all duration-200 active:scale-95"
+            className="w-full py-3 mt-4 rounded-sm font-semibold text-sm transition-all duration-200 active:scale-95"
             style={{
               background: '#C9A227',
               color: '#0A0A0A',
@@ -253,33 +148,9 @@ export default function AdminLogin() {
               cursor: isLoading ? 'not-allowed' : 'pointer',
             }}
           >
-            {isLoading ? (showRegister ? 'Criando conta...' : 'Entrando...') : (showRegister ? 'Criar Conta' : 'Entrar')}
+            {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
-
-          <div className="text-center pt-4" style={{ borderTop: '1px solid rgba(201,162,39,0.1)' }}>
-            <p className="text-sm" style={{ color: '#8A7A5A' }}>
-              {showRegister ? 'Já tem conta?' : 'Não tem conta?'}{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowRegister(!showRegister);
-                  setEmail('');
-                  setPassword('');
-                  setRegisterName('');
-                  setRegisterEmail('');
-                  setRegisterPassword('');
-                  setError('');
-                }}
-                className="font-semibold transition-colors hover:opacity-80"
-                style={{ color: '#C9A227' }}
-              >
-                {showRegister ? 'Fazer login' : 'Criar conta'}
-              </button>
-            </p>
-          </div>
         </form>
-
-
       </div>
     </div>
   );
