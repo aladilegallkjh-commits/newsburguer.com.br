@@ -772,13 +772,6 @@ export const appRouter = router({
         return db.deleteDriver(input.id);
       }),
   }),
-
-  analytics: router({
-    getMetrics: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
-      return analytics.getAnalyticsMetrics();
-    }),
-  }),
 });
 
 export type AppRouter = typeof appRouter;
