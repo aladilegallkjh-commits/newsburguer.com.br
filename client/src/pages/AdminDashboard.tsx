@@ -71,7 +71,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Menu */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-6 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-28 scrollbar-hide">
           <nav className="mt-4 space-y-1 px-4">
             {menuItems.map(item => (
               <button
@@ -1336,6 +1336,7 @@ function CuponsTab() {
     </div>
   );
 }
+
 
 
 
