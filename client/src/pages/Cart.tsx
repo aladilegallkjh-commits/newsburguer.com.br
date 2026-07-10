@@ -158,6 +158,8 @@ export default function Cart() {
   const [customerPhone, setCustomerPhone] = React.useState('');
   const [appliedDiscount, setAppliedDiscount] = React.useState(0);
   const [appliedCoupon, setAppliedCoupon] = React.useState<string | undefined>();
+  const { data: settings } = trpc.storeSettings.get.useQuery();
+  const isStoreOpen = settings?.isOpen === 1;
 
   const finalTotal = Math.max(0, total - appliedDiscount);
 
@@ -188,6 +190,10 @@ export default function Cart() {
   });
 
   function handleOrder() {
+    if (!isStoreOpen) {
+      toast.error('A loja está fechada no momento.');
+      return;
+    }
     if (items.length === 0) {
       toast.error('Adicione itens ao carrinho', {
         duration: 2000,
@@ -406,15 +412,15 @@ export default function Cart() {
 
                 <button
                   onClick={handleOrder}
-                  disabled={items.length === 0 || createOrder.isPending}
+                  disabled={items.length === 0 || createOrder.isPending || !isStoreOpen}
                   className="w-full py-3 sm:py-3 rounded-sm font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mb-2 sm:mb-3 min-h-[44px]"
                   style={{
-                    background: items.length > 0 ? '#C9A227' : 'rgba(201,162,39,0.3)',
-                    color: items.length > 0 ? '#0A0A0A' : '#4A3A2A',
+                    background: items.length > 0 && isStoreOpen ? '#C9A227' : 'rgba(201,162,39,0.3)',
+                    color: items.length > 0 && isStoreOpen ? '#0A0A0A' : '#4A3A2A',
                   }}
                 >
                   <MessageCircle size={18} />
-                  {createOrder.isPending ? 'Processando...' : 'Finalizar Pedido'}
+                  {createOrder.isPending ? 'Processando...' : !isStoreOpen ? 'Loja Fechada' : 'Finalizar Pedido'}
                 </button>
 
                 {/* Clear cart button */}

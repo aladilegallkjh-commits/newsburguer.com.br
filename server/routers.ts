@@ -219,9 +219,43 @@ export const appRouter = router({
         }
         return db.getRecentOrders(1000);
       }),
+
+    // Admin: Assign driver to order
+    assignDriver: protectedProcedure
+      .input(z.object({ orderId: z.number(), driverId: z.number().nullable() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+        await db.updateOrderDriver(input.orderId, input.driverId);
+        return { success: true };
+      }),
   }),
 
   coupons: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
+      return db.getCoupons();
+    }),
+    create: protectedProcedure
+      .input(z.object({ code: z.string(), type: z.enum(["percentage", "fixed"]), discountValue: z.number(), minOrderAmount: z.number().optional(), maxUses: z.number().optional(), expiresAt: z.date().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
+        return db.createCoupon(input as any);
+      }),
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), code: z.string().optional(), type: z.enum(["percentage", "fixed"]).optional(), discountValue: z.number().optional(), isActive: z.number().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
+        const { id, ...data } = input;
+        return db.updateCoupon(id, data as any);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
+        return db.deleteCoupon(input.id);
+      }),
     validate: publicProcedure
       .input(z.object({ code: z.string() }))
       .mutation(async ({ input }) => {
@@ -334,6 +368,7 @@ export const appRouter = router({
           zipCode: z.string().optional(),
           openingTime: z.string().optional(),
           closingTime: z.string().optional(),
+          isOpen: z.number().optional(),
           logoUrl: z.string().optional(),
           bannerUrl: z.string().optional(),
           description: z.string().optional(),
@@ -709,6 +744,32 @@ export const appRouter = router({
         if (!admin) throw new Error('Admin not found');
         
         return await db.getWhatsappMessagesByAdmin(admin.id, input.limit);
+      }),
+  }),
+
+  drivers: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
+      return db.getDrivers();
+    }),
+    create: protectedProcedure
+      .input(z.object({ name: z.string(), phone: z.string(), vehicle: z.string().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
+        return db.createDriver(input);
+      }),
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), name: z.string().optional(), phone: z.string().optional(), vehicle: z.string().optional(), isActive: z.number().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
+        const { id, ...data } = input;
+        return db.updateDriver(id, data);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
+        return db.deleteDriver(input.id);
       }),
   }),
 });

@@ -34,11 +34,14 @@ export const orders = sqliteTable("orders", {
   items: text("items", { mode: "json" }).notNull(),
   totalAmount: real("totalAmount").notNull(),
   discount: real("discount").default(0),
+  couponId: integer("couponId"),
   finalAmount: real("finalAmount").notNull(),
   
   deliveryType: text("deliveryType", { enum: ["delivery", "pickup"] }).notNull(),
   address: text("address"),
   notes: text("notes"),
+  
+  driverId: integer("driverId"),
   
   status: text("status", { enum: ["pending", "confirmed", "preparing", "ready", "out_for_delivery", "delivered", "cancelled"] }).default("pending").notNull(),
   
@@ -181,6 +184,7 @@ export const storeSettings = sqliteTable("storeSettings", {
   zipCode: text("zipCode"),
   openingTime: text("openingTime"),
   closingTime: text("closingTime"),
+  isOpen: integer("isOpen").default(1),
   logoUrl: text("logoUrl"),
   bannerUrl: text("bannerUrl"),
   description: text("description"),

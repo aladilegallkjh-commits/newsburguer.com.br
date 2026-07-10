@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { LogOut, Menu, X, Settings, FileText, Clock, Trophy, ShoppingBag, Plus, Trash2, Edit2, Download } from 'lucide-react';
+import { LogOut, Menu, X, Settings, FileText, Clock, Trophy, ShoppingBag, Plus, Trash2, Edit2, Download, Bike, Ticket, Printer, Bell, Power } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import MenuImageUpload from '@/components/MenuImageUpload';
 import EditMenuItemImageModal from '@/components/EditMenuItemImageModal';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -23,6 +23,8 @@ const menuItems: MenuItem[] = [
   { id: 'cardapio', label: 'Cardápio', icon: <FileText size={20} /> },
   { id: 'informacoes', label: 'Configurações', icon: <Settings size={20} /> },
   { id: 'promocoes', label: 'Promoções', icon: <Trophy size={20} /> },
+  { id: 'entregadores', label: 'Entregadores', icon: <Bike size={20} /> },
+  { id: 'cupons', label: 'Cupons', icon: <Ticket size={20} /> },
 ];
 
 export default function AdminDashboard() {
@@ -36,24 +38,32 @@ export default function AdminDashboard() {
     localStorage.removeItem('adminToken');
     toast.success('Logout realizado', {
       duration: 2000,
-      style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
+      style: { background: 'rgba(10,16,13,0.85)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
     });
     setLocation('/');
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#0A0A0A' }}>
+    <div className="min-h-screen flex text-[#F5F0E8]" style={{ background: '#080c09' }}>
       {/* Sidebar */}
       <div
-        className={`${sidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 border-r`}
-        style={{ background: '#0D1A14', borderColor: 'rgba(201,162,39,0.15)' }}
+        className={`${sidebarOpen ? 'w-72' : 'w-20'} transition-all duration-300 border-r flex flex-col relative z-20`}
+        style={{ background: '#0a100d', borderColor: 'rgba(201,162,39,0.1)' }}
       >
         {/* Logo */}
-        <div className="p-4 flex items-center justify-between">
-          <img src={LOGO_URL} alt="New S'Burguer" className="w-10 h-10 object-contain" />
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={LOGO_URL} alt="New S'Burguer" className="w-10 h-10 object-contain" />
+            {sidebarOpen && (
+              <div className="leading-tight">
+                <span className="font-bold text-[#C9A227] tracking-wider text-sm block">NEWS</span>
+                <span className="font-bold text-[#F5F0E8] tracking-widest text-sm block">BURGUER</span>
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 rounded-sm transition-colors"
+            className="p-1 rounded-sm transition-colors hover:bg-[#C9A227]/10"
             style={{ color: '#C9A227' }}
           >
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
@@ -61,33 +71,96 @@ export default function AdminDashboard() {
         </div>
 
         {/* Menu */}
-        <nav className="mt-8 space-y-2 px-3">
-          {menuItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm transition-all duration-200 ${
-                activeTab === item.id ? 'font-semibold' : ''
-              }`}
-              style={{
-                background: activeTab === item.id ? 'rgba(201,162,39,0.15)' : 'transparent',
-                color: activeTab === item.id ? '#C9A227' : '#8A7A5A',
-              }}
-            >
-              {item.icon}
-              {sidebarOpen && <span>{item.label}</span>}
-            </button>
-          ))}
-        </nav>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24 scrollbar-hide">
+          <nav className="mt-4 space-y-1 px-4">
+            {menuItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
+                  activeTab === item.id ? 'font-semibold rounded-lg' : 'rounded-lg'
+                }`}
+                style={{
+                  background: activeTab === item.id ? 'rgba(201,162,39,0.15)' : 'transparent',
+                  color: activeTab === item.id ? '#EAD695' : '#8A7A5A',
+                  border: activeTab === item.id ? '1px solid rgba(201,162,39,0.3)' : '1px solid transparent',
+                  boxShadow: activeTab === item.id ? '0 0 15px rgba(201,162,39,0.1)' : 'none'
+                }}
+              >
+                {item.icon}
+                {sidebarOpen && <span>{item.label}</span>}
+              </button>
+            ))}
+          </nav>
+
+          {sidebarOpen && (
+            <>
+              {/* Promoções Destaque */}
+              <div className="mt-8 px-4">
+                <div className="rounded-xl border border-[#C9A227]/20 p-4" style={{ background: 'linear-gradient(180deg, rgba(13,26,20,0.8) 0%, rgba(10,16,13,0.8) 100%)' }}>
+                  <h4 className="text-xs font-bold text-[#C9A227] mb-3 tracking-wider uppercase">Promoções Destaque</h4>
+                  <ul className="space-y-2 text-xs text-[#8A7A5A]">
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#C9A227] mt-0.5">•</span>
+                      <span>Hambúrguer Gourmet - Compre 1 Leve 2</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#C9A227] mt-0.5">•</span>
+                      <span>Combo Família - R$ 49,90 (was R$ 65,90)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#C9A227] mt-0.5">•</span>
+                      <span>Frete Grátis nas próximas 2 horas</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Resumo do Negócio */}
+              <div className="mt-4 px-4 mb-4">
+                <div className="rounded-xl border border-[#C9A227]/20 p-4" style={{ background: 'linear-gradient(180deg, rgba(13,26,20,0.8) 0%, rgba(10,16,13,0.8) 100%)' }}>
+                  <h4 className="text-xs font-bold text-[#C9A227] mb-3 tracking-wider uppercase">Resumo do Negócio</h4>
+                  
+                  <div className="mb-3">
+                    <p className="text-xs text-[#8A7A5A] mb-1">Faturamento Total (Mês Atual)</p>
+                    <p className="text-lg font-bold text-[#C9A227]">R$ 15.300,00</p>
+                  </div>
+                  
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-xs text-[#8A7A5A] mb-1">Total de Pedidos (Mês Atual)</p>
+                      <p className="text-lg font-bold text-[#F5F0E8]">512</p>
+                    </div>
+                    {/* Fake mini chart */}
+                    <div className="w-16 h-8 opacity-70">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={[{v:1},{v:3},{v:2},{v:5},{v:3},{v:6}]}>
+                          <defs>
+                            <linearGradient id="colorMini" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#C9A227" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#C9A227" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <Area type="monotone" dataKey="v" stroke="#C9A227" fill="url(#colorMini)" strokeWidth={1.5} dot={false} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Logout */}
-        <div className="absolute bottom-6 left-3 right-3">
+        <div className="absolute bottom-6 left-4 right-4 z-30">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-sm transition-all duration-200"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border border-red-900/50 hover:border-red-500/50"
             style={{
-              background: 'rgba(255, 107, 107, 0.1)',
+              background: 'linear-gradient(90deg, rgba(30,0,0,1) 0%, rgba(60,0,0,1) 100%)',
               color: '#FF6B6B',
+              boxShadow: '0 4px 15px rgba(255,0,0,0.1)'
             }}
           >
             <LogOut size={20} />
@@ -97,32 +170,35 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <div
-          className="border-b px-8 py-4 flex items-center justify-between"
-          style={{ borderColor: 'rgba(201,162,39,0.15)' }}
-        >
-          <div>
-            <h1 className="font-display text-2xl font-bold" style={{ color: '#F5F0E8' }}>
-              Painel Administrativo
-            </h1>
-            <p className="text-sm" style={{ color: '#8A7A5A' }}>
-              Bem-vindo, {adminEmail}
-            </p>
-          </div>
-          <div className="text-sm" style={{ color: '#8A7A5A' }}>
-            {new Date().toLocaleDateString('pt-BR')}
-          </div>
-        </div>
-
-        {/* Content */}
+      <div className="flex-1 overflow-auto relative" style={{
+        backgroundImage: `radial-gradient(circle at center, transparent 0%, #080c09 100%), url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C9A227' fill-opacity='0.03'%3E%3Cpath d='M50 25a15 15 0 0115 15v5H35v-5a15 15 0 0115-15zM30 50h40v5a15 15 0 01-30 0v-5H30z'/%3E%3Cpath d='M20 70a5 5 0 110-10 5 5 0 010 10zm60-40a5 5 0 110-10 5 5 0 010 10z'/%3E%3C/g%3E%3C/svg%3E")`,
+        backgroundSize: 'cover, 150px 150px'
+      }}>
+        {/* Header and Content Area */}
         <div className="p-8">
+          <div className="flex items-start justify-between mb-12">
+            <div>
+              <h1 className="font-display text-4xl font-bold mb-1" style={{ color: '#F5F0E8' }}>
+                Painel Administrativo
+              </h1>
+              <p className="text-sm" style={{ color: '#8A7A5A' }}>
+                Bem-vindo, {adminEmail}
+              </p>
+            </div>
+            <div className="flex items-center gap-6">
+              <StoreToggle />
+              <div className="text-sm" style={{ color: '#8A7A5A' }}>
+                {new Date().toLocaleDateString('pt-BR')}
+              </div>
+            </div>
+          </div>
           {activeTab === 'dashboard' && <DashboardTab />}
           {activeTab === 'pedidos' && <PedidosTab />}
           {activeTab === 'cardapio' && <CardapioTab />}
           {activeTab === 'informacoes' && <InformacoesTab />}
           {activeTab === 'promocoes' && <PromocoesTab />}
+          {activeTab === 'entregadores' && <EntregadoresTab />}
+          {activeTab === 'cupons' && <CuponsTab />}
         </div>
       </div>
     </div>
@@ -130,121 +206,123 @@ export default function AdminDashboard() {
 }
 
 function PedidosTab() {
-  const { data: orders, isLoading } = trpc.orders.getAll.useQuery();
+  const { data: orders, isLoading } = trpc.orders.getAll.useQuery(undefined, { refetchInterval: 10000 });
+  const { data: drivers } = trpc.drivers.getAll.useQuery();
   const updateStatus = trpc.orders.updateStatus.useMutation();
+  const assignDriver = trpc.orders.assignDriver.useMutation();
+  const prevOrdersCount = useRef(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+  }, []);
+
+  useEffect(() => {
+    if (orders && prevOrdersCount.current > 0 && orders.length > prevOrdersCount.current) {
+      audioRef.current?.play().catch(e => console.log('Audio autoplay blocked'));
+    }
+    if (orders) prevOrdersCount.current = orders.length;
+  }, [orders]);
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
       await updateStatus.mutateAsync({ orderId, status: newStatus as any });
       toast.success('Status atualizado!', {
         duration: 2000,
-        style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
+        style: { background: 'rgba(10,16,13,0.85)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
       });
     } catch (error) {
-      toast.error('Erro ao atualizar status', {
-        duration: 2000,
-        style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
-      });
+      toast.error('Erro ao atualizar status');
     }
   };
 
-  const statusColors: Record<string, string> = {
-    'pending': '#FF6B35',
-    'confirmed': '#FFA500',
-    'preparing': '#C9A227',
-    'ready': '#4CAF50',
-    'out_for_delivery': '#2196F3',
-    'delivered': '#8BC34A',
-    'cancelled': '#F44336',
+  const handleDriverChange = async (orderId: number, driverId: string) => {
+    try {
+      await assignDriver.mutateAsync({ orderId, driverId: driverId ? Number(driverId) : null });
+      toast.success('Entregador atribuído!');
+    } catch (error) {
+      toast.error('Erro ao atribuir entregador');
+    }
   };
 
-  const statusLabels: Record<string, string> = {
-    'pending': 'Pendente',
-    'confirmed': 'Confirmado',
-    'preparing': 'Preparando',
-    'ready': 'Pronto',
-    'out_for_delivery': 'Saindo para Entrega',
-    'delivered': 'Entregue',
-    'cancelled': 'Cancelado',
+  const handlePrint = (order: any) => {
+    const printWindow = window.open('', '', 'width=300,height=600');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html><head><style>
+        body { font-family: monospace; font-size: 14px; margin: 0; padding: 10px; width: 80mm; }
+        .center { text-align: center; }
+        .line { border-bottom: 1px dashed black; margin: 10px 0; }
+        h1, h2 { margin: 5px 0; }
+      </style></head><body>
+        <div class="center">
+          <h2>NEW S'BURGUER</h2>
+          <p>Pedido: ${order.orderNumber}</p>
+          <p>${new Date(order.createdAt).toLocaleString('pt-BR')}</p>
+        </div>
+        <div class="line"></div>
+        <p><b>Cliente:</b> ${order.customerName}</p>
+        <p><b>Telefone:</b> ${order.customerPhone}</p>
+        <p><b>Entrega:</b> ${order.deliveryType === 'delivery' ? 'Delivery' : 'Retirada'}</p>
+        ${order.address ? `<p><b>Endereço:</b> ${order.address}</p>` : ''}
+        <div class="line"></div>
+        ${Array.isArray(order.items) ? order.items.map((i:any) => `<p>${i.quantity}x ${i.name} (R$ ${(i.price * i.quantity).toFixed(2)})</p>`).join('') : ''}
+        <div class="line"></div>
+        <p><b>Total: R$ ${parseFloat(order.finalAmount).toFixed(2)}</b></p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
   };
+
+  const statusColors: Record<string, string> = { 'pending': '#FF6B35', 'confirmed': '#FFA500', 'preparing': '#C9A227', 'ready': '#4CAF50', 'out_for_delivery': '#2196F3', 'delivered': '#8BC34A', 'cancelled': '#F44336' };
+  const statusLabels: Record<string, string> = { 'pending': 'Pendente', 'confirmed': 'Confirmado', 'preparing': 'Preparando', 'ready': 'Pronto', 'out_for_delivery': 'Saindo para Entrega', 'delivered': 'Entregue', 'cancelled': 'Cancelado' };
 
   return (
     <div>
-      <h2 className="font-display text-xl font-bold mb-6" style={{ color: '#F5F0E8' }}>
-        Gerenciar Pedidos
-      </h2>
-      
-      {isLoading ? (
-        <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p>
-      ) : !orders || orders.length === 0 ? (
-        <div
-          className="rounded-lg p-6 text-center"
-          style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
-        >
-          <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido ainda</p>
-        </div>
-      ) : (
+      <h2 className="font-display text-xl font-bold mb-6" style={{ color: '#F5F0E8' }}>Gerenciar Pedidos</h2>
+      {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
         <div className="space-y-4">
           {orders.map((order: any) => (
-            <div
-              key={order.id}
-              className="rounded-lg p-6"
-              style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
-            >
+            <div key={order.id} className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="font-bold" style={{ color: '#F5F0E8' }}>
+                  <h3 className="font-bold flex items-center gap-2" style={{ color: '#F5F0E8' }}>
                     {order.orderNumber}
+                    <button onClick={() => handlePrint(order)} className="p-1 rounded transition" style={{ background: '#222' }} title="Imprimir Comanda"><Printer size={16} /></button>
                   </h3>
-                  <p className="text-sm" style={{ color: '#8A7A5A' }}>
-                    {order.customerName} • {order.customerPhone}
-                  </p>
-                  <p className="text-sm" style={{ color: '#8A7A5A' }}>
-                    {new Date(order.createdAt).toLocaleString('pt-BR')}
-                  </p>
+                  <p className="text-sm" style={{ color: '#8A7A5A' }}>{order.customerName} • {order.customerPhone}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-lg" style={{ color: '#C9A227' }}>
-                    R$ {parseFloat(order.finalAmount).toFixed(2)}
-                  </p>
+                  <p className="font-bold text-lg" style={{ color: '#C9A227' }}>R$ {parseFloat(order.finalAmount).toFixed(2)}</p>
                 </div>
               </div>
-
               <div className="mb-4 pb-4" style={{ borderBottom: '1px solid rgba(201,162,39,0.1)' }}>
                 <p className="text-sm font-semibold mb-2" style={{ color: '#C9A227' }}>Itens:</p>
                 {Array.isArray(order.items) && order.items.map((item: any, idx: number) => (
-                  <p key={idx} className="text-sm" style={{ color: '#8A7A5A' }}>
-                    • {item.name} x{item.quantity} - R$ {(item.price * item.quantity).toFixed(2)}
-                  </p>
+                  <p key={idx} className="text-sm" style={{ color: '#8A7A5A' }}>• {item.name} x{item.quantity}</p>
                 ))}
               </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <span
-                    className="text-xs font-bold px-3 py-1 rounded-full"
-                    style={{
-                      background: `${statusColors[order.status]}20`,
-                      color: statusColors[order.status],
-                    }}
-                  >
-                    {statusLabels[order.status]}
-                  </span>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>{statusLabels[order.status]}</span>
+                <div className="flex items-center gap-4">
+                  {order.deliveryType === 'delivery' && (
+                    <select value={order.driverId || ''} onChange={e => handleDriverChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+                      <option value="">Atribuir Entregador</option>
+                      {drivers?.filter((d: any) => d.isActive).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  )}
+                  <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+                    <option value="pending">Pendente</option>
+                    <option value="confirmed">Confirmado</option>
+                    <option value="preparing">Preparando</option>
+                    <option value="ready">Pronto</option>
+                    <option value="out_for_delivery">Saindo para Entrega</option>
+                    <option value="delivered">Entregue</option>
+                    <option value="cancelled">Cancelado</option>
+                  </select>
                 </div>
-                <select
-                  value={order.status}
-                  onChange={(e) => handleStatusChange(order.id, e.target.value as any)}
-                  className="px-3 py-2 rounded text-sm"
-                  style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
-                >
-                  <option value="pending">Pendente</option>
-                  <option value="confirmed">Confirmado</option>
-                  <option value="preparing">Preparando</option>
-                  <option value="ready">Pronto</option>
-                  <option value="out_for_delivery">Saindo para Entrega</option>
-                  <option value="delivered">Entregue</option>
-                  <option value="cancelled">Cancelado</option>
-                </select>
               </div>
             </div>
           ))}
@@ -253,6 +331,7 @@ function PedidosTab() {
     </div>
   );
 }
+
 
 function CardapioTab() {
   const { data: items, isLoading, refetch } = trpc.menu.getAll.useQuery();
@@ -316,8 +395,8 @@ function CardapioTab() {
 
       {/* Add New Item */}
       <div
-        className="rounded-lg p-6 mb-6"
-        style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+        className="rounded-2xl p-6 mb-6"
+        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
       >
         <h3 className="font-semibold mb-4" style={{ color: '#C9A227' }}>
           <Plus size={18} className="inline mr-2" />
@@ -376,8 +455,8 @@ function CardapioTab() {
         <p style={{ color: '#8A7A5A' }}>Carregando cardápio...</p>
       ) : !items || items.length === 0 ? (
         <div
-          className="rounded-lg p-6 text-center"
-          style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+          className="rounded-2xl p-6 text-center"
+          style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
         >
           <p style={{ color: '#8A7A5A' }}>Nenhum item no cardápio</p>
         </div>
@@ -387,7 +466,7 @@ function CardapioTab() {
             <div
               key={item.id}
               className="rounded-lg overflow-hidden"
-              style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
             >
               {item.imageUrl && (
                 <img
@@ -487,8 +566,8 @@ function InformacoesTab() {
       </h2>
 
       <div
-        className="rounded-lg p-6"
-        style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+        className="rounded-2xl p-6"
+        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
       >
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -669,8 +748,8 @@ function PromocoesTab() {
 
       {/* Add New Promotion */}
       <div
-        className="rounded-lg p-6 mb-6"
-        style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+        className="rounded-2xl p-6 mb-6"
+        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
       >
         <h3 className="font-semibold mb-4" style={{ color: '#C9A227' }}>
           <Plus size={18} className="inline mr-2" />
@@ -720,8 +799,8 @@ function PromocoesTab() {
         <p style={{ color: '#8A7A5A' }}>Carregando promoções...</p>
       ) : !promotions || promotions.length === 0 ? (
         <div
-          className="rounded-lg p-6 text-center"
-          style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+          className="rounded-2xl p-6 text-center"
+          style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
         >
           <p style={{ color: '#8A7A5A' }}>Nenhuma promoção cadastrada</p>
         </div>
@@ -731,7 +810,7 @@ function PromocoesTab() {
             <div
               key={promo.id}
               className="rounded-lg p-4 flex items-center justify-between"
-              style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
             >
               <div>
                 <h3 className="font-semibold" style={{ color: '#F5F0E8' }}>
@@ -888,65 +967,65 @@ function DashboardTab() {
   
   return (
     <div>
-      <h2 className="font-display text-xl font-bold mb-6" style={{ color: '#F5F0E8' }}>
+      <h2 className="font-display text-3xl font-bold mb-8" style={{ color: '#F5F0E8' }}>
         Dashboard de Vendas
       </h2>
       
       {/* Seletor de Datas */}
       <div className="mb-6 flex gap-3 flex-wrap items-center">
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={() => handleDateRangeChange('today')}
-            className="px-4 py-2 rounded text-sm font-semibold transition"
-            style={{ background: '#C9A227', color: '#0A0A0A' }}
+            className="px-5 py-2 rounded-lg text-sm font-bold transition shadow-lg hover:brightness-110"
+            style={{ background: 'linear-gradient(180deg, #EAD695 0%, #B8860B 100%)', color: '#111', border: '1px solid rgba(255,215,0,0.5)', boxShadow: '0 0 15px rgba(201,162,39,0.4)' }}
           >
             Hoje
           </button>
           <button
             onClick={() => handleDateRangeChange('7days')}
-            className="px-4 py-2 rounded text-sm font-semibold transition"
-            style={{ background: 'rgba(201,162,39,0.3)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.5)' }}
+            className="px-5 py-2 rounded-lg text-sm font-semibold transition hover:bg-[#C9A227]/20"
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
           >
             Últimos 7 dias
           </button>
           <button
             onClick={() => handleDateRangeChange('30days')}
-            className="px-4 py-2 rounded text-sm font-semibold transition"
-            style={{ background: 'rgba(201,162,39,0.3)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.5)' }}
+            className="px-5 py-2 rounded-lg text-sm font-semibold transition hover:bg-[#C9A227]/20"
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
           >
             Últimos 30 dias
           </button>
           <button
             onClick={() => handleDateRangeChange('month')}
-            className="px-4 py-2 rounded text-sm font-semibold transition"
-            style={{ background: 'rgba(201,162,39,0.3)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.5)' }}
+            className="px-5 py-2 rounded-lg text-sm font-semibold transition hover:bg-[#C9A227]/20"
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
           >
             Este mês
           </button>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center ml-4">
           <input
             type="date"
             value={startDate ? startDate.toISOString().split('T')[0] : ''}
             onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
-            className="px-3 py-2 rounded text-sm"
-            style={{ background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' }}
+            className="px-3 py-2 rounded-lg text-sm"
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
           />
           <span style={{ color: '#8A7A5A' }}>a</span>
           <input
             type="date"
             value={endDate ? endDate.toISOString().split('T')[0] : ''}
             onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
-            className="px-3 py-2 rounded text-sm"
-            style={{ background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' }}
+            className="px-3 py-2 rounded-lg text-sm"
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
           />
         </div>
         
         <button
           onClick={exportToPDF}
-          className="px-4 py-2 rounded text-sm font-semibold transition flex items-center gap-2 ml-auto"
-          style={{ background: '#C9A227', color: '#0A0A0A' }}
+          className="px-5 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ml-auto shadow-lg hover:brightness-110"
+          style={{ background: 'linear-gradient(180deg, #EAD695 0%, #B8860B 100%)', color: '#111', border: '1px solid rgba(255,215,0,0.5)', boxShadow: '0 0 15px rgba(201,162,39,0.4)' }}
         >
           <Download size={16} />
           Exportar PDF
@@ -959,53 +1038,62 @@ function DashboardTab() {
       {isLoading ? (
         <p style={{ color: '#8A7A5A' }}>Carregando dados...</p>
       ) : (
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
+        <div className="grid grid-cols-4 gap-6 mb-8">
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>Vendas Hoje</p>
-                <h3 className="text-2xl font-bold mt-2" style={{ color: '#C9A227' }}>R$ {stats.todaySales}</h3>
+                <h3 className="text-3xl font-bold mt-2" style={{ color: '#C9A227' }}>R$ {stats.todaySales}</h3>
               </div>
               <div className="text-right">
-                <p className="text-xs" style={{ color: parseFloat(stats.salesGrowth) >= 0 ? '#4CAF50' : '#FF6B6B' }}>
+                <p className="text-sm font-semibold" style={{ color: parseFloat(stats.salesGrowth) >= 0 ? '#4CAF50' : '#FF6B6B' }}>
                   {parseFloat(stats.salesGrowth) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(stats.salesGrowth))}%
                 </p>
               </div>
             </div>
-            <p className="text-xs mt-2" style={{ color: '#8A7A5A' }}>vs período anterior</p>
+            <p className="text-xs mt-3" style={{ color: '#8A7A5A' }}>vs período anterior</p>
           </div>
-          <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>Pedidos Hoje</p>
-                <h3 className="text-2xl font-bold mt-2" style={{ color: '#C9A227' }}>{stats.todayOrders}</h3>
+                <h3 className="text-3xl font-bold mt-2" style={{ color: '#C9A227' }}>{stats.todayOrders}</h3>
               </div>
               <div className="text-right">
-                <p className="text-xs" style={{ color: parseFloat(stats.ordersGrowth) >= 0 ? '#4CAF50' : '#FF6B6B' }}>
+                <p className="text-sm font-semibold" style={{ color: parseFloat(stats.ordersGrowth) >= 0 ? '#4CAF50' : '#FF6B6B' }}>
                   {parseFloat(stats.ordersGrowth) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(stats.ordersGrowth))}%
                 </p>
               </div>
             </div>
-            <p className="text-xs mt-2" style={{ color: '#8A7A5A' }}>vs período anterior</p>
+            <p className="text-xs mt-3" style={{ color: '#8A7A5A' }}>vs período anterior</p>
           </div>
-          <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>Ticket Médio</p>
-                <h3 className="text-2xl font-bold mt-2" style={{ color: '#C9A227' }}>R$ {stats.avgTicket}</h3>
+                <h3 className="text-3xl font-bold mt-2" style={{ color: '#C9A227' }}>R$ {stats.avgTicket}</h3>
               </div>
               <div className="text-right">
-                <p className="text-xs" style={{ color: parseFloat(stats.avgTicketGrowth) >= 0 ? '#4CAF50' : '#FF6B6B' }}>
+                <p className="text-sm font-semibold" style={{ color: parseFloat(stats.avgTicketGrowth) >= 0 ? '#4CAF50' : '#FF6B6B' }}>
                   {parseFloat(stats.avgTicketGrowth) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(stats.avgTicketGrowth))}%
                 </p>
               </div>
             </div>
-            <p className="text-xs mt-2" style={{ color: '#8A7A5A' }}>vs período anterior</p>
+            <p className="text-xs mt-3" style={{ color: '#8A7A5A' }}>vs período anterior</p>
           </div>
-          <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
-            <p className="text-sm" style={{ color: '#8A7A5A' }}>Total de Pedidos</p>
-            <h3 className="text-2xl font-bold mt-2" style={{ color: '#C9A227' }}>{stats.totalOrders}</h3>
-            <p className="text-xs mt-2" style={{ color: '#4CAF50' }}>Todos os tempos</p>
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm" style={{ color: '#8A7A5A' }}>Total de Pedidos</p>
+                <h3 className="text-3xl font-bold mt-2" style={{ color: '#C9A227' }}>{stats.totalOrders}</h3>
+              </div>
+              <div className="text-right">
+                 <p className="text-sm font-semibold" style={{ color: '#4CAF50' }}>
+                  ↑ 0%
+                </p>
+              </div>
+            </div>
+            <p className="text-xs mt-3" style={{ color: '#8A7A5A' }}>Todos os tempos</p>
           </div>
         </div>
       )}
@@ -1013,44 +1101,57 @@ function DashboardTab() {
       {/* Gráficos */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         {/* Gráfico de Vendas por Dia */}
-        <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
-          <h3 className="font-semibold mb-4" style={{ color: '#F5F0E8' }}>Vendas Últimos 7 Dias</h3>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
+          <h3 className="font-semibold mb-6" style={{ color: '#F5F0E8' }}>Vendas Últimos 7 Dias</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,162,39,0.2)" />
-              <XAxis dataKey="day" stroke="#8A7A5A" />
-              <YAxis stroke="#8A7A5A" />
+            <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#C9A227" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#C9A227" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,162,39,0.1)" vertical={false} />
+              <XAxis dataKey="day" stroke="#8A7A5A" axisLine={false} tickLine={false} />
+              <YAxis stroke="#8A7A5A" axisLine={false} tickLine={false} />
               <Tooltip 
-                contentStyle={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)' }}
+                contentStyle={{ background: '#0a100d', border: '1px solid rgba(201,162,39,0.3)', borderRadius: '8px' }}
                 labelStyle={{ color: '#C9A227' }}
+                itemStyle={{ color: '#F5F0E8' }}
               />
-              <Legend />
-              <Line type="monotone" dataKey="sales" stroke="#C9A227" strokeWidth={2} dot={{ fill: '#C9A227' }} />
-            </LineChart>
+              <Area type="monotone" dataKey="sales" stroke="#C9A227" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" dot={{ fill: '#0a100d', stroke: '#C9A227', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#C9A227' }} />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Gráfico de Horários de Pico */}
-        <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
-          <h3 className="font-semibold mb-4" style={{ color: '#F5F0E8' }}>Horários de Pico</h3>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
+          <h3 className="font-semibold mb-6" style={{ color: '#F5F0E8' }}>Horários de Pico</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={peakHoursData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,162,39,0.2)" />
-              <XAxis dataKey="hour" stroke="#8A7A5A" />
-              <YAxis stroke="#8A7A5A" />
+            <AreaChart data={peakHoursData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#C9A227" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#C9A227" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,162,39,0.1)" vertical={false} />
+              <XAxis dataKey="hour" stroke="#8A7A5A" axisLine={false} tickLine={false} />
+              <YAxis stroke="#8A7A5A" axisLine={false} tickLine={false} />
               <Tooltip 
-                contentStyle={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)' }}
+                contentStyle={{ background: '#0a100d', border: '1px solid rgba(201,162,39,0.3)', borderRadius: '8px' }}
                 labelStyle={{ color: '#C9A227' }}
+                itemStyle={{ color: '#F5F0E8' }}
               />
-              <Bar dataKey="orders" fill="#C9A227" radius={[8, 8, 0, 0]} />
-            </BarChart>
+              <Area type="monotone" dataKey="orders" stroke="#C9A227" strokeWidth={3} fillOpacity={1} fill="url(#colorOrders)" dot={{ fill: '#0a100d', stroke: '#C9A227', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#C9A227' }} />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Produtos Mais Vendidos */}
       <div className="grid grid-cols-2 gap-6">
-        <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
           <h3 className="font-semibold mb-4" style={{ color: '#F5F0E8' }}>Produtos Mais Vendidos</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -1069,7 +1170,7 @@ function DashboardTab() {
                 ))}
               </Pie>
               <Tooltip 
-                contentStyle={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)' }}
+                contentStyle={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
                 labelStyle={{ color: '#C9A227' }}
               />
             </PieChart>
@@ -1077,7 +1178,7 @@ function DashboardTab() {
         </div>
 
         {/* Resumo de Produtos */}
-        <div className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
           <h3 className="font-semibold mb-4" style={{ color: '#F5F0E8' }}>Top 5 Produtos</h3>
           <div className="space-y-3">
             {topProductsData.map((product, idx) => (
@@ -1099,3 +1200,141 @@ function DashboardTab() {
     </div>
   );
 }
+function StoreToggle() {
+  const { data: settings } = trpc.storeSettings.get.useQuery();
+  const updateSettings = trpc.storeSettings.update.useMutation();
+  const isOpen = settings?.isOpen === 1;
+
+  const toggleStore = async () => {
+    try {
+      await updateSettings.mutateAsync({ isOpen: isOpen ? 0 : 1 });
+      toast.success(isOpen ? 'Loja fechada' : 'Loja aberta');
+    } catch (e) {
+      toast.error('Erro ao alterar status da loja');
+    }
+  };
+
+  return (
+    <button
+      onClick={toggleStore}
+      className="flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all"
+      style={{
+        background: isOpen ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 107, 107, 0.1)',
+        color: isOpen ? '#4CAF50' : '#FF6B6B',
+        border: isOpen ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid rgba(255, 107, 107, 0.3)'
+      }}
+    >
+      <Power size={18} />
+      {isOpen ? 'LOJA ABERTA' : 'LOJA FECHADA'}
+    </button>
+  );
+}
+
+function EntregadoresTab() {
+  const { data: drivers, refetch } = trpc.drivers.getAll.useQuery();
+  const createDriver = trpc.drivers.create.useMutation();
+  const deleteDriver = trpc.drivers.delete.useMutation();
+  const [formData, setFormData] = useState({ name: '', phone: '', vehicle: '' });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.phone) return toast.error('Preencha nome e telefone');
+    await createDriver.mutateAsync(formData);
+    toast.success('Entregador adicionado');
+    setFormData({ name: '', phone: '', vehicle: '' });
+    refetch();
+  };
+
+  return (
+    <div>
+      <h2 className="text-xl font-display font-bold mb-6 text-[#F5F0E8]">Entregadores</h2>
+      <form onSubmit={handleSubmit} className="mb-8 p-4 rounded-lg bg-[#111] border border-[#C9A227]/20 flex gap-4 items-end">
+        <div className="flex-1">
+          <label className="block text-sm text-[#8A7A5A] mb-1">Nome</label>
+          <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm text-[#8A7A5A] mb-1">Telefone</label>
+          <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm text-[#8A7A5A] mb-1">Veículo</label>
+          <input type="text" value={formData.vehicle} onChange={e => setFormData({ ...formData, vehicle: e.target.value })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+        </div>
+        <button type="submit" className="bg-[#C9A227] text-black px-4 py-2 rounded font-bold">Adicionar</button>
+      </form>
+      <div className="grid gap-4">
+        {drivers?.map(d => (
+          <div key={d.id} className="p-4 rounded-lg bg-[#111] border border-[#C9A227]/20 flex justify-between items-center">
+            <div>
+              <p className="font-bold text-[#F5F0E8]">{d.name}</p>
+              <p className="text-sm text-[#8A7A5A]">{d.phone} • {d.vehicle || 'Sem veículo'}</p>
+            </div>
+            <button onClick={async () => { await deleteDriver.mutateAsync({ id: d.id }); refetch(); }} className="text-red-500 hover:text-red-400">
+              <Trash2 size={20} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CuponsTab() {
+  const { data: coupons, refetch } = trpc.coupons.getAll.useQuery();
+  const createCoupon = trpc.coupons.create.useMutation();
+  const deleteCoupon = trpc.coupons.delete.useMutation();
+  const [formData, setFormData] = useState({ code: '', type: 'percentage', discountValue: 0, minOrderAmount: 0 });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.code || formData.discountValue <= 0) return toast.error('Preencha código e desconto');
+    await createCoupon.mutateAsync({ ...formData, type: formData.type as any, discountValue: Number(formData.discountValue), minOrderAmount: Number(formData.minOrderAmount) });
+    toast.success('Cupom criado');
+    setFormData({ code: '', type: 'percentage', discountValue: 0, minOrderAmount: 0 });
+    refetch();
+  };
+
+  return (
+    <div>
+      <h2 className="text-xl font-display font-bold mb-6 text-[#F5F0E8]">Cupons de Desconto</h2>
+      <form onSubmit={handleSubmit} className="mb-8 p-4 rounded-lg bg-[#111] border border-[#C9A227]/20 grid grid-cols-5 gap-4 items-end">
+        <div>
+          <label className="block text-sm text-[#8A7A5A] mb-1">Código</label>
+          <input type="text" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+        </div>
+        <div>
+          <label className="block text-sm text-[#8A7A5A] mb-1">Tipo</label>
+          <select value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white">
+            <option value="percentage">Porcentagem (%)</option>
+            <option value="fixed">Fixo (R$)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm text-[#8A7A5A] mb-1">Desconto</label>
+          <input type="number" value={formData.discountValue} onChange={e => setFormData({ ...formData, discountValue: Number(e.target.value) })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+        </div>
+        <div>
+          <label className="block text-sm text-[#8A7A5A] mb-1">Pedido Mín. (R$)</label>
+          <input type="number" value={formData.minOrderAmount} onChange={e => setFormData({ ...formData, minOrderAmount: Number(e.target.value) })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+        </div>
+        <button type="submit" className="bg-[#C9A227] text-black px-4 py-2 rounded font-bold">Criar</button>
+      </form>
+      <div className="grid gap-4">
+        {coupons?.map(c => (
+          <div key={c.id} className="p-4 rounded-lg bg-[#111] border border-[#C9A227]/20 flex justify-between items-center">
+            <div>
+              <p className="font-bold text-[#F5F0E8]">{c.code}</p>
+              <p className="text-sm text-[#8A7A5A]">{c.type === 'percentage' ? c.discountValue + '%' : 'R$ ' + c.discountValue} • Min: R$ {c.minOrderAmount}</p>
+            </div>
+            <button onClick={async () => { await deleteCoupon.mutateAsync({ id: c.id }); refetch(); }} className="text-red-500 hover:text-red-400">
+              <Trash2 size={20} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+

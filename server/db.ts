@@ -1,7 +1,7 @@
 import { eq, desc, and, gte, lte } from 'drizzle-orm';
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
-import { InsertUser, users, orders, InsertOrder, orderStatusHistory, InsertOrderStatusHistory, notifications, InsertNotification, storeSettings, InsertStoreSettings, menuItems, InsertMenuItem, promotions, InsertPromotion, adminUsers, InsertAdminUser, whatsappSettings, InsertWhatsappSettings, whatsappMessagesLog, InsertWhatsappMessagesLog } from "../drizzle/schema";
+import { InsertUser, users, orders, InsertOrder, orderStatusHistory, InsertOrderStatusHistory, notifications, InsertNotification, storeSettings, InsertStoreSettings, menuItems, InsertMenuItem, promotions, InsertPromotion, adminUsers, InsertAdminUser, whatsappSettings, InsertWhatsappSettings, whatsappMessagesLog, InsertWhatsappMessagesLog, deliveryDrivers, InsertDeliveryDriver, coupons, InsertCoupon } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -441,4 +441,50 @@ export async function updateWhatsappMessageStatus(id: number, status: 'pending' 
   }
   
   return db.update(whatsappMessagesLog).set(updateData).where(eq(whatsappMessagesLog.id, id));
+}
+export async function getDrivers() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.select().from(deliveryDrivers);
+}
+export async function createDriver(data: InsertDeliveryDriver) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.insert(deliveryDrivers).values(data);
+}
+export async function updateDriver(id: number, data: Partial<InsertDeliveryDriver>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.update(deliveryDrivers).set(data).where(eq(deliveryDrivers.id, id));
+}
+export async function deleteDriver(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.update(deliveryDrivers).set({ isActive: 0 }).where(eq(deliveryDrivers.id, id));
+}
+
+export async function getCoupons() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.select().from(coupons);
+}
+export async function createCoupon(data: InsertCoupon) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.insert(coupons).values(data);
+}
+export async function updateCoupon(id: number, data: Partial<InsertCoupon>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.update(coupons).set(data).where(eq(coupons.id, id));
+}
+export async function deleteCoupon(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.update(coupons).set({ isActive: 0 }).where(eq(coupons.id, id));
+}
+export async function updateOrderDriver(orderId: number, driverId: number | null) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.update(orders).set({ driverId }).where(eq(orders.id, orderId));
 }

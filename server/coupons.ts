@@ -39,10 +39,10 @@ export async function validateCoupon(code: string) {
     valid: true,
     coupon: {
       code: couponData.code,
-      discountType: couponData.discountType,
+      discountType: couponData.type,
       discountValue: parseFloat(couponData.discountValue.toString()),
       minOrderAmount: couponData.minOrderAmount ? parseFloat(couponData.minOrderAmount.toString()) : null,
-      description: `${couponData.discountType === 'percentage' ? couponData.discountValue + '%' : 'R$ ' + couponData.discountValue} de desconto`,
+      description: `${couponData.type === 'percentage' ? couponData.discountValue + '%' : 'R$ ' + couponData.discountValue} de desconto`,
     },
   };
 }

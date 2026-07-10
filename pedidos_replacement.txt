@@ -1,0 +1,126 @@
+function PedidosTab() {
+  const { data: orders, isLoading } = trpc.orders.getAll.useQuery(undefined, { refetchInterval: 10000 });
+  const { data: drivers } = trpc.drivers.getAll.useQuery();
+  const updateStatus = trpc.orders.updateStatus.useMutation();
+  const assignDriver = trpc.orders.assignDriver.useMutation();
+  const prevOrdersCount = useRef(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+  }, []);
+
+  useEffect(() => {
+    if (orders && prevOrdersCount.current > 0 && orders.length > prevOrdersCount.current) {
+      audioRef.current?.play().catch(e => console.log('Audio autoplay blocked'));
+    }
+    if (orders) prevOrdersCount.current = orders.length;
+  }, [orders]);
+
+  const handleStatusChange = async (orderId: number, newStatus: string) => {
+    try {
+      await updateStatus.mutateAsync({ orderId, status: newStatus as any });
+      toast.success('Status atualizado!', {
+        duration: 2000,
+        style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
+      });
+    } catch (error) {
+      toast.error('Erro ao atualizar status');
+    }
+  };
+
+  const handleDriverChange = async (orderId: number, driverId: string) => {
+    try {
+      await assignDriver.mutateAsync({ orderId, driverId: driverId ? Number(driverId) : null });
+      toast.success('Entregador atribuído!');
+    } catch (error) {
+      toast.error('Erro ao atribuir entregador');
+    }
+  };
+
+  const handlePrint = (order: any) => {
+    const printWindow = window.open('', '', 'width=300,height=600');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html><head><style>
+        body { font-family: monospace; font-size: 14px; margin: 0; padding: 10px; width: 80mm; }
+        .center { text-align: center; }
+        .line { border-bottom: 1px dashed black; margin: 10px 0; }
+        h1, h2 { margin: 5px 0; }
+      </style></head><body>
+        <div class="center">
+          <h2>NEW S'BURGUER</h2>
+          <p>Pedido: ${order.orderNumber}</p>
+          <p>${new Date(order.createdAt).toLocaleString('pt-BR')}</p>
+        </div>
+        <div class="line"></div>
+        <p><b>Cliente:</b> ${order.customerName}</p>
+        <p><b>Telefone:</b> ${order.customerPhone}</p>
+        <p><b>Entrega:</b> ${order.deliveryType === 'delivery' ? 'Delivery' : 'Retirada'}</p>
+        ${order.address ? `<p><b>Endereço:</b> ${order.address}</p>` : ''}
+        <div class="line"></div>
+        ${Array.isArray(order.items) ? order.items.map((i:any) => `<p>${i.quantity}x ${i.name} (R$ ${(i.price * i.quantity).toFixed(2)})</p>`).join('') : ''}
+        <div class="line"></div>
+        <p><b>Total: R$ ${parseFloat(order.finalAmount).toFixed(2)}</b></p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+  };
+
+  const statusColors: Record<string, string> = { 'pending': '#FF6B35', 'confirmed': '#FFA500', 'preparing': '#C9A227', 'ready': '#4CAF50', 'out_for_delivery': '#2196F3', 'delivered': '#8BC34A', 'cancelled': '#F44336' };
+  const statusLabels: Record<string, string> = { 'pending': 'Pendente', 'confirmed': 'Confirmado', 'preparing': 'Preparando', 'ready': 'Pronto', 'out_for_delivery': 'Saindo para Entrega', 'delivered': 'Entregue', 'cancelled': 'Cancelado' };
+
+  return (
+    <div>
+      <h2 className="font-display text-xl font-bold mb-6" style={{ color: '#F5F0E8' }}>Gerenciar Pedidos</h2>
+      {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
+        <div className="space-y-4">
+          {orders.map((order: any) => (
+            <div key={order.id} className="rounded-lg p-6" style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="font-bold flex items-center gap-2" style={{ color: '#F5F0E8' }}>
+                    {order.orderNumber}
+                    <button onClick={() => handlePrint(order)} className="p-1 rounded transition" style={{ background: '#222' }} title="Imprimir Comanda"><Printer size={16} /></button>
+                  </h3>
+                  <p className="text-sm" style={{ color: '#8A7A5A' }}>{order.customerName} • {order.customerPhone}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg" style={{ color: '#C9A227' }}>R$ {parseFloat(order.finalAmount).toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="mb-4 pb-4" style={{ borderBottom: '1px solid rgba(201,162,39,0.1)' }}>
+                <p className="text-sm font-semibold mb-2" style={{ color: '#C9A227' }}>Itens:</p>
+                {Array.isArray(order.items) && order.items.map((item: any, idx: number) => (
+                  <p key={idx} className="text-sm" style={{ color: '#8A7A5A' }}>• {item.name} x{item.quantity}</p>
+                ))}
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>{statusLabels[order.status]}</span>
+                <div className="flex items-center gap-4">
+                  {order.deliveryType === 'delivery' && (
+                    <select value={order.driverId || ''} onChange={e => handleDriverChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+                      <option value="">Atribuir Entregador</option>
+                      {drivers?.filter((d: any) => d.isActive).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  )}
+                  <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+                    <option value="pending">Pendente</option>
+                    <option value="confirmed">Confirmado</option>
+                    <option value="preparing">Preparando</option>
+                    <option value="ready">Pronto</option>
+                    <option value="out_for_delivery">Saindo para Entrega</option>
+                    <option value="delivered">Entregue</option>
+                    <option value="cancelled">Cancelado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
