@@ -820,9 +820,9 @@ function PromocoesTab() {
                   {promo.title}
                 </h3>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>
-                  {promo.type === 'percentage' && `${promo.discountValue}% de desconto`}
-                  {promo.type === 'fixed' && `R$ ${promo.discountValue.toFixed(2)} de desconto`}
-                  {promo.type === 'combo' && `Combo especial`}
+                  {promo.discountType === 'percentage' && `${promo.discountValue}% de desconto`}
+                  {promo.discountType === 'fixed' && `R$ ${promo.discountValue.toFixed(2)} de desconto`}
+                  {promo.discountType === 'combo' && `Combo especial`}
                 </p>
               </div>
               <button
@@ -1237,14 +1237,14 @@ function EntregadoresTab() {
   const { data: drivers, refetch } = trpc.drivers.getAll.useQuery();
   const createDriver = trpc.drivers.create.useMutation();
   const deleteDriver = trpc.drivers.delete.useMutation();
-  const [formData, setFormData] = useState({ name: '', phone: '', vehicle: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', vehicleType: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return toast.error('Preencha nome e telefone');
     await createDriver.mutateAsync(formData);
     toast.success('Entregador adicionado');
-    setFormData({ name: '', phone: '', vehicle: '' });
+    setFormData({ name: '', phone: '', vehicleType: '' });
     refetch();
   };
 
@@ -1262,7 +1262,7 @@ function EntregadoresTab() {
         </div>
         <div className="flex-1">
           <label className="block text-sm text-[#8A7A5A] mb-1">Veículo</label>
-          <input type="text" value={formData.vehicle} onChange={e => setFormData({ ...formData, vehicle: e.target.value })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+          <input type="text" value={formData.vehicleType} onChange={e => setFormData({ ...formData, vehicleType: e.target.value })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
         </div>
         <button type="submit" className="bg-[#C9A227] text-black px-4 py-2 rounded font-bold">Adicionar</button>
       </form>
@@ -1271,7 +1271,7 @@ function EntregadoresTab() {
           <div key={d.id} className="p-4 rounded-lg bg-[#111] border border-[#C9A227]/20 flex justify-between items-center">
             <div>
               <p className="font-bold text-[#F5F0E8]">{d.name}</p>
-              <p className="text-sm text-[#8A7A5A]">{d.phone} • {d.vehicle || 'Sem veículo'}</p>
+              <div className="text-xs text-[#8A7A5A]">Veículo: {d.vehicleType || 'Não informado'}</div>
             </div>
             <button onClick={async () => { await deleteDriver.mutateAsync({ id: d.id }); refetch(); }} className="text-red-500 hover:text-red-400">
               <Trash2 size={20} />
@@ -1328,7 +1328,7 @@ function CuponsTab() {
           <div key={c.id} className="p-4 rounded-lg bg-[#111] border border-[#C9A227]/20 flex justify-between items-center">
             <div>
               <p className="font-bold text-[#F5F0E8]">{c.code}</p>
-              <p className="text-sm text-[#8A7A5A]">{c.type === 'percentage' ? c.discountValue + '%' : 'R$ ' + c.discountValue} • Min: R$ {c.minOrderAmount}</p>
+              <p className="text-sm text-[#8A7A5A]">{c.discountType === 'percentage' ? c.discountValue + '%' : 'R$ ' + c.discountValue} • Min: R$ {c.minOrderAmount}</p>
             </div>
             <button onClick={async () => { await deleteCoupon.mutateAsync({ id: c.id }); refetch(); }} className="text-red-500 hover:text-red-400">
               <Trash2 size={20} />

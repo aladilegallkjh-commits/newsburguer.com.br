@@ -39,10 +39,10 @@ export async function validateCoupon(code: string) {
     valid: true,
     coupon: {
       code: couponData.code,
-      discountType: couponData.type,
+      discountType: couponData.discountType,
       discountValue: parseFloat(couponData.discountValue.toString()),
       minOrderAmount: couponData.minOrderAmount ? parseFloat(couponData.minOrderAmount.toString()) : null,
-      description: `${couponData.type === 'percentage' ? couponData.discountValue + '%' : 'R$ ' + couponData.discountValue} de desconto`,
+      description: `${couponData.discountType === 'percentage' ? couponData.discountValue + '%' : 'R$ ' + couponData.discountValue} de desconto`,
     },
   };
 }
@@ -69,7 +69,7 @@ export async function calculateDiscount(
   let discountAmount = 0;
 
   if (couponData.discountType === 'percentage') {
-    discountAmount = (orderTotal * couponData.discountValue) / 100;
+    discountAmount = orderTotal * (couponData.discountValue / 100);
   } else if (couponData.discountType === 'fixed') {
     discountAmount = couponData.discountValue;
   }
