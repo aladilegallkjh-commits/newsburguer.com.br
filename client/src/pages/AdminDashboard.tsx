@@ -32,6 +32,9 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [adminEmail] = useState(localStorage.getItem('adminEmail') || 'Admin');
+  const { data: metrics } = trpc.analytics.getMetrics.useQuery();
+
+  const formatMoney = (val: string | number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val));
 
   const handleLogout = () => {
     localStorage.removeItem('adminEmail');
@@ -123,13 +126,13 @@ export default function AdminDashboard() {
                   
                   <div className="mb-3">
                     <p className="text-xs text-[#8A7A5A] mb-1">Faturamento Total (Mês Atual)</p>
-                    <p className="text-lg font-bold text-[#C9A227]">R$ 15.300,00</p>
+                    <p className="text-lg font-bold text-[#C9A227]">{metrics ? formatMoney(metrics.revenueThisMonth) : 'R$ 0,00'}</p>
                   </div>
                   
                   <div className="flex items-end justify-between">
                     <div>
                       <p className="text-xs text-[#8A7A5A] mb-1">Total de Pedidos (Mês Atual)</p>
-                      <p className="text-lg font-bold text-[#F5F0E8]">512</p>
+                      <p className="text-lg font-bold text-[#F5F0E8]">{metrics ? metrics.ordersThisMonth : '0'}</p>
                     </div>
                     {/* Fake mini chart */}
                     <div className="w-16 h-8 opacity-70">
