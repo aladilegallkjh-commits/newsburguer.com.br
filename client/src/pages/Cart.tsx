@@ -18,8 +18,7 @@ function CartItemRow({ item }: { item: CartItem }) {
 
   return (
     <div
-      className="flex flex-col gap-3 p-3 sm:p-4 rounded-sm animate-fade-in"
-      style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
+      className="flex flex-col gap-3 p-4 sm:p-5 rounded-lg animate-fade-in glass premium-card"
     >
       {/* Main row */}
       <div className="flex items-start sm:items-center gap-2 sm:gap-4">
@@ -51,8 +50,8 @@ function CartItemRow({ item }: { item: CartItem }) {
         <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
           <button
             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-            className="w-8 h-8 sm:w-7 sm:h-7 rounded-sm flex items-center justify-center transition-all duration-150 active:scale-95 min-w-[32px] min-h-[32px]"
-            style={{ background: 'rgba(201,162,39,0.1)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.2)' }}
+            className="w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 hover:bg-[#C9A227]/20 min-w-[32px] min-h-[32px]"
+            style={{ background: 'rgba(201,162,39,0.1)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)' }}
           >
             <Minus size={14} />
           </button>
@@ -64,8 +63,8 @@ function CartItemRow({ item }: { item: CartItem }) {
           </span>
           <button
             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-            className="w-8 h-8 sm:w-7 sm:h-7 rounded-sm flex items-center justify-center transition-all duration-150 active:scale-95 min-w-[32px] min-h-[32px]"
-            style={{ background: 'rgba(201,162,39,0.1)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.2)' }}
+            className="w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 hover:bg-[#C9A227]/20 min-w-[32px] min-h-[32px]"
+            style={{ background: 'rgba(201,162,39,0.1)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)' }}
           >
             <Plus size={14} />
           </button>
@@ -81,8 +80,8 @@ function CartItemRow({ item }: { item: CartItem }) {
         {/* Remove */}
         <button
           onClick={() => removeItem(item.id)}
-          className="p-1.5 rounded-sm transition-all duration-150 active:scale-95 min-w-[32px] min-h-[32px] flex items-center justify-center"
-          style={{ color: '#4A3A2A' }}
+          className="p-2 rounded-full transition-all duration-150 active:scale-95 hover:bg-red-900/30 hover:text-red-400 min-w-[32px] min-h-[32px] flex items-center justify-center"
+          style={{ color: '#8A7A5A' }}
           aria-label="Remover"
         >
           <Trash2 size={16} />
@@ -235,7 +234,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#0A0A0A' }}>
+    <div className="min-h-screen selection:bg-[#C9A227] selection:text-black" style={{ background: '#080C09' }}>
       <Navbar />
 
       <div className="container pt-16 sm:pt-20 pb-12 px-2 sm:px-4">
@@ -296,8 +295,7 @@ export default function Cart() {
             {/* Order summary */}
             <div className="lg:col-span-1">
               <div
-                className="rounded-sm p-4 sm:p-6 sticky top-20 sm:top-24"
-                style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.2)' }}
+                className="rounded-lg p-6 sm:p-8 sticky top-24 glass premium-card"
               >
                 {/* Logo */}
                 <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4" style={{ borderBottom: '1px solid rgba(201,162,39,0.15)' }}>
@@ -329,7 +327,7 @@ export default function Cart() {
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: '1px', background: 'rgba(201,162,39,0.15)', marginBottom: '1rem' }} />
+                <div className="gold-divider opacity-50 my-5"><div className="w-1 h-1 bg-[#C9A227] rotate-45 mx-2" /></div>
 
                 {/* Customer info */}
                 <div className="mb-3 sm:mb-4 space-y-2 sm:space-y-3">
@@ -342,8 +340,8 @@ export default function Cart() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Digite seu nome"
-                      className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
-                      style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                      className="w-full px-4 py-3 rounded-md text-xs sm:text-sm focus:border-[#C9A227] transition-colors"
+                      style={{ background: '#080C09', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
                     />
                   </div>
                   <div>
@@ -355,14 +353,14 @@ export default function Cart() {
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="(41) 98701-9702"
-                      className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
-                      style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                      className="w-full px-4 py-3 rounded-md text-xs sm:text-sm focus:border-[#C9A227] transition-colors"
+                      style={{ background: '#080C09', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
                     />
                   </div>
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: '1px', background: 'rgba(201,162,39,0.15)', marginBottom: '1rem' }} />
+                <div className="gold-divider opacity-50 my-5"><div className="w-1 h-1 bg-[#C9A227] rotate-45 mx-2" /></div>
 
                 {/* Coupon Section */}
                 <div className="mb-3 sm:mb-4">
@@ -375,7 +373,7 @@ export default function Cart() {
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: '1px', background: 'rgba(201,162,39,0.15)', marginBottom: '1rem' }} />
+                <div className="gold-divider opacity-50 my-5"><div className="w-1 h-1 bg-[#C9A227] rotate-45 mx-2" /></div>
 
                 {/* Subtotal and Discount */}
                 <div className="flex flex-col gap-2 mb-3 sm:mb-4">
@@ -392,7 +390,7 @@ export default function Cart() {
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: '1px', background: 'rgba(201,162,39,0.15)', marginBottom: '1rem' }} />
+                <div className="gold-divider opacity-50 my-5"><div className="w-1 h-1 bg-[#C9A227] rotate-45 mx-2" /></div>
 
                 {/* Total */}
                 <div className="flex justify-between items-center mb-4 sm:mb-6">
@@ -426,11 +424,11 @@ export default function Cart() {
                 {/* Clear cart button */}
                 <button
                   onClick={clearCart}
-                  className="w-full py-2 sm:py-2 rounded-sm font-semibold text-xs sm:text-sm transition-all duration-200 active:scale-95 min-h-[44px]"
+                  className="w-full py-3 rounded-md font-semibold text-xs sm:text-sm transition-all duration-200 active:scale-95 hover:bg-[#C9A227]/10"
                   style={{
-                    background: 'rgba(201,162,39,0.1)',
+                    background: 'transparent',
                     color: '#C9A227',
-                    border: '1px solid rgba(201,162,39,0.2)',
+                    border: '1px solid rgba(201,162,39,0.3)',
                   }}
                 >
                   Limpar Carrinho
