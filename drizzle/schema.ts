@@ -319,3 +319,14 @@ export const ratings = sqliteTable("ratings", {
   createdAt: integer("createdAt", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`).notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`).notNull(),
 });
+
+export const deliveryDrivers = sqliteTable("deliveryDrivers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  vehicleType: text("vehicleType"),
+  isActive: integer("isActive").default(1).notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`).notNull(),
+});
+
+export type InsertDeliveryDriver = typeof deliveryDrivers.$inferInsert;
