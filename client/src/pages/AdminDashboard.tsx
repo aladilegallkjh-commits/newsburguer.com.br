@@ -71,7 +71,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Menu */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-6 scrollbar-hide">
           <nav className="mt-4 space-y-1 px-4">
             {menuItems.map(item => (
               <button
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
           {sidebarOpen && (
             <>
               {/* Promoções Destaque */}
-              <div className="mt-8 px-4">
+              <div className="mt-4 px-4">
                 <div className="rounded-xl border border-[#C9A227]/20 p-4" style={{ background: 'linear-gradient(180deg, rgba(13,26,20,0.8) 0%, rgba(10,16,13,0.8) 100%)' }}>
                   <h4 className="text-xs font-bold text-[#C9A227] mb-3 tracking-wider uppercase">Promoções Destaque</h4>
                   <ul className="space-y-2 text-xs text-[#8A7A5A]">
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
 
       {/* Main content */}
       <div className="flex-1 overflow-auto relative" style={{
-        backgroundImage: `radial-gradient(circle at center, transparent 0%, #080c09 100%), url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C9A227' fill-opacity='0.03'%3E%3Cpath d='M50 25a15 15 0 0115 15v5H35v-5a15 15 0 0115-15zM30 50h40v5a15 15 0 01-30 0v-5H30z'/%3E%3Cpath d='M20 70a5 5 0 110-10 5 5 0 010 10zm60-40a5 5 0 110-10 5 5 0 010 10z'/%3E%3C/g%3E%3C/svg%3E")`,
+        backgroundImage: `radial-gradient(circle at center, transparent 0%, #080c09 100%), url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C9A227' fill-opacity='0.08'%3E%3Cpath d='M50 25a15 15 0 0115 15v5H35v-5a15 15 0 0115-15zM30 50h40v5a15 15 0 01-30 0v-5H30z'/%3E%3Cpath d='M20 70a5 5 0 110-10 5 5 0 010 10zm60-40a5 5 0 110-10 5 5 0 010 10z'/%3E%3C/g%3E%3C/svg%3E")`,
         backgroundSize: 'cover, 150px 150px'
       }}>
         {/* Header and Content Area */}
@@ -285,7 +285,7 @@ function PedidosTab() {
       {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
         <div className="space-y-4">
           {orders.map((order: any) => (
-            <div key={order.id} className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
+            <div key={order.id} className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}>
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="font-bold flex items-center gap-2" style={{ color: '#F5F0E8' }}>
@@ -396,7 +396,7 @@ function CardapioTab() {
       {/* Add New Item */}
       <div
         className="rounded-2xl p-6 mb-6"
-        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
       >
         <h3 className="font-semibold mb-4" style={{ color: '#C9A227' }}>
           <Plus size={18} className="inline mr-2" />
@@ -456,7 +456,7 @@ function CardapioTab() {
       ) : !items || items.length === 0 ? (
         <div
           className="rounded-2xl p-6 text-center"
-          style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+          style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
         >
           <p style={{ color: '#8A7A5A' }}>Nenhum item no cardápio</p>
         </div>
@@ -466,7 +466,7 @@ function CardapioTab() {
             <div
               key={item.id}
               className="rounded-lg overflow-hidden"
-              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
             >
               {item.imageUrl && (
                 <img
@@ -567,7 +567,7 @@ function InformacoesTab() {
 
       <div
         className="rounded-2xl p-6"
-        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
       >
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -749,7 +749,7 @@ function PromocoesTab() {
       {/* Add New Promotion */}
       <div
         className="rounded-2xl p-6 mb-6"
-        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+        style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
       >
         <h3 className="font-semibold mb-4" style={{ color: '#C9A227' }}>
           <Plus size={18} className="inline mr-2" />
@@ -800,7 +800,7 @@ function PromocoesTab() {
       ) : !promotions || promotions.length === 0 ? (
         <div
           className="rounded-2xl p-6 text-center"
-          style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+          style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
         >
           <p style={{ color: '#8A7A5A' }}>Nenhuma promoção cadastrada</p>
         </div>
@@ -810,7 +810,7 @@ function PromocoesTab() {
             <div
               key={promo.id}
               className="rounded-lg p-4 flex items-center justify-between"
-              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
             >
               <div>
                 <h3 className="font-semibold" style={{ color: '#F5F0E8' }}>
@@ -984,21 +984,21 @@ function DashboardTab() {
           <button
             onClick={() => handleDateRangeChange('7days')}
             className="px-5 py-2 rounded-lg text-sm font-semibold transition hover:bg-[#C9A227]/20"
-            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
           >
             Últimos 7 dias
           </button>
           <button
             onClick={() => handleDateRangeChange('30days')}
             className="px-5 py-2 rounded-lg text-sm font-semibold transition hover:bg-[#C9A227]/20"
-            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
           >
             Últimos 30 dias
           </button>
           <button
             onClick={() => handleDateRangeChange('month')}
             className="px-5 py-2 rounded-lg text-sm font-semibold transition hover:bg-[#C9A227]/20"
-            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
           >
             Este mês
           </button>
@@ -1010,7 +1010,7 @@ function DashboardTab() {
             value={startDate ? startDate.toISOString().split('T')[0] : ''}
             onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
             className="px-3 py-2 rounded-lg text-sm"
-            style={{ background: 'rgba(10,16,13,0.7)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
           />
           <span style={{ color: '#8A7A5A' }}>a</span>
           <input
@@ -1018,7 +1018,7 @@ function DashboardTab() {
             value={endDate ? endDate.toISOString().split('T')[0] : ''}
             onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
             className="px-3 py-2 rounded-lg text-sm"
-            style={{ background: 'rgba(10,16,13,0.7)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+            style={{ background: 'rgba(10,16,13,0.7)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
           />
         </div>
         
@@ -1039,7 +1039,7 @@ function DashboardTab() {
         <p style={{ color: '#8A7A5A' }}>Carregando dados...</p>
       ) : (
         <div className="grid grid-cols-4 gap-6 mb-8">
-          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.8)', boxShadow: '0 0 40px rgba(201,162,39,0.4)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>Vendas Hoje</p>
@@ -1053,7 +1053,7 @@ function DashboardTab() {
             </div>
             <p className="text-xs mt-3" style={{ color: '#8A7A5A' }}>vs período anterior</p>
           </div>
-          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.8)', boxShadow: '0 0 40px rgba(201,162,39,0.4)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>Pedidos Hoje</p>
@@ -1067,7 +1067,7 @@ function DashboardTab() {
             </div>
             <p className="text-xs mt-3" style={{ color: '#8A7A5A' }}>vs período anterior</p>
           </div>
-          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.8)', boxShadow: '0 0 40px rgba(201,162,39,0.4)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>Ticket Médio</p>
@@ -1081,7 +1081,7 @@ function DashboardTab() {
             </div>
             <p className="text-xs mt-3" style={{ color: '#8A7A5A' }}>vs período anterior</p>
           </div>
-          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.4)', boxShadow: '0 0 25px rgba(201,162,39,0.2)' }}>
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.8)', boxShadow: '0 0 40px rgba(201,162,39,0.4)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>Total de Pedidos</p>
@@ -1101,7 +1101,7 @@ function DashboardTab() {
       {/* Gráficos */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         {/* Gráfico de Vendas por Dia */}
-        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}>
           <h3 className="font-semibold mb-6" style={{ color: '#F5F0E8' }}>Vendas Últimos 7 Dias</h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -1125,7 +1125,7 @@ function DashboardTab() {
         </div>
 
         {/* Gráfico de Horários de Pico */}
-        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}>
           <h3 className="font-semibold mb-6" style={{ color: '#F5F0E8' }}>Horários de Pico</h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={peakHoursData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -1151,7 +1151,7 @@ function DashboardTab() {
 
       {/* Produtos Mais Vendidos */}
       <div className="grid grid-cols-2 gap-6">
-        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}>
           <h3 className="font-semibold mb-4" style={{ color: '#F5F0E8' }}>Produtos Mais Vendidos</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -1170,7 +1170,7 @@ function DashboardTab() {
                 ))}
               </Pie>
               <Tooltip 
-                contentStyle={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}
+                contentStyle={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
                 labelStyle={{ color: '#C9A227' }}
               />
             </PieChart>
@@ -1178,7 +1178,7 @@ function DashboardTab() {
         </div>
 
         {/* Resumo de Produtos */}
-        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' }}>
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}>
           <h3 className="font-semibold mb-4" style={{ color: '#F5F0E8' }}>Top 5 Produtos</h3>
           <div className="space-y-3">
             {topProductsData.map((product, idx) => (
@@ -1336,5 +1336,7 @@ function CuponsTab() {
     </div>
   );
 }
+
+
 
 
