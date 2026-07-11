@@ -22,16 +22,16 @@ export default function Navbar() {
   // Tamanhos dinâmicos baseado no scroll
   const logoSize = scrolled ? 'w-8 h-8 sm:w-10 sm:h-10' : 'w-12 h-12 sm:w-20 sm:h-20';
   const navbarBg = scrolled
-    ? 'rgba(8, 12, 9, 0.85)'
-    : 'transparent';
+    ? 'rgba(10, 10, 10, 0.98)'
+    : 'rgba(10, 10, 10, 0.7)';
 
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         background: navbarBg,
-        backdropFilter: scrolled ? 'blur(16px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(201, 162, 39, 0.15)' : '1px solid transparent',
+        backdropFilter: 'blur(12px)',
+        borderBottom: scrolled ? '1px solid rgba(201, 162, 39, 0.2)' : 'none',
       }}
     >
       <div className="container">
@@ -89,7 +89,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <Link href="/cart">
               <button
-                className="relative p-2 rounded-full transition-all duration-300 hover:bg-[#C9A227]/10"
+                className="relative p-2 rounded-full transition-all duration-200"
                 style={{ color: '#C9A227' }}
                 aria-label="Carrinho"
               >
@@ -107,7 +107,7 @@ export default function Navbar() {
 
             {/* Mobile menu toggle */}
             <button
-              className="md:hidden p-2 rounded-full transition-colors duration-200 hover:bg-[#C9A227]/10"
+              className="md:hidden p-2 rounded-full transition-colors duration-200"
               style={{ color: '#C9A227' }}
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Menu"
@@ -120,8 +120,8 @@ export default function Navbar() {
         {/* Mobile Nav */}
         {menuOpen && (
           <nav
-            className="md:hidden py-4 border-t flex flex-col gap-4 animate-fade-in px-4"
-            style={{ background: 'rgba(8, 12, 9, 0.95)', backdropFilter: 'blur(16px)', borderColor: 'rgba(201, 162, 39, 0.15)' }}
+            className="md:hidden py-4 border-t flex flex-col gap-4 animate-fade-in"
+            style={{ borderColor: 'rgba(201, 162, 39, 0.2)' }}
           >
             <Link href="/" onClick={() => setMenuOpen(false)}>
               <span

@@ -8,7 +8,7 @@ import { useCart, CartItemCustomization } from '@/contexts/CartContext';
 import { menuItems, categories, formatPrice, MenuItem } from '@/lib/menuData';
 import { toast } from 'sonner';
 
-const MENU_BG = 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1500&auto=format&fit=crop';
+const MENU_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663785681503/hw2XZYFpsWbStHSB92WGwu/menu-bg-Em9o5MrNXX2xQCaAp5Wz2t.webp';
 
 export default function Menu() {
   useEffect(() => {
@@ -16,17 +16,16 @@ export default function Menu() {
       const elements = document.querySelectorAll('.menu-item-scroll-reveal');
       elements.forEach((el) => {
         const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.9) {
+        if (rect.top < window.innerHeight * 0.85) {
           el.classList.add('visible');
         }
       });
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll();
+    handleScroll(); // Trigger on mount in case elements are already in view
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
   const [activeCategory, setActiveCategory] = useState('burgers');
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
@@ -35,9 +34,11 @@ export default function Menu() {
 
   const filtered = menuItems.filter(item => item.category === activeCategory);
   
+  // Resetar produto selecionado quando categoria muda
   useEffect(() => {
     setSelectedProduct(null);
   }, [activeCategory]);
+  const activeLabel = categories.find(c => c.id === activeCategory);
 
   function handleAddWithCustomization(
     product: MenuItem,
@@ -61,7 +62,7 @@ export default function Menu() {
     });
 
     toast.success(`${product.name} adicionado ao pedido!`, {
-      style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 20px rgba(201,162,39,0.1)' },
+      style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
     });
 
     if (goToCart) {
@@ -80,136 +81,119 @@ export default function Menu() {
   }
 
   return (
-    <div className="min-h-screen selection:bg-[#C9A227] selection:text-black" style={{ background: '#080C09' }}>
+    <div className="min-h-screen" style={{ background: '#0A0A0A' }}>
       <Navbar />
 
-      {/* Elegant Header */}
+      {/* Header */}
       <div
-        className="relative pt-24 sm:pt-32 pb-12 sm:pb-16 px-4 overflow-hidden"
-        style={{ background: '#080C09' }}
+        className="relative pt-16 sm:pt-20 pb-6 sm:pb-10 px-4 overflow-hidden"
+        style={{ background: '#0D1A14' }}
       >
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `url(${MENU_BG})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center 40%',
-            filter: 'blur(4px)',
+            backgroundPosition: 'center',
           }}
         />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(8,12,9,0.7) 0%, #080C09 100%)' }} />
-        
         <div className="relative z-10 container text-center">
-          <p className="text-xs sm:text-sm font-display mb-3 tracking-[0.4em] font-semibold" style={{ color: '#C9A227' }}>
-            A NOSSA COLEÇÃO
+          <p className="text-xs sm:text-sm font-display mb-2" style={{ color: '#C9A227' }}>
+            ESCOLHA O SEU
           </p>
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black mb-6 drop-shadow-lg" style={{ color: '#F5F0E8' }}>
-            O Cardápio
+          <h1 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4" style={{ color: '#F5F0E8' }}>
+            Cardápio
           </h1>
-          <div className="gold-divider w-32 sm:w-48 mx-auto opacity-70">
-            <div className="w-1.5 h-1.5 rotate-45" style={{ background: '#C9A227' }} />
+          <div className="flex items-center gap-3 justify-center w-24 sm:w-32 mx-auto">
+            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #C9A227)' }} />
+            <div className="w-1.5 h-1.5 rotate-45" style={{ background: '#C9A227', flexShrink: 0 }} />
+            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #C9A227)' }} />
           </div>
         </div>
       </div>
 
-      {/* Minimalist Categories */}
-      <div className="container py-8 sm:py-10 sticky top-14 z-20" style={{ background: 'rgba(8,12,9,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(201,162,39,0.1)' }}>
+      {/* Categories */}
+      <div className="container py-6 sm:py-8">
         <div
-          className="flex gap-4 sm:gap-8 overflow-x-auto pb-2 px-2 sm:px-4 -mx-2 sm:-mx-4 scrollbar-hide justify-start md:justify-center"
+          className="flex gap-2 overflow-x-auto pb-4 px-2 sm:px-4 -mx-2 sm:-mx-4 scrollbar-hide"
           style={{ scrollBehavior: 'smooth' }}
         >
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className="flex flex-col items-center gap-2 pb-3 relative transition-all duration-300 flex-shrink-0 group"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 text-xs sm:text-sm"
+              style={{
+                background: activeCategory === cat.id ? '#C9A227' : '#0D1A14',
+                color: activeCategory === cat.id ? '#0A0A0A' : '#F5F0E8',
+                border: `1px solid ${activeCategory === cat.id ? '#C9A227' : 'rgba(201,162,39,0.15)'}`,
+              }}
             >
-              <div className="text-2xl sm:text-3xl opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-300">
-                {cat.emoji}
-              </div>
-              <span 
-                className="text-xs sm:text-sm font-display tracking-wider uppercase font-semibold transition-colors duration-300"
-                style={{ color: activeCategory === cat.id ? '#C9A227' : '#8A7A5A' }}
-              >
-                {cat.name}
-              </span>
-              {/* Animated Underline */}
-              <div 
-                className="absolute bottom-0 left-0 w-full h-[2px] transition-all duration-300"
-                style={{ 
-                  background: activeCategory === cat.id ? '#C9A227' : 'transparent',
-                  boxShadow: activeCategory === cat.id ? '0 0 10px rgba(201,162,39,0.5)' : 'none',
-                  transform: activeCategory === cat.id ? 'scaleX(1)' : 'scaleX(0)'
-                }}
-              />
+              <span className="text-base sm:text-lg">{cat.emoji}</span>
+              <span>{cat.name}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Premium Products Grid */}
-      <div className="container py-12 pb-24 px-2 sm:px-4 min-h-[50vh]">
+      {/* Products Grid */}
+      <div className="container pb-20 px-2 sm:px-4">
         {filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <p style={{ color: '#8A7A5A' }} className="text-lg font-display italic">O chef está preparando novidades para esta categoria...</p>
+          <div className="text-center py-12">
+            <p style={{ color: '#8A7A5A' }} className="text-lg">Nenhum produto disponível nesta categoria</p>
           </div>
         ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-          {filtered.map((item, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          {filtered.map(item => (
             <div
               key={item.id}
-              className="premium-card rounded-lg overflow-hidden cursor-pointer menu-item-scroll-reveal flex flex-col group h-full"
-              style={{ animationDelay: `${index * 0.05}s` }}
+              className="rounded-lg overflow-hidden transition-all duration-200 cursor-pointer menu-item-scroll-reveal hover-lift"
+              style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.15)' }}
               onClick={() => setSelectedProduct(item)}
             >
               {/* Product Image */}
               <div
-                className="h-48 sm:h-56 w-full flex items-center justify-center text-6xl overflow-hidden relative"
+                className="h-32 sm:h-40 flex items-center justify-center text-5xl sm:text-6xl overflow-hidden"
                 style={{ background: '#0D1A14' }}
               >
                 {item.image ? (
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="group-hover:scale-110 transition-transform duration-500">{item.emoji}</span>
+                  <span>{item.emoji}</span>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#111111] to-transparent opacity-80" />
               </div>
 
               {/* Product Info */}
-              <div className="p-5 sm:p-6 flex flex-col flex-1 relative z-10 -mt-6 bg-[#111111]/90 backdrop-blur-sm">
-                <h3 className="font-display font-bold text-lg sm:text-xl mb-2 group-hover:text-gradient transition-colors" style={{ color: '#F5F0E8' }}>
+              <div className="p-3 sm:p-4">
+                <h3 className="font-display font-semibold text-sm sm:text-base mb-1" style={{ color: '#F5F0E8' }}>
                   {item.name}
                 </h3>
-                <p className="text-sm mb-6 flex-1 text-[#8A7A5A] leading-relaxed">
+                <p className="text-xs mb-2 sm:mb-3 line-clamp-2" style={{ color: '#8A7A5A' }}>
                   {item.description}
                 </p>
 
-                {/* Price and Action */}
-                <div className="flex items-end justify-between mt-auto">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#8A7A5A] mb-1">A partir de</p>
-                    <span className="font-display font-bold text-xl sm:text-2xl" style={{ color: '#C9A227' }}>
-                      {formatPrice(item.price)}
-                    </span>
-                  </div>
+                {/* Price and Button */}
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-base sm:text-lg" style={{ color: '#C9A227' }}>
+                    {formatPrice(item.price)}
+                  </span>
                   <button
-                    className="p-3 rounded-full transition-all duration-300 hover:scale-110 active:scale-95"
+                    className="p-2 sm:p-2.5 rounded-lg transition-all duration-150 active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     style={{
                       background: addedItems.has(item.id) ? '#C9A227' : 'rgba(201,162,39,0.1)',
                       color: addedItems.has(item.id) ? '#0A0A0A' : '#C9A227',
-                      border: `1px solid ${addedItems.has(item.id) ? '#C9A227' : 'rgba(201,162,39,0.3)'}`,
-                      boxShadow: addedItems.has(item.id) ? '0 0 15px rgba(201,162,39,0.4)' : 'none',
+                      border: `1px solid ${addedItems.has(item.id) ? '#C9A227' : 'rgba(201,162,39,0.2)'}`,
                     }}
                     onClick={e => {
                       e.stopPropagation();
                       setSelectedProduct(item);
                     }}
                   >
-                    {addedItems.has(item.id) ? <Check size={20} /> : <Plus size={20} />}
+                    {addedItems.has(item.id) ? <Check size={18} /> : <Plus size={18} />}
                   </button>
                 </div>
               </div>
@@ -236,6 +220,7 @@ export default function Menu() {
         />
       )}
 
+      {/* Footer */}
       <Footer />
     </div>
   );

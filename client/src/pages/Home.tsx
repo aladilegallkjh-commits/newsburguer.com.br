@@ -5,11 +5,10 @@ import Footer from '@/components/Footer';
 
 const LOGO_URL = '/logo.png';
 const HERO_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663785681503/hw2XZYFpsWbStHSB92WGwu/hero-bg-5ZMaG7H6TSsgzEUvPhS5fs.webp';
-const FEATURED_BURGER = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1500&auto=format&fit=crop';
-const FEATURED_BURGER_2 = 'https://images.unsplash.com/photo-1594212691516-7463f6fb39e3?q=80&w=1500&auto=format&fit=crop';
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
+  const [visibleElements, setVisibleElements] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,25 +18,24 @@ export default function Home() {
       const elements = document.querySelectorAll('.scroll-reveal');
       elements.forEach((el) => {
         const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.85) {
+        if (rect.top < window.innerHeight * 0.75) {
           el.classList.add('visible');
         }
       });
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <div className="min-h-screen font-sans selection:bg-[#C9A227] selection:text-black" style={{ background: '#080C09' }}>
+    <div className="min-h-screen" style={{ background: '#0A0A0A' }}>
       <Navbar />
 
-      {/* Hero Section with Deep Parallax */}
+      {/* Hero Section with Parallax */}
       <section
-        className="relative min-h-[100vh] flex items-center justify-center overflow-hidden"
-        style={{ background: '#080C09' }}
+        className="relative min-h-screen flex items-center justify-center overflow-hidden pt-12 md:pt-16"
+        style={{ background: '#0A0A0A' }}
       >
         {/* Parallax background image */}
         <div
@@ -45,165 +43,235 @@ export default function Home() {
           style={{
             backgroundImage: `url(${HERO_BG})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center 30%',
-            transform: `scale(1.1) translateY(${scrollY * 0.4}px)`,
-            transition: 'transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            backgroundPosition: 'center',
+            opacity: 0.45,
+            transform: `translateY(${scrollY * 0.5}px)`,
+            transition: 'transform 0.1s ease-out',
           }}
         />
 
-        {/* Dramatic vignette overlay */}
+        {/* Dark overlay gradient */}
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(circle at center, transparent 0%, #080C09 90%), linear-gradient(to bottom, rgba(8,12,9,0.8) 0%, rgba(8,12,9,0.2) 40%, rgba(8,12,9,1) 100%)',
+            background: 'linear-gradient(to bottom, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.3) 40%, rgba(10,10,10,0.8) 100%)',
           }}
         />
 
         {/* Content */}
-        <div className="relative z-10 text-center px-4 flex flex-col items-center mt-20">
-          <div className="animate-fade-in-up mb-8 relative group">
-            <div 
-              className="absolute inset-0 rounded-full blur-3xl opacity-40 transition-opacity duration-700 group-hover:opacity-70"
-              style={{
-                background: 'radial-gradient(circle, rgba(201, 162, 39, 0.5) 0%, transparent 70%)',
-                animation: 'pulse 4s ease-in-out infinite',
-              }}
-            />
-            <img
-              src={LOGO_URL}
-              alt="New S'Burguer"
-              className="w-40 h-40 md:w-56 md:h-56 object-contain mx-auto drop-shadow-2xl relative z-10 hover:scale-105 transition-transform duration-700"
-              style={{ filter: 'drop-shadow(0 0 50px rgba(201, 162, 39, 0.4))' }}
-            />
+        <div className="relative z-10 text-center px-4 flex flex-col items-center">
+          {/* Logo with glow effect */}
+          <div className="animate-fade-in-up mb-6">
+            <div className="relative inline-block">
+              <div 
+                className="absolute inset-0 rounded-full blur-3xl opacity-50"
+                style={{
+                  background: 'radial-gradient(circle, rgba(201, 162, 39, 0.3) 0%, transparent 70%)',
+                  animation: 'pulse 3s ease-in-out infinite',
+                }}
+              />
+              <img
+                src={LOGO_URL}
+                alt="New S'Burguer"
+                className="w-36 h-36 md:w-48 md:h-48 object-contain mx-auto drop-shadow-2xl relative z-10 animate-glow"
+                style={{ filter: 'drop-shadow(0 0 40px rgba(201, 162, 39, 0.3))' }}
+              />
+            </div>
           </div>
 
-          <div className="animate-fade-in-up stagger-1 mb-4">
-            <p className="font-display text-xs md:text-sm tracking-[0.4em] uppercase mb-4 text-[#C9A227] font-semibold">
-              A Arte do Hambúrguer
+          {/* Brand name with gradient text */}
+          <div className="animate-fade-in-up stagger-1 mb-2">
+            <p
+              className="font-display text-sm md:text-base tracking-[0.3em] uppercase mb-1"
+              style={{ color: '#C9A227' }}
+            >
+              Bem-vindo à
             </p>
-            <h1 className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-none text-[#F5F0E8] drop-shadow-xl">
-              NEW S'BURGUER
+            <h1
+              className="font-display text-3xl sm:text-4xl md:text-7xl font-black leading-none"
+              style={{ color: '#F5F0E8' }}
+            >
+              New S'Burguer
             </h1>
           </div>
 
-          <div className="animate-fade-in-up stagger-2 gold-divider w-64 md:w-96 my-6 opacity-70">
-            <div className="w-1.5 h-1.5 rotate-45 bg-[#C9A227]" />
+          {/* Gold divider ornament */}
+          <div className="animate-fade-in-up stagger-2 flex items-center gap-3 my-4 w-48 sm:w-64 md:w-80">
+            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #C9A227)' }} />
+            <div
+              className="w-2 h-2 rotate-45"
+              style={{ background: '#C9A227', flexShrink: 0 }}
+            />
+            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #C9A227)' }} />
           </div>
 
-          <p className="animate-fade-in-up stagger-3 font-display italic text-lg sm:text-xl md:text-2xl mb-10 px-4 text-[#8A7A5A] max-w-2xl leading-relaxed">
-            Feito com fogo. Servido com estilo. Uma experiência gastronômica inesquecível em cada mordida.
+          {/* Tagline with fade effect */}
+          <p
+            className="animate-fade-in-up stagger-3 font-display italic text-base sm:text-lg md:text-2xl mb-6 px-2"
+            style={{ color: 'rgba(245, 240, 232, 0.75)' }}
+          >
+            Feito com fogo. Servido com estilo.
           </p>
 
-          <div className="animate-fade-in-up stagger-4 flex flex-col sm:flex-row gap-4 items-center">
+          {/* CTA Button with premium effect */}
+          <div className="animate-fade-in-up stagger-4">
             <Link href="/menu">
-              <button className="btn-gold text-sm px-12 py-4 hover-lift">
-                Fazer Pedido
+              <button className="btn-gold text-sm sm:text-base px-6 sm:px-10 py-3 sm:py-4 rounded-sm hover-lift">
+                Ver Cardápio
               </button>
             </Link>
-            <Link href="#destaques">
-              <button className="text-sm px-8 py-4 font-semibold uppercase tracking-widest text-[#C9A227] border border-[#C9A227]/30 hover:border-[#C9A227] hover:bg-[#C9A227]/10 transition-all duration-300 rounded-sm">
-                Descobrir
-              </button>
-            </Link>
+          </div>
+
+          {/* Scroll indicator */}
+          <div
+            className="animate-fade-in-up stagger-5 mt-8 sm:mt-12 md:mt-16 flex flex-col items-center gap-2"
+            style={{ color: 'rgba(201, 162, 39, 0.5)' }}
+          >
+            <span className="text-xs tracking-widest uppercase hidden sm:block">Role para baixo</span>
+            <div
+              className="w-px h-8 animate-float"
+              style={{ background: 'linear-gradient(to bottom, rgba(201, 162, 39, 0.5), transparent)' }}
+            />
           </div>
         </div>
       </section>
 
-      {/* Destaques do Chef (Bento Box / Premium Grid) */}
-      <section id="destaques" className="py-24 px-4 relative" style={{ background: '#080C09' }}>
-        {/* Background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#C9A227]/5 rounded-full blur-[120px] pointer-events-none" />
-        
-        <div className="container max-w-6xl relative z-10">
-          <div className="text-center mb-16 scroll-reveal">
-            <p className="font-display text-xs tracking-[0.4em] uppercase mb-3 text-[#C9A227]">Assinatura</p>
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-[#F5F0E8] mb-6">Destaques do Chef</h2>
-            <div className="gold-divider w-40 mx-auto opacity-50"><div className="w-1 h-1 bg-[#C9A227] rotate-45"/></div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {/* Featured Item 1 */}
-            <div className="lg:col-span-2 group relative h-[400px] rounded-lg overflow-hidden scroll-reveal premium-card cursor-pointer">
-              <img src={FEATURED_BURGER} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-60 group-hover:opacity-40" alt="Supreme Smash" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#080C09] via-transparent to-transparent opacity-90" />
-              <div className="absolute bottom-0 left-0 p-8 w-full">
-                <span className="inline-block px-3 py-1 border border-[#C9A227]/50 text-[#C9A227] text-xs uppercase tracking-widest font-semibold mb-4 glass rounded-full">Mais Vendido</span>
-                <h3 className="font-display text-3xl font-bold text-[#F5F0E8] mb-2 group-hover:text-gradient transition-colors">Supreme Smash Duplo</h3>
-                <p className="text-[#8A7A5A] text-sm md:text-base max-w-md mb-4">Dois blends de 100g prensados na chapa, queijo cheddar inglês derretido, bacon rústico e molho especial trufado.</p>
-                <p className="text-[#C9A227] text-2xl font-bold font-display">R$ 42,90</p>
-              </div>
-            </div>
-
-            {/* Featured Item 2 */}
-            <div className="group relative h-[400px] rounded-lg overflow-hidden scroll-reveal premium-card cursor-pointer" style={{ animationDelay: '0.2s' }}>
-              <img src={FEATURED_BURGER_2} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-50 group-hover:opacity-30" alt="Black Angus" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#080C09] via-[#080C09]/50 to-transparent opacity-90" />
-              <div className="absolute bottom-0 left-0 p-8 w-full text-center">
-                <h3 className="font-display text-2xl font-bold text-[#F5F0E8] mb-2 group-hover:text-gradient">Black Angus Premium</h3>
-                <p className="text-[#8A7A5A] text-sm mb-4">Blend 200g de Angus certificado, cebola caramelizada no Jack Daniel's e queijo brie.</p>
-                <p className="text-[#C9A227] text-xl font-bold font-display">R$ 54,90</p>
-              </div>
+      {/* Features Section with scroll reveal */}
+      <section
+        className="py-12 sm:py-20 px-4"
+        style={{ background: 'linear-gradient(to bottom, #0A0A0A, #0D1A14)' }}
+      >
+        <div className="container">
+          {/* Section header */}
+          <div className="text-center mb-8 sm:mb-14 scroll-reveal">
+            <p
+              className="font-display text-sm tracking-[0.3em] uppercase mb-3"
+              style={{ color: '#C9A227' }}
+            >
+              Por que escolher a
+            </p>
+            <h2
+              className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
+              style={{ color: '#F5F0E8' }}
+            >
+              New S'Burguer
+            </h2>
+            <div className="flex items-center justify-center gap-3 w-40 sm:w-48 mx-auto">
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #C9A227)' }} />
+              <div className="w-2 h-2 rotate-45" style={{ background: '#C9A227', flexShrink: 0 }} />
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #C9A227)' }} />
             </div>
           </div>
-          
-          <div className="text-center mt-12 scroll-reveal" style={{ animationDelay: '0.4s' }}>
-            <Link href="/menu">
-              <span className="inline-flex items-center gap-2 text-[#C9A227] hover:text-[#F5F0E8] transition-colors cursor-pointer text-sm tracking-widest uppercase font-semibold pb-1 border-b border-[#C9A227]/30 hover:border-[#F5F0E8]">
-                Ver Cardápio Completo &rarr;
-              </span>
-            </Link>
-          </div>
-        </div>
-      </section>
 
-      {/* A Experiência (Storytelling) */}
-      <section className="py-24 px-4 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #080C09 0%, #0a110c 100%)' }}>
-        {/* Subtle geometric pattern background */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `radial-gradient(#C9A227 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
-        
-        <div className="container max-w-5xl relative z-10">
-          <div className="text-center mb-16 scroll-reveal">
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-[#F5F0E8] mb-6">A Experiência</h2>
-            <div className="gold-divider w-40 mx-auto opacity-50"><div className="w-1 h-1 bg-[#C9A227] rotate-45"/></div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                number: '01',
-                title: 'Ingredientes Premium',
-                desc: 'Selecionamos apenas cortes nobres e insumos frescos. Sem atalhos, apenas a pura essência do sabor.',
+                icon: '🔥',
+                title: 'Artesanal',
+                desc: 'Hambúrgueres feitos à mão com ingredientes selecionados e carne de primeira qualidade.',
               },
               {
-                number: '02',
-                title: 'Fogo Perfeito',
-                desc: 'A temperatura exata e o tempo preciso para garantir a reação de Maillard que cria nossa crosta inconfundível.',
+                icon: '⚡',
+                title: 'Rápido',
+                desc: 'Pedido feito, pedido entregue. Sem demora, sem complicação — só sabor.',
               },
               {
-                number: '03',
-                title: 'Entrega Impecável',
-                desc: 'Da grelha até a sua porta, mantemos o padrão intacto. O burger chega quente, montado e irresistível.',
+                icon: '✨',
+                title: 'Premium',
+                desc: 'Ingredientes premium, receitas exclusivas e um padrão de qualidade que você sente no primeiro mordida.',
               },
             ].map((feature, i) => (
               <div
                 key={i}
-                className="glass glass-hover p-10 rounded-lg scroll-reveal text-center relative overflow-hidden group"
-                style={{ animationDelay: `${i * 0.15}s` }}
+                className="premium-card rounded-sm p-8 text-center scroll-reveal hover-lift"
+                style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <div className="absolute -top-4 -right-4 text-7xl font-display font-black text-[#C9A227] opacity-5 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
-                  {feature.number}
+                <div className="text-5xl mb-4 inline-block hover:scale-110 transition-transform duration-300">
+                  {feature.icon}
                 </div>
-                <div className="text-[#C9A227] text-sm tracking-widest font-bold mb-4 font-display">{feature.number}</div>
-                <h3 className="font-display text-xl font-bold mb-4 text-[#F5F0E8]">{feature.title}</h3>
-                <p className="text-sm leading-relaxed text-[#8A7A5A]">
+                <h3
+                  className="font-display text-xl font-bold mb-3"
+                  style={{ color: '#C9A227' }}
+                >
+                  {feature.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#8A7A5A' }}>
                   {feature.desc}
                 </p>
               </div>
             ))}
           </div>
+
+          {/* CTA */}
+          <div className="text-center mt-12 scroll-reveal">
+            <Link href="/menu">
+              <button className="btn-gold hover-lift">
+                Fazer Pedido Agora
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
 
+      {/* Divider with gradient */}
+      <div
+        style={{
+          height: '1px',
+          background: 'linear-gradient(to right, transparent, #C9A227, transparent)',
+        }}
+      />
+
+      {/* Premium Features Section */}
+      <section
+        className="py-12 sm:py-20 px-4"
+        style={{ background: 'linear-gradient(to bottom, #0D1A14, #0A0A0A)' }}
+      >
+        <div className="container">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-8 sm:mb-12 scroll-reveal">
+              <h2
+                className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
+                style={{ color: '#F5F0E8' }}
+              >
+                Experiência Premium
+              </h2>
+              <p style={{ color: '#8A7A5A' }}>
+                Cada detalhe foi pensado para oferecer a melhor experiência
+              </p>
+            </div>
+
+            <div className="space-y-8">
+              {[
+                {
+                  title: 'Entrega Rápida',
+                  desc: 'Seus pedidos chegam quentes e frescos, sempre no tempo prometido.',
+                },
+                {
+                  title: 'Qualidade Garantida',
+                  desc: 'Cada hambúrguer é preparado com cuidado e atenção aos detalhes.',
+                },
+                {
+                  title: 'Atendimento Excepcional',
+                  desc: 'Nossa equipe está sempre pronta para oferecer o melhor atendimento.',
+                },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="glass glass-hover p-6 rounded-lg scroll-reveal"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  <h3 className="font-display text-lg font-bold mb-2" style={{ color: '#C9A227' }}>
+                    {item.title}
+                  </h3>
+                  <p style={{ color: '#8A7A5A' }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
       <Footer />
     </div>
   );
