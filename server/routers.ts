@@ -315,6 +315,23 @@ export const appRouter = router({
       return { success: true, fixed };
     }),
 
+    // TEMPORARY: Clear all orders and customers to reset test environment
+    clearTestOrders: publicProcedure.mutation(async () => {
+      const database = await db.getDb();
+      if (!database) throw new Error("DB not available");
+
+      const { customers, orders: ordersTable, customerRankings, prizeCodes, orderStatusHistory, ratings } = await import("../drizzle/schema");
+      
+      await database.delete(orderStatusHistory);
+      await database.delete(ratings);
+      await database.delete(prizeCodes);
+      await database.delete(customerRankings);
+      await database.delete(ordersTable);
+      await database.delete(customers);
+
+      return { success: true, message: "Todos os dados de teste foram apagados!" };
+    }),
+
     getMyPrizes: publicProcedure
       .input(z.object({ phone: z.string() }))
       .query(async ({ input }) => {
