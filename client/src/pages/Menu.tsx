@@ -5,8 +5,9 @@ import Navbar from '@/components/Navbar';
 import ProductCustomizer from '@/components/ProductCustomizer';
 import Footer from '@/components/Footer';
 import { useCart, CartItemCustomization } from '@/contexts/CartContext';
-import { menuItems, categories, formatPrice, MenuItem } from '@/lib/menuData';
+import { categories, formatPrice, MenuItem } from '@/lib/menuData';
 import { toast } from 'sonner';
+import { trpc } from '@/lib/trpc';
 
 const MENU_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663785681503/hw2XZYFpsWbStHSB92WGwu/menu-bg-Em9o5MrNXX2xQCaAp5Wz2t.webp';
 
@@ -32,7 +33,8 @@ export default function Menu() {
   const { addItem } = useCart();
   const [, navigate] = useLocation();
 
-  const filtered = menuItems.filter(item => item.category === activeCategory);
+  const { data: menuItems, isLoading } = trpc.menu.getAll.useQuery();
+  const filtered = (menuItems || []).filter((item: any) => item.category === activeCategory);
   
   // Resetar produto selecionado quando categoria muda
   useEffect(() => {
@@ -138,13 +140,17 @@ export default function Menu() {
 
       {/* Products Grid */}
       <div className="container pb-20 px-2 sm:px-4">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p style={{ color: '#8A7A5A' }} className="text-lg">Carregando cardápio...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-12">
             <p style={{ color: '#8A7A5A' }} className="text-lg">Nenhum produto disponível nesta categoria</p>
           </div>
         ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {filtered.map(item => (
+          {filtered.map((item: any) => (
             <div
               key={item.id}
               className="rounded-lg overflow-hidden transition-all duration-200 cursor-pointer menu-item-scroll-reveal hover-lift"
@@ -156,14 +162,14 @@ export default function Menu() {
                 className="h-32 sm:h-40 flex items-center justify-center text-5xl sm:text-6xl overflow-hidden"
                 style={{ background: '#0D1A14' }}
               >
-                {item.image ? (
+                {item.imageUrl ? (
                   <img
-                    src={item.image}
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span>{item.emoji}</span>
+                  <span>{categories.find(c => c.id === item.category)?.emoji || '🍔'}</span>
                 )}
               </div>
 
