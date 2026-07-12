@@ -43,8 +43,8 @@ export default function Home() {
           style={{
             backgroundImage: `url(${HERO_BG})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.45,
+            backgroundPosition: 'right center',
+            opacity: 0.35,
             transform: `translateY(${scrollY * 0.5}px)`,
             transition: 'transform 0.1s ease-out',
           }}
@@ -54,7 +54,7 @@ export default function Home() {
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(to bottom, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.3) 40%, rgba(10,10,10,0.8) 100%)',
+            background: 'linear-gradient(to bottom, rgba(10,10,10,0.8) 0%, rgba(10,10,10,0.5) 40%, rgba(10,10,10,0.9) 100%)',
           }}
         />
 

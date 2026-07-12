@@ -117,12 +117,12 @@ export default function Menu() {
 
       {/* Categories */}
       <div className="container max-w-4xl mx-auto py-6">
-        <div className="flex gap-3 overflow-x-auto pb-4 px-4 scrollbar-hide justify-start md:justify-center">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 px-4 scrollbar-hide justify-start md:justify-center">
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold whitespace-nowrap transition-all duration-300 uppercase tracking-widest text-xs border"
+              className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold whitespace-nowrap transition-all duration-300 uppercase tracking-widest text-[10px] sm:text-xs border"
               style={{
                 background: activeCategory === cat.id ? 'rgba(13,38,25,0.8)' : '#0A0E0B',
                 color: activeCategory === cat.id ? '#C9A227' : '#8A7A5A',
@@ -130,7 +130,7 @@ export default function Menu() {
                 boxShadow: activeCategory === cat.id ? '0 0 15px rgba(201,162,39,0.2)' : 'none'
               }}
             >
-              <span className="text-base">{cat.emoji}</span>
+              <span className="text-sm sm:text-base">{cat.emoji}</span>
               <span>{cat.name}</span>
             </button>
           ))}
@@ -152,7 +152,7 @@ export default function Menu() {
             {filtered.map((item: any) => (
               <div
                 key={item.id}
-                className="rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-row items-stretch p-3 sm:p-4 hover:scale-[1.01]"
+                className="rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-row items-stretch p-3 sm:p-4 hover:scale-[1.01] gap-3"
                 style={{
                   background: 'linear-gradient(135deg, rgba(13,38,25,0.7) 0%, rgba(7,11,8,0.9) 100%)',
                   border: '1px solid rgba(201,162,39,0.25)',
@@ -161,41 +161,45 @@ export default function Menu() {
                 onClick={() => setSelectedProduct(item)}
               >
                 {/* Product Info (Left) */}
-                <div className="flex-1 flex flex-col justify-between pr-3 sm:pr-4">
+                <div className="flex-1 flex flex-col justify-between">
                   <div>
                     {/* Badge */}
-                    <span className="text-[10px] sm:text-xs font-serif italic mb-1 block uppercase tracking-wider text-[#C9A227]">
+                    <span className="text-[9px] sm:text-xs font-serif italic mb-0.5 sm:mb-1 block uppercase tracking-wider text-[#C9A227]">
                       {item.category === 'burgers' ? '★ Destaque' : '✔ Frescor em cada mordida'}
                     </span>
                     
                     {/* Title */}
-                    <h3 className="font-serif font-bold text-lg sm:text-xl md:text-2xl mb-1 text-[#F5F0E8]">
+                    <h3 className="font-serif font-bold text-sm sm:text-xl md:text-2xl mb-0.5 sm:mb-1 text-[#F5F0E8]">
                       {item.name}
                     </h3>
                     
                     {/* Description */}
-                    <p className="text-xs sm:text-sm leading-relaxed mb-2 text-[#8A7A5A] line-clamp-3">
+                    <p className="text-[11px] sm:text-sm leading-relaxed mb-2 text-[#8A7A5A] line-clamp-2 sm:line-clamp-3">
                       {item.description}
                     </p>
                   </div>
 
                   {/* Price and Button */}
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="font-bold text-base sm:text-lg text-[#C9A227]">
+                  <div className="flex items-center gap-2 sm:gap-3 mt-1">
+                    <span className="font-bold text-sm sm:text-lg text-[#C9A227]">
                       {formatPrice(item.price)}
                     </span>
                     <div className="flex items-center rounded-lg overflow-hidden border border-[#C9A227]/30 bg-[#0A0A0A]">
-                      <span className="px-3 py-1.5 text-xs font-bold text-[#F5F0E8] uppercase tracking-wider hidden sm:inline">
+                      <span className="px-2.5 py-1 text-[10px] sm:text-xs font-bold text-[#F5F0E8] uppercase tracking-wider hidden sm:inline">
                         Adicionar
                       </span>
                       <button
-                        className="p-1.5 sm:p-2 bg-[#C9A227] text-[#0A0A0A] hover:bg-[#D4B242] transition-colors"
+                        className="p-1.5 sm:p-2 bg-[#C9A227] text-[#0A0A0A] hover:bg-[#D4B242] transition-colors flex items-center justify-center"
                         onClick={e => {
                           e.stopPropagation();
                           setSelectedProduct(item);
                         }}
                       >
-                        {addedItems.has(item.id) ? <Check size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
+                        {addedItems.has(item.id) ? (
+                          <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={3} />
+                        ) : (
+                          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={3} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -203,7 +207,7 @@ export default function Menu() {
 
                 {/* Product Image (Right) */}
                 <div
-                  className="w-24 h-24 sm:w-36 sm:h-36 flex-shrink-0 rounded-xl overflow-hidden self-center border border-[#C9A227]/10"
+                  className="w-20 h-20 sm:w-32 sm:h-32 md:w-36 md:h-36 flex-shrink-0 rounded-xl overflow-hidden self-center border border-[#C9A227]/10"
                   style={{ background: '#0D1A14' }}
                 >
                   {item.imageUrl ? (
@@ -213,7 +217,7 @@ export default function Menu() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl">
+                    <div className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl">
                       {categories.find(c => c.id === item.category)?.emoji || '🍔'}
                     </div>
                   )}
