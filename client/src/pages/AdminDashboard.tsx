@@ -256,9 +256,9 @@ function PedidosTab() {
     };
     
     const msg = `*Pedido ${order.orderNumber}*\n\n${statusMsgs[currentStatus] || 'Status do pedido atualizado.'}\n\n---\nNew S'Burguer 🍔`;
-    const phone = (order.customerPhone || '').replace(/\\D/g, '');
-    const phoneWithCountry = phone.startsWith('55') ? phone : \`55\${phone}\`;
-    const waLink = \`https://wa.me/\${phoneWithCountry}?text=\${encodeURIComponent(msg)}\`;
+    const phone = (order.customerPhone || '').replace(/\D/g, '');
+    const phoneWithCountry = phone.startsWith('55') ? phone : `55${phone}`;
+    const waLink = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(msg)}`;
     
     window.open(waLink, '_blank');
   };
@@ -327,7 +327,7 @@ function PedidosTab() {
           style={{ 
             background: audioEnabled ? 'rgba(201,162,39,0.2)' : 'rgba(255,107,107,0.1)', 
             color: audioEnabled ? '#C9A227' : '#FF6B6B',
-            border: \`1px solid \${audioEnabled ? 'rgba(201,162,39,0.5)' : 'rgba(255,107,107,0.3)'}\`
+            border: `1px solid ${audioEnabled ? 'rgba(201,162,39,0.5)' : 'rgba(255,107,107,0.3)'}`
           }}
         >
           {audioEnabled ? <Bell size={16} /> : <Bell size={16} className="opacity-50" />}
