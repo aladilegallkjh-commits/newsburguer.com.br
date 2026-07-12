@@ -196,9 +196,9 @@ export default function Ranking() {
                 }}
               >
                 <div className="col-span-2">Rank</div>
-                <div className="col-span-5">Nome</div>
+                <div className="col-span-4">Nome</div>
                 <div className="col-span-3">Pontos</div>
-                <div className="col-span-2">Prêmio</div>
+                <div className="col-span-3 text-center">Prêmio / Ação</div>
               </div>
 
               {/* Table Rows */}
@@ -223,7 +223,7 @@ export default function Ranking() {
                     </div>
 
                     {/* Name */}
-                    <div className="col-span-5">
+                    <div className="col-span-4">
                       <div className="font-semibold">{customer.customerName || 'Cliente'}</div>
                       <div className="text-xs" style={{ color: '#8A7A5A' }}>
                         {customer.orderCount} pedidos
@@ -237,13 +237,21 @@ export default function Ranking() {
                       </div>
                     </div>
 
-                    {/* Prize */}
-                    <div className="col-span-2 text-center">
+                    {/* Prize and Share */}
+                    <div className="col-span-3 flex items-center justify-center gap-3">
                       {hasPrize ? (
                         <span className="text-lg">🎁</span>
                       ) : (
-                        <span style={{ color: '#8A7A5A' }} className="text-xs">-</span>
+                        <span style={{ color: '#8A7A5A' }} className="text-xs w-[28px] text-center">-</span>
                       )}
+                      <button
+                        onClick={() => handleShareWhatsApp(customer, position)}
+                        className="p-2 rounded-full transition-colors flex items-center justify-center hover:bg-opacity-80"
+                        style={{ background: 'rgba(201,162,39,0.1)', color: '#C9A227' }}
+                        title="Compartilhar no WhatsApp"
+                      >
+                        <Share2 size={16} />
+                      </button>
                     </div>
                   </div>
                 );

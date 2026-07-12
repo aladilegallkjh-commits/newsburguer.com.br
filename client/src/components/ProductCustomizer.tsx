@@ -214,7 +214,8 @@ export default function ProductCustomizer({
             </h3>
             <textarea
               value={notes}
-              onChange={e => setNotes(e.target.value.slice(0, 200))}
+              onChange={e => setNotes(e.target.value)}
+              maxLength={200}
               placeholder="Ex: Carne bem passada, pouco molho..."
               className="w-full p-3 rounded-lg text-sm resize-none"
               style={{

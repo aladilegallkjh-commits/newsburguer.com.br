@@ -563,7 +563,7 @@ export const appRouter = router({
           password: z.string().min(6),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const admin = await db.getAdminByEmail(input.email);
         if (!admin) {
           throw new Error("Admin não encontrado");
@@ -578,6 +578,14 @@ export const appRouter = router({
 
         await db.updateAdminLastLogin(admin.id);
 
+        // Set admin session cookie so protected procedures can authenticate the admin
+        const { getSessionCookieOptions } = await import("./_core/cookies");
+        const cookieOpts = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie('admin_session', admin.email, {
+          ...cookieOpts,
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
         return {
           success: true,
           admin: {
@@ -587,6 +595,12 @@ export const appRouter = router({
             role: admin.role,
           },
         };
+      }),
+
+    logout: publicProcedure
+      .mutation(async ({ ctx }) => {
+        ctx.res.clearCookie('admin_session', { path: '/' });
+        return { success: true };
       }),
 
     register: publicProcedure

@@ -42,6 +42,17 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      headers() {
+        const adminEmail = localStorage.getItem('adminEmail');
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminEmail && adminToken) {
+          return {
+            'x-admin-email': adminEmail,
+            'x-admin-token': adminToken,
+          };
+        }
+        return {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),
@@ -49,6 +60,7 @@ const trpcClient = trpc.createClient({
         });
       },
     }),
+
   ],
 });
 

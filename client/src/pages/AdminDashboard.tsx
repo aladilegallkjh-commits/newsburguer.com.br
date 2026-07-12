@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import MenuImageUpload from '@/components/MenuImageUpload';
 import EditMenuItemImageModal from '@/components/EditMenuItemImageModal';
+import EditMenuItemModal from '@/components/EditMenuItemModal';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -36,14 +37,21 @@ export default function AdminDashboard() {
 
   const formatMoney = (val: string | number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val));
 
-  const handleLogout = () => {
+  const logoutMutation = trpc.adminAuth.logout.useMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (e) {
+      console.error(e);
+    }
     localStorage.removeItem('adminEmail');
     localStorage.removeItem('adminToken');
     toast.success('Logout realizado', {
       duration: 2000,
       style: { background: 'rgba(10,16,13,0.85)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
     });
-    setLocation('/');
+    setLocation('/admin/login');
   };
 
   return (
@@ -209,24 +217,49 @@ export default function AdminDashboard() {
 }
 
 function PedidosTab() {
-  const { data: orders, isLoading } = trpc.orders.getAll.useQuery(undefined, { refetchInterval: 10000 });
+  const { data: orders, isLoading } = trpc.orders.getAll.useQuery(undefined, { refetchInterval: 5000 });
   const { data: drivers } = trpc.drivers.getAll.useQuery();
   const updateStatus = trpc.orders.updateStatus.useMutation();
   const assignDriver = trpc.orders.assignDriver.useMutation();
   const prevOrdersCount = useRef(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(() => localStorage.getItem('audioEnabled') === 'true');
+  const [hasNewOrder, setHasNewOrder] = useState(false);
 
-  useEffect(() => {
-    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-  }, []);
+  const playBeep = () => {
+    try {
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioContext();
+      }
+      const ctx = audioCtxRef.current;
+      // Play 3 quick beeps like iFood
+      [0, 0.25, 0.5].forEach(delay => {
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gainNode.gain.setValueAtTime(0, ctx.currentTime + delay);
+        gainNode.gain.linearRampToValueAtTime(0.6, ctx.currentTime + delay + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + delay + 0.2);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.25);
+      });
+    } catch (e) {
+      console.warn('Audio playback failed', e);
+    }
+  };
 
   useEffect(() => {
     if (orders && prevOrdersCount.current > 0 && orders.length > prevOrdersCount.current) {
+      setHasNewOrder(true);
+      toast('🔔 Novo pedido recebido!', {
+        duration: 8000,
+        style: { background: '#C9A227', color: '#0A0A0A', fontWeight: 'bold' },
+      });
       if (audioEnabled) {
-        audioRef.current?.play().catch(e => console.log('Audio autoplay blocked', e));
-      } else {
-        toast('Novo pedido recebido!', { icon: '🔔' });
+        playBeep();
       }
     }
     if (orders) prevOrdersCount.current = orders.length;
@@ -316,14 +349,14 @@ function PedidosTab() {
             setAudioEnabled(nextState);
             localStorage.setItem('audioEnabled', String(nextState));
             if (nextState) {
-              audioRef.current?.play().then(() => {
-                audioRef.current?.pause();
-                audioRef.current!.currentTime = 0;
-              }).catch(e => toast.error('Permita o áudio no navegador!'));
+              playBeep();
               toast.success('Som de notificação ativado!');
+            } else {
+              toast('Som desativado.', { style: { background: '#111', color: '#8A7A5A' } });
             }
+            setHasNewOrder(false);
           }}
-          className="px-4 py-2 rounded font-semibold text-sm flex items-center gap-2 transition-all"
+          className="px-4 py-2 rounded font-semibold text-sm flex items-center gap-2 transition-all relative"
           style={{ 
             background: audioEnabled ? 'rgba(201,162,39,0.2)' : 'rgba(255,107,107,0.1)', 
             color: audioEnabled ? '#C9A227' : '#FF6B6B',
@@ -331,7 +364,10 @@ function PedidosTab() {
           }}
         >
           {audioEnabled ? <Bell size={16} /> : <Bell size={16} className="opacity-50" />}
-          {audioEnabled ? 'Som Ativado' : 'Som Desativado (Clique para Ativar)'}
+          {audioEnabled ? 'Som Ativado' : 'Ativar Som de Notificação'}
+          {hasNewOrder && (
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-ping" style={{ background: '#C9A227' }} />
+          )}
         </button>
       </div>
       {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
@@ -378,11 +414,12 @@ function PedidosTab() {
                     
                     <button 
                       onClick={() => handleNotifyCustomer(order, order.status)}
-                      className="px-3 py-2 rounded flex items-center justify-center transition-all hover:opacity-80"
+                      className="px-3 py-2 rounded flex items-center justify-center gap-2 transition-all hover:opacity-80 text-sm font-semibold"
                       title="Avisar cliente no WhatsApp"
                       style={{ background: '#25D366', color: '#FFF' }}
                     >
                       <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                      Avisar Cliente
                     </button>
                   </div>
                 </div>
@@ -404,12 +441,14 @@ function CardapioTab() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingImageId, setEditingImageId] = useState<number | null>(null);
   const [editingImageItem, setEditingImageItem] = useState<any>(null);
+  const [editingFullItem, setEditingFullItem] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: 'hamburgers' as const,
     price: 0,
     imageUrl: '',
+    ingredients: '',
   });
 
   const handleAdd = async () => {
@@ -419,9 +458,14 @@ function CardapioTab() {
     }
 
     try {
-      await createItem.mutateAsync(formData as any);
+      const ingredientsArray = formData.ingredients
+        .split(',')
+        .map((i) => i.trim())
+        .filter((i) => i.length > 0);
+
+      await createItem.mutateAsync({ ...formData, ingredients: ingredientsArray } as any);
       toast.success('Item adicionado!');
-      setFormData({ name: '', description: '', category: 'hamburgers', price: 0, imageUrl: '' });
+      setFormData({ name: '', description: '', category: 'hamburgers', price: 0, imageUrl: '', ingredients: '' });
       refetch();
     } catch (error) {
       toast.error('Erro ao adicionar item');
@@ -496,6 +540,14 @@ function CardapioTab() {
               className="px-3 py-2 rounded"
               style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
             />
+            <input
+              type="text"
+              placeholder="Ingredientes (separados por vírgula)"
+              value={formData.ingredients}
+              onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
+              className="px-3 py-2 rounded col-span-2"
+              style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+            />
             <button
               onClick={handleAdd}
               disabled={createItem.isPending}
@@ -550,6 +602,15 @@ function CardapioTab() {
                     R$ {parseFloat(item.price).toFixed(2)}
                   </p>
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingFullItem(item)}
+                      disabled={updateItem.isPending}
+                      className="p-2 rounded hover:opacity-80"
+                      style={{ background: 'rgba(201,162,39,0.2)', color: '#C9A227' }}
+                      title="Editar detalhes"
+                    >
+                      <Settings size={16} />
+                    </button>
                     {item.imageUrl && (
                       <button
                         onClick={() => handleOpenEditImageModal(item)}
@@ -590,6 +651,16 @@ function CardapioTab() {
             refetch();
             handleCloseEditImageModal();
           }}
+        />
+      )}
+
+      {/* Edit Full Item Modal */}
+      {editingFullItem && (
+        <EditMenuItemModal
+          isOpen={editingFullItem !== null}
+          onClose={() => setEditingFullItem(null)}
+          item={editingFullItem}
+          onUpdated={() => refetch()}
         />
       )}
     </div>

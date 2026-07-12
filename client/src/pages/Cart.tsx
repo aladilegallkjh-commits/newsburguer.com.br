@@ -154,14 +154,24 @@ function CartItemRow({ item }: { item: CartItem }) {
 
 export default function Cart() {
   const { items, total, clearCart, itemCount } = useCart();
-  const [customerName, setCustomerName] = React.useState('');
-  const [customerPhone, setCustomerPhone] = React.useState('');
+  const [customerName, setCustomerName] = React.useState(() => localStorage.getItem('customerName') || '');
+  const [customerPhone, setCustomerPhone] = React.useState(() => localStorage.getItem('customerPhone') || '');
   const [appliedDiscount, setAppliedDiscount] = React.useState(0);
   const [appliedCoupon, setAppliedCoupon] = React.useState<string | undefined>();
   const { data: settings } = trpc.storeSettings.get.useQuery();
   const isStoreOpen = settings?.isOpen === 1;
 
   const finalTotal = Math.max(0, total - appliedDiscount);
+
+  const handleNameChange = (val: string) => {
+    setCustomerName(val);
+    localStorage.setItem('customerName', val);
+  };
+
+  const handlePhoneChange = (val: string) => {
+    setCustomerPhone(val);
+    localStorage.setItem('customerPhone', val);
+  };
 
   const handleCouponApplied = (discount: number, couponCode: string) => {
     setAppliedDiscount(discount);
@@ -340,7 +350,7 @@ export default function Cart() {
                     <input
                       type="text"
                       value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
+                      onChange={(e) => handleNameChange(e.target.value)}
                       placeholder="Digite seu nome"
                       className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
                       style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
@@ -353,12 +363,13 @@ export default function Cart() {
                     <input
                       type="tel"
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
                       placeholder="(41) 98701-9702"
                       className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
                       style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
                     />
                   </div>
+
                 </div>
 
                 {/* Divider */}
