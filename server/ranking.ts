@@ -30,7 +30,7 @@ export async function upsertCustomer(phone: string, name: string, email?: string
 /**
  * Update customer order count and total spent
  */
-export async function updateCustomerStats(phone: string, orderAmount: number) {
+export async function updateCustomerStats(phone: string, orderAmount: number, name?: string) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
 
@@ -38,22 +38,28 @@ export async function updateCustomerStats(phone: string, orderAmount: number) {
   
   if (customer.length > 0) {
     const newTotal = (customer[0].totalOrders || 0) + 1;
-    const newSpent = (parseFloat(customer[0].totalSpent?.toString() || '0') + orderAmount).toFixed(2);
+    const newSpent = parseFloat((parseFloat(customer[0].totalSpent?.toString() || '0') + orderAmount).toFixed(2));
+    
+    // Always update name if we have a real name now
+    const updateData: any = {
+      totalOrders: newTotal,
+      totalSpent: newSpent,
+    };
+    if (name && name.trim() !== '') {
+      updateData.name = name;
+    }
     
     await db.update(customers)
-      .set({
-        totalOrders: newTotal,
-        totalSpent: newSpent as any,
-      })
+      .set(updateData)
       .where(eq(customers.phone, phone));
   } else {
     // Create new customer if doesn't exist
     await db.insert(customers).values({
       phone,
-      name: 'Cliente',
+      name: name || 'Cliente',
       email: null,
       totalOrders: 1,
-      totalSpent: orderAmount.toString() as any,
+      totalSpent: parseFloat(orderAmount.toFixed(2)),
     });
   }
 }
@@ -114,7 +120,7 @@ export async function calculateWeeklyRankings() {
       period: 'week',
       position: i + 1,
       orderCount: customer.orderCount || 0,
-      totalSpent: customer.totalSpent as any,
+      totalSpent: parseFloat(customer.totalSpent || '0'),
       prizeWon: prizeType as any,
     });
 
@@ -187,7 +193,7 @@ export async function calculateMonthlyRankings() {
       period: 'month',
       position: i + 1,
       orderCount: customer.orderCount || 0,
-      totalSpent: customer.totalSpent as any,
+      totalSpent: parseFloat(customer.totalSpent || '0'),
       prizeWon: prizeType as any,
     });
 

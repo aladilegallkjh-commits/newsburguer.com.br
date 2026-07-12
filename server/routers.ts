@@ -81,9 +81,9 @@ export const appRouter = router({
           customerName: input.customerName,
           customerPhone: input.customerPhone,
           items: input.items as OrderItem[],
-          totalAmount: input.totalAmount.toString() as any,
-          discount: (input.discount || 0).toString() as any,
-          finalAmount: input.finalAmount.toString() as any,
+          totalAmount: input.totalAmount,
+          discount: input.discount || 0,
+          finalAmount: input.finalAmount,
           deliveryType: input.deliveryType as any,
           address: input.address,
           notes: input.notes,
@@ -112,7 +112,7 @@ export const appRouter = router({
         // Update customer stats and rankings after order creation
         try {
           // First update customer stats (total orders and spent)
-          await ranking.updateCustomerStats(input.customerPhone, input.finalAmount);
+          await ranking.updateCustomerStats(input.customerPhone, input.finalAmount, input.customerName);
           // Then recalculate rankings
           await ranking.calculateWeeklyRankings();
           await ranking.calculateMonthlyRankings();
@@ -278,6 +278,41 @@ export const appRouter = router({
   ranking: router({
     getCurrent: publicProcedure.query(async () => {
       return ranking.getCurrentRankings();
+    }),
+
+    // TEMPORARY: Fix customer names from orders
+    fixNames: publicProcedure.mutation(async () => {
+      const database = await db.getDb();
+      if (!database) throw new Error("DB not available");
+
+      const { customers, orders: ordersTable } = await import("../drizzle/schema");
+      const { eq, desc } = await import("drizzle-orm");
+
+      const fixed: string[] = [];
+      const allCustomers = await database.select().from(customers);
+
+      for (const customer of allCustomers) {
+        if (customer.name === 'Cliente' || !customer.name) {
+          const latestOrders = await database
+            .select({ customerName: ordersTable.customerName })
+            .from(ordersTable)
+            .where(eq(ordersTable.customerPhone, customer.phone))
+            .orderBy(desc(ordersTable.createdAt))
+            .limit(1);
+
+          if (latestOrders.length > 0 && latestOrders[0].customerName) {
+            const realName = latestOrders[0].customerName;
+            await database.update(customers).set({ name: realName }).where(eq(customers.id, customer.id));
+            fixed.push(`${customer.phone} → ${realName}`);
+          }
+        }
+      }
+
+      // Recalculate rankings
+      await ranking.calculateWeeklyRankings();
+      await ranking.calculateMonthlyRankings();
+
+      return { success: true, fixed };
     }),
 
     getMyPrizes: publicProcedure

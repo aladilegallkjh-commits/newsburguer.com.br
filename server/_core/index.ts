@@ -59,6 +59,59 @@ async function startServer() {
     }
   });
 
+  // TEMPORARY: Fix customer names endpoint
+  app.get("/api/fix-names", async (req, res) => {
+    try {
+      const { getDb } = await import("../db");
+      const { customers, orders, customerRankings } = await import("../../drizzle/schema");
+      const { eq, desc, sql, and } = await import("drizzle-orm");
+      const db = await getDb();
+      if (!db) return res.json({ error: "DB not available" });
+
+      const fixed: string[] = [];
+      const allCustomers = await db.select().from(customers);
+
+      for (const customer of allCustomers) {
+        if (customer.name === 'Cliente' || !customer.name) {
+          const latestOrders = await db
+            .select({ customerName: orders.customerName })
+            .from(orders)
+            .where(eq(orders.customerPhone, customer.phone))
+            .orderBy(desc(orders.createdAt))
+            .limit(1);
+
+          if (latestOrders.length > 0 && latestOrders[0].customerName) {
+            const realName = latestOrders[0].customerName;
+            await db.update(customers).set({ name: realName }).where(eq(customers.id, customer.id));
+            fixed.push(`${customer.phone} → ${realName}`);
+          }
+        }
+      }
+
+      // Recalculate rankings
+      await db.delete(customerRankings);
+      const top = await db.execute(
+        sql`SELECT c.id as customerId, c.phone, c.name, COUNT(o.id) as orderCount, SUM(o.finalAmount) as totalSpent
+            FROM customers c
+            LEFT JOIN orders o ON o.customerPhone = c.phone AND o.status != 'cancelled'
+            GROUP BY c.id
+            ORDER BY COUNT(o.id) DESC, SUM(o.finalAmount) DESC
+            LIMIT 5`
+      );
+
+      for (let i = 0; i < top.rows.length; i++) {
+        const c = top.rows[i] as any;
+        await db.insert(customerRankings).values({ customerId: c.customerId, period: 'week' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'hamburger_kids' : 'none') as any });
+        await db.insert(customerRankings).values({ customerId: c.customerId, period: 'month' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'combo_free' : 'none') as any });
+      }
+
+      return res.json({ success: true, fixed, ranking: top.rows });
+    } catch (error: any) {
+      return res.json({ error: error.message });
+    }
+  });
+
+
   // tRPC API
   app.use(
     "/api/trpc",

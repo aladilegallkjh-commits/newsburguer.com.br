@@ -9,7 +9,9 @@ export default function Ranking() {
   const [activePeriod, setActivePeriod] = useState<'week' | 'month' | 'all'>('week');
   const [searchQuery, setSearchQuery] = useState('');
   const [showOnlyPrizes, setShowOnlyPrizes] = useState(false);
-  const { data: rankings, isLoading } = trpc.ranking.getCurrent.useQuery();
+  const { data: rankings, isLoading } = trpc.ranking.getCurrent.useQuery(undefined, { 
+    refetchInterval: 5000 
+  });
 
   const weeklyRankings = rankings?.weeklyRankings || [];
   const monthlyRankings = rankings?.monthlyRankings || [];
