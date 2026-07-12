@@ -215,6 +215,7 @@ function PedidosTab() {
   const assignDriver = trpc.orders.assignDriver.useMutation();
   const prevOrdersCount = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioEnabled, setAudioEnabled] = useState(() => localStorage.getItem('audioEnabled') === 'true');
 
   useEffect(() => {
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -222,10 +223,14 @@ function PedidosTab() {
 
   useEffect(() => {
     if (orders && prevOrdersCount.current > 0 && orders.length > prevOrdersCount.current) {
-      audioRef.current?.play().catch(e => console.log('Audio autoplay blocked'));
+      if (audioEnabled) {
+        audioRef.current?.play().catch(e => console.log('Audio autoplay blocked', e));
+      } else {
+        toast('Novo pedido recebido!', { icon: '🔔' });
+      }
     }
     if (orders) prevOrdersCount.current = orders.length;
-  }, [orders]);
+  }, [orders, audioEnabled]);
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
@@ -237,6 +242,25 @@ function PedidosTab() {
     } catch (error) {
       toast.error('Erro ao atualizar status');
     }
+  };
+
+  const handleNotifyCustomer = (order: any, currentStatus: string) => {
+    const statusMsgs: Record<string, string> = {
+      pending: '✅ Recebemos o seu pedido e logo iremos confirmar!',
+      confirmed: '✅ Seu pedido foi confirmado! Estamos preparando...',
+      preparing: '👨‍🍳 Seu pedido está sendo preparado com muito cuidado!',
+      ready: '🎉 Seu pedido está embalado e pronto! Saindo para entrega...',
+      out_for_delivery: '🚗 Seu pedido saiu para entrega! Chegando em breve...',
+      delivered: '🎊 Seu pedido foi entregue! Bom apetite!',
+      cancelled: '❌ Seu pedido foi cancelado. Entre em contato conosco se houver dúvidas.'
+    };
+    
+    const msg = `*Pedido ${order.orderNumber}*\n\n${statusMsgs[currentStatus] || 'Status do pedido atualizado.'}\n\n---\nNew S'Burguer 🍔`;
+    const phone = (order.customerPhone || '').replace(/\\D/g, '');
+    const phoneWithCountry = phone.startsWith('55') ? phone : \`55\${phone}\`;
+    const waLink = \`https://wa.me/\${phoneWithCountry}?text=\${encodeURIComponent(msg)}\`;
+    
+    window.open(waLink, '_blank');
   };
 
   const handleDriverChange = async (orderId: number, driverId: string) => {
@@ -284,7 +308,32 @@ function PedidosTab() {
 
   return (
     <div>
-      <h2 className="font-display text-xl font-bold mb-6" style={{ color: '#F5F0E8' }}>Gerenciar Pedidos</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-display text-xl font-bold" style={{ color: '#F5F0E8' }}>Gerenciar Pedidos</h2>
+        <button
+          onClick={() => {
+            const nextState = !audioEnabled;
+            setAudioEnabled(nextState);
+            localStorage.setItem('audioEnabled', String(nextState));
+            if (nextState) {
+              audioRef.current?.play().then(() => {
+                audioRef.current?.pause();
+                audioRef.current!.currentTime = 0;
+              }).catch(e => toast.error('Permita o áudio no navegador!'));
+              toast.success('Som de notificação ativado!');
+            }
+          }}
+          className="px-4 py-2 rounded font-semibold text-sm flex items-center gap-2 transition-all"
+          style={{ 
+            background: audioEnabled ? 'rgba(201,162,39,0.2)' : 'rgba(255,107,107,0.1)', 
+            color: audioEnabled ? '#C9A227' : '#FF6B6B',
+            border: \`1px solid \${audioEnabled ? 'rgba(201,162,39,0.5)' : 'rgba(255,107,107,0.3)'}\`
+          }}
+        >
+          {audioEnabled ? <Bell size={16} /> : <Bell size={16} className="opacity-50" />}
+          {audioEnabled ? 'Som Ativado' : 'Som Desativado (Clique para Ativar)'}
+        </button>
+      </div>
       {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
         <div className="space-y-4">
           {orders.map((order: any) => (
@@ -316,15 +365,26 @@ function PedidosTab() {
                       {drivers?.filter((d: any) => d.isActive).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   )}
-                  <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
-                    <option value="pending">Pendente</option>
-                    <option value="confirmed">Confirmado</option>
-                    <option value="preparing">Preparando</option>
-                    <option value="ready">Pronto</option>
-                    <option value="out_for_delivery">Saindo para Entrega</option>
-                    <option value="delivered">Entregue</option>
-                    <option value="cancelled">Cancelado</option>
-                  </select>
+                  <div className="flex gap-2">
+                    <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+                      <option value="pending">Pendente</option>
+                      <option value="confirmed">Confirmado</option>
+                      <option value="preparing">Preparando</option>
+                      <option value="ready">Pronto / Embalado</option>
+                      <option value="out_for_delivery">Saindo para Entrega</option>
+                      <option value="delivered">Entregue</option>
+                      <option value="cancelled">Cancelado</option>
+                    </select>
+                    
+                    <button 
+                      onClick={() => handleNotifyCustomer(order, order.status)}
+                      className="px-3 py-2 rounded flex items-center justify-center transition-all hover:opacity-80"
+                      title="Avisar cliente no WhatsApp"
+                      style={{ background: '#25D366', color: '#FFF' }}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
