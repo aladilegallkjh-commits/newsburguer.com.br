@@ -50,6 +50,7 @@ export const customIngredients: CustomIngredient[] = [
   // Pães
   { id: 'ci-pao-brioche', name: 'Pão Brioche', emoji: '🍞', price: 4.00, category: 'paes', categoryLabel: 'Pães' },
   { id: 'ci-pao-hotdog', name: 'Pão Hot Dog Tradicional', emoji: '🌭', price: 3.00, category: 'paes', categoryLabel: 'Pães' },
+  { id: 'ci-pao-hotdog-25cm', name: 'Pão Hot Dog 25cm (Prensado)', emoji: '🌭', price: 5.00, category: 'paes', categoryLabel: 'Pães' },
 
   // Carnes
   { id: 'ci-burger-180', name: 'Hambúrguer Artesanal 180g', emoji: '🥩', price: 10.00, category: 'carnes', categoryLabel: 'Carnes' },
