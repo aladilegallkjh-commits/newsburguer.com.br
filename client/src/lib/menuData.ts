@@ -34,6 +34,56 @@ export const categories: MenuCategory[] = [
   { id: 'hotdogs', name: 'Hot Dogs', emoji: '🌭' },
   { id: 'combos', name: 'Combos', emoji: '🔥' },
   { id: 'drinks', name: 'Bebidas', emoji: '🥤' },
+  { id: 'custom', name: 'Crie Seu Lanche', emoji: '🛠️' },
+];
+
+export interface CustomIngredient {
+  id: string;
+  name: string;
+  emoji: string;
+  price: number;
+  category: 'paes' | 'carnes' | 'queijos' | 'molhos' | 'vegetais' | 'extras';
+  categoryLabel: string;
+}
+
+export const customIngredients: CustomIngredient[] = [
+  // Pães
+  { id: 'ci-pao-brioche', name: 'Pão Brioche', emoji: '🍞', price: 4.00, category: 'paes', categoryLabel: 'Pães' },
+  { id: 'ci-pao-hotdog', name: 'Pão Hot Dog Tradicional', emoji: '🌭', price: 3.00, category: 'paes', categoryLabel: 'Pães' },
+
+  // Carnes
+  { id: 'ci-burger-180', name: 'Hambúrguer Artesanal 180g', emoji: '🥩', price: 10.00, category: 'carnes', categoryLabel: 'Carnes' },
+  { id: 'ci-smash-90', name: 'Hambúrguer Smash 90g', emoji: '🥩', price: 5.50, category: 'carnes', categoryLabel: 'Carnes' },
+  { id: 'ci-salsicha', name: 'Salsicha', emoji: '🌭', price: 3.50, category: 'carnes', categoryLabel: 'Carnes' },
+  { id: 'ci-frango', name: 'Frango Desfiado Temperado', emoji: '🍗', price: 4.00, category: 'carnes', categoryLabel: 'Carnes' },
+  { id: 'ci-bacon', name: 'Bacon Crocante', emoji: '🥓', price: 4.50, category: 'carnes', categoryLabel: 'Carnes' },
+  { id: 'ci-calabresa', name: 'Calabresa', emoji: '🌶️', price: 3.50, category: 'carnes', categoryLabel: 'Carnes' },
+  { id: 'ci-ovo', name: 'Ovo Frito', emoji: '🍳', price: 2.50, category: 'carnes', categoryLabel: 'Carnes' },
+
+  // Queijos
+  { id: 'ci-cheddar', name: 'Queijo Cheddar', emoji: '🧀', price: 3.00, category: 'queijos', categoryLabel: 'Queijos & Cremes' },
+  { id: 'ci-cream-cheese', name: 'Cream Cheese', emoji: '🧀', price: 2.50, category: 'queijos', categoryLabel: 'Queijos & Cremes' },
+  { id: 'ci-catupiry', name: 'Catupiry Original', emoji: '🧀', price: 3.00, category: 'queijos', categoryLabel: 'Queijos & Cremes' },
+
+  // Molhos
+  { id: 'ci-molho-barbecue', name: 'Molho Barbecue', emoji: '🫙', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' },
+  { id: 'ci-molho-especial', name: 'Molho Especial da Casa', emoji: '🫙', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' },
+  { id: 'ci-molho-picante', name: 'Molho Picante', emoji: '🌶️', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' },
+  { id: 'ci-molho-news', name: "Molho New's", emoji: '⭐', price: 2.00, category: 'molhos', categoryLabel: 'Molhos' },
+  { id: 'ci-maionese', name: 'Maionese da Casa', emoji: '🫙', price: 1.00, category: 'molhos', categoryLabel: 'Molhos' },
+
+  // Vegetais
+  { id: 'ci-alface', name: 'Alface Americana', emoji: '🥬', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
+  { id: 'ci-tomate', name: 'Tomate', emoji: '🍅', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
+  { id: 'ci-cebola', name: 'Cebola', emoji: '🧅', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
+  { id: 'ci-picles', name: 'Picles', emoji: '🥒', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
+  { id: 'ci-milho', name: 'Milho', emoji: '🌽', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
+
+  // Extras
+  { id: 'ci-onion-rings', name: 'Onion Rings', emoji: '🧅', price: 4.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
+  { id: 'ci-doritos', name: 'Doritos', emoji: '🌮', price: 2.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
+  { id: 'ci-batata-palha', name: 'Batata Palha', emoji: '🍟', price: 1.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
+  { id: 'ci-oregano', name: 'Orégano', emoji: '🌿', price: 0.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
 ];
 
 // Extras disponíveis para hambúrgueres

@@ -12,6 +12,7 @@ import Menu from "./pages/Menu";
 import Cart from "./pages/Cart";
 import Ranking from "./pages/Ranking";
 import TrackOrder from "./pages/TrackOrder";
+import CustomBurger from "./pages/CustomBurger";
 
 import Ratings from "./pages/Ratings";
 import AdminLogin from "./pages/AdminLogin";
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/ranking" component={Ranking} />
       <Route path="/rastrear" component={TrackOrder} />
+      <Route path="/criar-lanche" component={CustomBurger} />
 
       <Route path="/avaliacoes" component={Ratings} />
       <Route path="/admin" component={() => {

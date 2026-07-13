@@ -121,7 +121,13 @@ export default function Menu() {
           {categories.map(cat => (
             <button
               key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
+              onClick={() => {
+                if (cat.id === 'custom') {
+                  navigate('/criar-lanche');
+                } else {
+                  setActiveCategory(cat.id);
+                }
+              }}
               className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold whitespace-nowrap transition-all duration-300 uppercase tracking-widest text-[10px] sm:text-xs border"
               style={{
                 background: activeCategory === cat.id ? 'rgba(13,38,25,0.8)' : '#0A0E0B',
