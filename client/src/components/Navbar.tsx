@@ -1,9 +1,19 @@
 import { Link, useLocation } from 'wouter';
-import { ShoppingCart, Menu, X } from 'lucide-react';
+import { ShoppingCart, Menu, X, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useState, useEffect } from 'react';
 
 const LOGO_URL = '/logo.png';
+
+// Mapa de rota → rota anterior (fallback caso não tenha histórico)
+const BACK_ROUTES: Record<string, string> = {
+  '/menu': '/',
+  '/cart': '/menu',
+  '/criar-lanche': '/menu',
+  '/ranking': '/',
+  '/rastrear': '/',
+  '/avaliacoes': '/',
+};
 
 export default function Navbar() {
   const { itemCount } = useCart();
@@ -18,6 +28,17 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const isHome = location === '/';
+  const backRoute = BACK_ROUTES[location] ?? '/';
+
+  function handleBack() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = backRoute;
+    }
+  }
 
   // Tamanhos dinâmicos baseado no scroll
   const logoSize = scrolled ? 'w-8 h-8 sm:w-10 sm:h-10' : 'w-12 h-12 sm:w-20 sm:h-20';
@@ -36,25 +57,45 @@ export default function Navbar() {
     >
       <div className="container">
         <div className="flex items-center justify-between py-1 sm:py-2">
-          {/* Logo */}
-          <Link href="/">
-            <div className="flex items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-300">
-              <img
-                src={LOGO_URL}
-                alt="New S'Burguer"
-                className={`${logoSize} object-contain transition-all duration-300`}
-                style={{ filter: 'drop-shadow(0 0 8px rgba(201, 162, 39, 0.2))' }}
-              />
-              <span
-                className={`font-display font-bold hidden sm:block transition-all duration-300 text-sm sm:text-base md:text-lg ${
-                  scrolled ? 'text-xs sm:text-base' : 'text-sm sm:text-lg'
-                }`}
-                style={{ color: '#C9A227', letterSpacing: '0.02em' }}
+
+          {/* Left side: back button + logo */}
+          <div className="flex items-center gap-2">
+            {/* Botão voltar — aparece em todas as páginas exceto Home */}
+            {!isHome && (
+              <button
+                onClick={handleBack}
+                className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90 hover:scale-105 mr-1"
+                style={{
+                  background: 'rgba(201,162,39,0.1)',
+                  border: '1px solid rgba(201,162,39,0.25)',
+                  color: '#C9A227',
+                }}
+                aria-label="Voltar"
               >
-                New S'Burguer
-              </span>
-            </div>
-          </Link>
+                <ArrowLeft size={18} />
+              </button>
+            )}
+
+            {/* Logo */}
+            <Link href="/">
+              <div className="flex items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-300">
+                <img
+                  src={LOGO_URL}
+                  alt="New S'Burguer"
+                  className={`${logoSize} object-contain transition-all duration-300`}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(201, 162, 39, 0.2))' }}
+                />
+                <span
+                  className={`font-display font-bold hidden sm:block transition-all duration-300 text-sm sm:text-base md:text-lg ${
+                    scrolled ? 'text-xs sm:text-base' : 'text-sm sm:text-lg'
+                  }`}
+                  style={{ color: '#C9A227', letterSpacing: '0.02em' }}
+                >
+                  New S'Burguer
+                </span>
+              </div>
+            </Link>
+          </div>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
@@ -82,7 +123,6 @@ export default function Navbar() {
                 🏆 Ranking
               </span>
             </Link>
-
           </nav>
 
           {/* Cart + Mobile Menu */}
@@ -147,7 +187,6 @@ export default function Navbar() {
                 🏆 Ranking
               </span>
             </Link>
-
           </nav>
         )}
       </div>
