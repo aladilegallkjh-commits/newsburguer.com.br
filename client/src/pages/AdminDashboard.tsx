@@ -1046,12 +1046,12 @@ function DashboardTab() {
   
   const exportToPDF = async () => {
     try {
-      toast.loading('Gerando PDF...');
+      const toastId = toast.loading('Gerando PDF...');
       
       // Capturar o elemento do dashboard
       const dashboardElement = document.getElementById('dashboard-content');
       if (!dashboardElement) {
-        toast.error('Erro ao gerar PDF');
+        toast.error('Erro ao gerar PDF', { id: toastId });
         return;
       }
       
@@ -1059,6 +1059,8 @@ function DashboardTab() {
       const canvas = await html2canvas(dashboardElement, {
         backgroundColor: '#0A0A0A',
         scale: 2,
+        useCORS: true,
+        allowTaint: true,
       });
       
       // Criar PDF
@@ -1090,10 +1092,10 @@ function DashboardTab() {
       const fileName = `relatorio-vendas-${startDate?.toISOString().split('T')[0]}-${endDate?.toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
       
-      toast.success('PDF gerado com sucesso!');
+      toast.success('PDF gerado com sucesso!', { id: toastId });
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF');
+      toast.error('Erro ao gerar PDF', { id: toastId });
     }
   };
   
