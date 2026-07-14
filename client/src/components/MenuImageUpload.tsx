@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { trpc } from '@/lib/trpc';
 
 interface MenuImageUploadProps {
   onImageUploaded: (imageUrl: string) => void;
@@ -9,62 +8,74 @@ interface MenuImageUploadProps {
   itemName?: string;
 }
 
+// Comprime a imagem no browser antes de salvar (evita payloads grandes)
+function compressImage(file: File, maxWidth = 800, quality = 0.8): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas not supported'));
+        ctx.drawImage(img, 0, 0, width, height);
+
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function MenuImageUpload({ onImageUploaded, currentImage, itemName }: MenuImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentImage || null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadMutation = trpc.upload.menuItemImage.useMutation();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Por favor, selecione uma imagem válida');
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Imagem muito grande (máximo 5MB)');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Imagem muito grande (máximo 10MB)');
       return;
     }
 
-    // Show preview and upload
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
-      setPreview(dataUrl);
+    setIsUploading(true);
+    try {
+      // Comprime no browser e retorna dataUrl (~100-200kb)
+      const compressed = await compressImage(file);
+      setPreview(compressed);
+      onImageUploaded(compressed);
+      toast.success('Imagem pronta para salvar!');
 
-      // Extract base64 part
-      const base64Data = dataUrl.split(',')[1];
-      if (!base64Data) return;
-
-      setIsUploading(true);
-      try {
-        const result = await uploadMutation.mutateAsync({
-          fileBase64: base64Data,
-          filename: file.name,
-          contentType: file.type,
-        });
-
-      onImageUploaded(result.url);
-      toast.success('Imagem enviada com sucesso!');
-      
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      toast.error('Erro ao enviar imagem');
-      setPreview(currentImage || null);
+      toast.error('Erro ao processar imagem');
     } finally {
       setIsUploading(false);
     }
   };
-  reader.readAsDataURL(file);
-};
 
   const handleRemove = () => {
     setPreview(null);
@@ -107,7 +118,7 @@ export default function MenuImageUpload({ onImageUploaded, currentImage, itemNam
             Clique para enviar uma imagem
           </p>
           <p className="text-xs mt-1" style={{ color: '#8A7A5A' }}>
-            PNG, JPG ou GIF (máximo 5MB)
+            PNG, JPG ou GIF (máximo 10MB) — comprimido automaticamente
           </p>
         </div>
       )}
@@ -126,7 +137,7 @@ export default function MenuImageUpload({ onImageUploaded, currentImage, itemNam
           <div className="animate-spin">
             <Upload size={16} />
           </div>
-          <span className="text-sm">Enviando imagem...</span>
+          <span className="text-sm">Processando imagem...</span>
         </div>
       )}
     </div>
