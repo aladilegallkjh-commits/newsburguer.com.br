@@ -1,5 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import { fileURLToPath } from "url";
+import path from "path";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -123,6 +125,12 @@ async function startServer() {
       createContext,
     })
   );
+
+  // Serve uploads explicitly to fix production path issues
+  const _dirname = path.dirname(fileURLToPath(import.meta.url));
+  const UPLOAD_DIR = path.resolve(_dirname, "../client/public/uploads");
+  app.use("/uploads", express.static(UPLOAD_DIR));
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
