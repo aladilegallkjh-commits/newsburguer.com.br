@@ -633,13 +633,10 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         try {
           const contentType = input.contentType || 'image/jpeg';
-          const buffer = Buffer.from(input.fileBase64, 'base64');
-          const result = await storagePut(
-            `menu-items/${Date.now()}-${input.filename}`,
-            buffer,
-            contentType
-          );
-          return result;
+          // Store as base64 data URL directly in the database
+          // This avoids filesystem issues on ephemeral hosting (Render, etc.)
+          const dataUrl = `data:${contentType};base64,${input.fileBase64}`;
+          return { key: input.filename, url: dataUrl };
         } catch (error) {
           throw new Error(`Upload failed: ${error}`);
         }
