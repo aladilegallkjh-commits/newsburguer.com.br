@@ -90,7 +90,7 @@ async function startServer() {
 
       // Recalculate rankings
       await db.delete(customerRankings);
-      const top = await db.execute(
+      const top = await db.all(
         sql`SELECT c.id as customerId, c.phone, c.name, COUNT(o.id) as orderCount, SUM(o.finalAmount) as totalSpent
             FROM customers c
             LEFT JOIN orders o ON o.customerPhone = c.phone AND o.status != 'cancelled'
@@ -99,13 +99,16 @@ async function startServer() {
             LIMIT 5`
       );
 
-      for (let i = 0; i < top.rows.length; i++) {
-        const c = top.rows[i] as any;
-        await db.insert(customerRankings).values({ customerId: c.customerId, period: 'week' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'hamburger_kids' : 'none') as any });
-        await db.insert(customerRankings).values({ customerId: c.customerId, period: 'month' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'combo_free' : 'none') as any });
+      for (let i = 0; i < top.length; i++) {
+        const c = top[i] as any;
+        await db.insert(customerRankings).values([
+          { customerId: c.customerId, period: 'week' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'hamburger_kids' : 'none') as any },
+          { customerId: c.customerId, period: 'month' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'combo_free' : 'none') as any }
+        ]);
+        fixed.push(`Ranking: ${i + 1}º ${c.name || c.phone} (${c.orderCount} pedidos)`);
       }
 
-      return res.json({ success: true, fixed, ranking: top.rows });
+      return res.json({ success: true, fixed, ranking: top });
     } catch (error: any) {
       return res.json({ error: error.message });
     }
