@@ -472,6 +472,7 @@ export const appRouter = router({
           id: z.number(),
           name: z.string().optional(),
           description: z.string().optional(),
+          category: z.enum(["hamburgers", "hotdogs", "combos", "drinks", "extras"]).optional(),
           price: z.number().optional(),
           imageUrl: z.string().optional(),
           ingredients: z.array(z.string()).optional(),
