@@ -611,17 +611,15 @@ function CardapioTab() {
                     >
                       <Settings size={16} />
                     </button>
-                    {item.imageUrl && (
-                      <button
-                        onClick={() => handleOpenEditImageModal(item)}
-                        disabled={updateItem.isPending}
-                        className="p-2 rounded hover:opacity-80"
-                        style={{ background: 'rgba(201,162,39,0.2)', color: '#C9A227' }}
-                        title="Editar imagem"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleOpenEditImageModal(item)}
+                      disabled={updateItem.isPending}
+                      className="p-2 rounded hover:opacity-80"
+                      style={{ background: 'rgba(201,162,39,0.2)', color: '#C9A227' }}
+                      title="Editar imagem"
+                    >
+                      <Edit2 size={16} />
+                    </button>
                     <button
                       onClick={() => handleDelete(item.id)}
                       disabled={deleteItem.isPending}
