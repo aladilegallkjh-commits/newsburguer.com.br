@@ -39,6 +39,24 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
 
+  // REST endpoint for image update (more reliable than TRPC for large payloads)
+  app.post("/api/menu/:id/image", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { imageUrl } = req.body;
+      if (!id || !imageUrl) {
+        return res.status(400).json({ error: "id and imageUrl are required" });
+      }
+      const { updateMenuItem } = await import("../db");
+      await updateMenuItem(id, { imageUrl } as any);
+      return res.json({ success: true });
+    } catch (error: any) {
+      console.error("[image update error]", error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+
   // DEBUG ENDPOINT
   app.get("/api/test-db", async (req, res) => {
     try {

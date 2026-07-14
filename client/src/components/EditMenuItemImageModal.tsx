@@ -33,15 +33,19 @@ export default function EditMenuItemImageModal({
 
     setIsLoading(true);
     try {
-      await updateItem.mutateAsync({
-        id: itemId,
-        imageUrl: newImageUrl,
+      const res = await fetch(`/api/menu/${itemId}/image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: newImageUrl }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
       toast.success('Imagem atualizada com sucesso!');
       onImageUpdated();
       onClose();
-    } catch (error) {
-      toast.error('Erro ao atualizar imagem');
+    } catch (error: any) {
+      console.error('[save image error]', error);
+      toast.error(`Erro ao salvar: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
