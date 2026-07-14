@@ -31,22 +31,23 @@ export default function MenuImageUpload({ onImageUploaded, currentImage, itemNam
       return;
     }
 
-    // Show preview
+    // Show preview and upload
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setPreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    reader.onload = async (event) => {
+      const dataUrl = event.target?.result as string;
+      setPreview(dataUrl);
 
-    // Upload file
-    setIsUploading(true);
-    try {
-      const buffer = await file.arrayBuffer();
-      const result = await uploadMutation.mutateAsync({
-        file: Buffer.from(buffer),
-        filename: file.name,
-        contentType: file.type,
-      });
+      // Extract base64 part
+      const base64Data = dataUrl.split(',')[1];
+      if (!base64Data) return;
+
+      setIsUploading(true);
+      try {
+        const result = await uploadMutation.mutateAsync({
+          fileBase64: base64Data,
+          filename: file.name,
+          contentType: file.type,
+        });
 
       onImageUploaded(result.url);
       toast.success('Imagem enviada com sucesso!');
@@ -62,6 +63,8 @@ export default function MenuImageUpload({ onImageUploaded, currentImage, itemNam
       setIsUploading(false);
     }
   };
+  reader.readAsDataURL(file);
+};
 
   const handleRemove = () => {
     setPreview(null);

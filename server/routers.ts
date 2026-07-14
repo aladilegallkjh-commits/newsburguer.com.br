@@ -624,7 +624,7 @@ export const appRouter = router({
     menuItemImage: publicProcedure
       .input(
         z.object({
-          file: z.instanceof(Buffer),
+          fileBase64: z.string(),
           filename: z.string(),
           contentType: z.string().optional(),
         })
@@ -632,9 +632,10 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         try {
           const contentType = input.contentType || 'image/jpeg';
+          const buffer = Buffer.from(input.fileBase64, 'base64');
           const result = await storagePut(
             `menu-items/${Date.now()}-${input.filename}`,
-            input.file,
+            buffer,
             contentType
           );
           return result;
