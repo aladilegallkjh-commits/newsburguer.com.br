@@ -126,9 +126,11 @@ async function startServer() {
     })
   );
 
-  // Serve uploads explicitly to fix production path issues
+  // Serve uploads explicitly - path differs between dev and production
   const _dirname = path.dirname(fileURLToPath(import.meta.url));
-  const UPLOAD_DIR = path.resolve(_dirname, "../client/public/uploads");
+  const UPLOAD_DIR = process.env.NODE_ENV === "production"
+    ? path.resolve(_dirname, "public/uploads")
+    : path.resolve(_dirname, "../../client/public/uploads");
   app.use("/uploads", express.static(UPLOAD_DIR));
 
   // development mode uses Vite, production mode uses static files

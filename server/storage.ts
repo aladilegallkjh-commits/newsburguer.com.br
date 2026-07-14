@@ -3,7 +3,13 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOAD_DIR = path.resolve(__dirname, "../client/public/uploads");
+
+// Em desenvolvimento o servidor está em server/, em produção está em dist/
+// Desenvolvimento: server/ -> ../client/public/uploads
+// Produção:        dist/   -> ./public/uploads
+const UPLOAD_DIR = process.env.NODE_ENV === "production"
+  ? path.resolve(__dirname, "public/uploads")
+  : path.resolve(__dirname, "../client/public/uploads");
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -15,16 +21,15 @@ export async function storagePut(
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream",
 ): Promise<{ key: string; url: string }> {
-  // Save file locally
   const filename = relKey.split('/').pop() || 'upload.bin';
   const filePath = path.join(UPLOAD_DIR, filename);
-  
+
   if (typeof data === "string") {
     fs.writeFileSync(filePath, data);
   } else {
     fs.writeFileSync(filePath, Buffer.from(data));
   }
-  
+
   return { key: filename, url: `/uploads/${filename}` };
 }
 
