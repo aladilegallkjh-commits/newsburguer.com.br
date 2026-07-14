@@ -128,7 +128,7 @@ export default function Menu() {
                   setActiveCategory(cat.id);
                 }
               }}
-              className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold whitespace-nowrap transition-all duration-300 uppercase tracking-widest text-[10px] sm:text-xs border"
+              className="flex-shrink-0 flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold whitespace-nowrap transition-all duration-300 uppercase tracking-widest text-[10px] sm:text-xs border"
               style={{
                 background: activeCategory === cat.id ? 'rgba(13,38,25,0.8)' : '#0A0E0B',
                 color: activeCategory === cat.id ? '#C9A227' : '#8A7A5A',
