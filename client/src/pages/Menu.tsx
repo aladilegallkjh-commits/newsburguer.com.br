@@ -82,8 +82,28 @@ export default function Menu() {
   }
 
   return (
-    <div className="min-h-screen text-[#F5F0E8]" style={{ background: '#070b08' }}>
-      <Navbar />
+    <div className="min-h-screen text-[#F5F0E8] relative bg-[#070b08]">
+      {/* Global Texture Background */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none opacity-[0.04]"
+        style={{
+          backgroundImage: `url(${MENU_BG})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      />
+      
+      {/* Ambient Glows */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#C9A227] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.07]" />
+        <div className="absolute top-[40%] right-[-20%] w-[600px] h-[600px] bg-[#0A3A20] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.15]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[400px] h-[400px] bg-[#C9A227] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.05]" />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10">
+        <Navbar />
 
       {/* Header */}
       <div
@@ -305,6 +325,7 @@ export default function Menu() {
 
       {/* Footer */}
       <Footer />
+      </div>
     </div>
   );
 }
