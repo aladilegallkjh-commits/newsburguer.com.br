@@ -1,6 +1,6 @@
 import { Link } from 'wouter';
 import React from 'react';
-import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft, MessageCircle, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart, CartItem } from '@/contexts/CartContext';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { formatOrderForWhatsApp, openWhatsAppChat } from '@/lib/whatsappUtils';
 import CouponInput from '@/components/CouponInput';
 import { trpc } from '@/lib/trpc';
+import PixQRCode from '@/components/PixQRCode';
 
 const LOGO_URL = '/logo.png';
 
@@ -158,6 +159,11 @@ export default function Cart() {
   const [customerPhone, setCustomerPhone] = React.useState(() => localStorage.getItem('customerPhone') || '');
   const [appliedDiscount, setAppliedDiscount] = React.useState(0);
   const [appliedCoupon, setAppliedCoupon] = React.useState<string | undefined>();
+  const [showPix, setShowPix] = React.useState(false);
+  const [orderNumber, setOrderNumber] = React.useState('');
+  const [pixFinalTotal, setPixFinalTotal] = React.useState(0);
+  const [pixItems, setPixItems] = React.useState(items);
+  const [pixName, setPixName] = React.useState('');
   const { data: settings } = trpc.storeSettings.get.useQuery();
   const isStoreOpen = settings?.isOpen === 1;
 
@@ -183,17 +189,27 @@ export default function Cart() {
     setAppliedCoupon(undefined);
   };
 
+  const handleSendWhatsApp = () => {
+    const message = formatOrderForWhatsApp(pixItems, pixFinalTotal, pixName, customerPhone);
+    openWhatsAppChat(message);
+    setShowPix(false);
+    clearCart();
+  };
+
   const createOrder = trpc.orders.create.useMutation({
-    onSuccess: () => {
-      const message = formatOrderForWhatsApp(items, finalTotal, customerName, customerPhone);
-      openWhatsAppChat(message);
-      clearCart();
+    onSuccess: (data: any) => {
+      const num = data?.orderNumber || String(Date.now()).slice(-6);
+      setOrderNumber(num);
+      setPixFinalTotal(finalTotal);
+      setPixItems([...items]);
+      setPixName(customerName);
+      setShowPix(true);
     },
     onError: (err) => {
-      toast.error('Erro ao registrar pedido no sistema: ' + err.message, {
+      toast.error('Erro ao registrar pedido: ' + err.message, {
         style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
       });
-      // Fallback para o WhatsApp mesmo se falhar
+      // Fallback direto pro WhatsApp
       const message = formatOrderForWhatsApp(items, finalTotal, customerName, customerPhone);
       openWhatsAppChat(message);
     }
@@ -454,6 +470,48 @@ export default function Cart() {
 
       {/* Footer */}
       <Footer />
+
+      {/* PIX Modal */}
+      {showPix && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)' }}>
+          <div
+            className="w-full max-w-sm rounded-2xl p-5 relative"
+            style={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)' }}
+          >
+            {/* Fechar */}
+            <button
+              onClick={() => { setShowPix(false); clearCart(); }}
+              className="absolute top-3 right-3 p-1 rounded-full hover:opacity-70"
+              style={{ color: '#8A7A5A' }}
+            >
+              <X size={20} />
+            </button>
+
+            <p className="text-center text-xs mb-1" style={{ color: '#8A7A5A' }}>
+              Pedido #{orderNumber} registrado! ✅
+            </p>
+            <p className="text-center font-bold mb-4" style={{ color: '#F5F0E8' }}>
+              Agora finalize o pagamento
+            </p>
+
+            <PixQRCode valor={pixFinalTotal} pedidoNumero={orderNumber} />
+
+            {/* Botão WhatsApp */}
+            <button
+              onClick={handleSendWhatsApp}
+              className="w-full mt-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-95"
+              style={{ background: '#25D366', color: '#fff' }}
+            >
+              <MessageCircle size={18} />
+              Enviar Pedido pelo WhatsApp
+            </button>
+
+            <p className="text-center text-xs mt-3" style={{ color: '#8A7A5A' }}>
+              Após pagar o PIX, clique acima para confirmar seu pedido via WhatsApp com o comprovante.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

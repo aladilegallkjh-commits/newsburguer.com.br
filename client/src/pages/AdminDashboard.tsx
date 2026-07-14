@@ -1045,9 +1045,8 @@ function DashboardTab() {
   };
   
   const exportToPDF = async () => {
+    const toastId = toast.loading('Gerando PDF...');
     try {
-      const toastId = toast.loading('Gerando PDF...');
-      
       // Capturar o elemento do dashboard
       const dashboardElement = document.getElementById('dashboard-content');
       if (!dashboardElement) {
