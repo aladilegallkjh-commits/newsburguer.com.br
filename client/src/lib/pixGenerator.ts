@@ -37,13 +37,13 @@ export function gerarPixCopiaECola(params: PixPayload): string {
   // Merchant Account Information (MAI) - Dados do destinatário PIX
   const gui = field('00', 'br.gov.bcb.pix');
   const chaveField = field('01', params.chave);
-  const descricaoField = params.descricao ? field('02', params.descricao.substring(0, 72)) : '';
+  const descricaoField = ''; // Alguns bancos falham ao ler a descrição, removido por segurança
   const mai = field('26', gui + chaveField + descricaoField);
 
   // Monta payload sem CRC
   const payload =
     field('00', '01') +           // Payload Format Indicator
-    field('01', '12') +           // Point of Initiation Method - 12 = dinâmico (não reutilizável)
+    field('01', '11') +           // Point of Initiation Method - 11 = estático (exigido por alguns bancos)
     mai +                          // Merchant Account Information
     field('52', '0000') +         // Merchant Category Code
     field('53', '986') +          // Transaction Currency (BRL = 986)

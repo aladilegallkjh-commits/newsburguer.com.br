@@ -1,6 +1,6 @@
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { Copy, CheckCircle, Smartphone } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { gerarPixCopiaECola } from '@/lib/pixGenerator';
 
@@ -9,22 +9,30 @@ interface PixQRCodeProps {
   pedidoNumero: string;
 }
 
-// ⚙️ Configurações da conta PIX - Altere aqui se necessário
-const PIX_CHAVE = '67.608.862/0001-72';
-const PIX_NOME = "NEW'S BURGUER";
+// ⚙️ Configurações da conta PIX
+const PIX_CHAVE = '+5541999349874';
+const PIX_NOME = 'NEWS BURGUER';
 const PIX_CIDADE = 'CURITIBA';
 
 export default function PixQRCode({ valor, pedidoNumero }: PixQRCodeProps) {
   const [copiado, setCopiado] = useState(false);
+  const [pixPayload, setPixPayload] = useState('');
 
-  const pixPayload = gerarPixCopiaECola({
-    chave: PIX_CHAVE,
-    nome: PIX_NOME,
-    cidade: PIX_CIDADE,
-    valor,
-    txid: `PED${pedidoNumero}`,
-    descricao: `Pedido ${pedidoNumero}`,
-  });
+  useEffect(() => {
+    try {
+      const payload = gerarPixCopiaECola({
+        chave: PIX_CHAVE,
+        nome: PIX_NOME,
+        cidade: PIX_CIDADE,
+        valor,
+        txid: '***',
+      });
+      console.log('[PixQRCode] payload gerado:', payload);
+      setPixPayload(payload);
+    } catch (e) {
+      console.error('[PixQRCode] erro ao gerar payload:', e);
+    }
+  }, [valor, pedidoNumero]);
 
   const handleCopiar = async () => {
     try {
@@ -56,17 +64,33 @@ export default function PixQRCode({ valor, pedidoNumero }: PixQRCodeProps) {
 
       {/* QR Code */}
       <div
-        className="p-3 rounded-lg"
-        style={{ background: '#FFFFFF' }}
+        className="p-3 rounded-lg flex justify-center"
+        style={{ background: '#FFFFFF', minWidth: 180, minHeight: 180 }}
       >
-        <QRCodeSVG
-          value={pixPayload}
-          size={200}
-          bgColor="#FFFFFF"
-          fgColor="#000000"
-          level="M"
-        />
+        {pixPayload ? (
+          <QRCodeCanvas
+            value={pixPayload}
+            size={180}
+            bgColor="#FFFFFF"
+            fgColor="#000000"
+            level="M"
+          />
+        ) : (
+          <div style={{ width: 180, height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ color: '#888', fontSize: 12 }}>Carregando...</p>
+          </div>
+        )}
       </div>
+
+      {/* Código copia e cola */}
+      <textarea
+        readOnly
+        value={pixPayload}
+        onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+        className="w-full text-[10px] p-2 rounded bg-black text-gray-400 border border-gray-800 break-all cursor-pointer"
+        rows={3}
+        placeholder="Gerando código PIX..."
+      />
 
       {/* Valor */}
       <div className="text-center">
@@ -76,28 +100,43 @@ export default function PixQRCode({ valor, pedidoNumero }: PixQRCodeProps) {
         </p>
       </div>
 
-      {/* Botão Copiar */}
-      <button
-        onClick={handleCopiar}
-        className="w-full py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-95"
-        style={{
-          background: copiado ? 'rgba(34,197,94,0.15)' : 'rgba(201,162,39,0.15)',
-          color: copiado ? '#22C55E' : '#C9A227',
-          border: `1px solid ${copiado ? 'rgba(34,197,94,0.4)' : 'rgba(201,162,39,0.3)'}`,
-        }}
-      >
-        {copiado ? (
-          <>
-            <CheckCircle size={16} />
-            Copiado!
-          </>
-        ) : (
-          <>
-            <Copy size={16} />
-            Copiar Código PIX
-          </>
-        )}
-      </button>
+      {/* Botões Copiar */}
+      <div className="w-full flex flex-col gap-2">
+        <button
+          onClick={handleCopiar}
+          disabled={!pixPayload}
+          className="w-full py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 disabled:opacity-50"
+          style={{
+            background: copiado ? 'rgba(34,197,94,0.15)' : 'rgba(201,162,39,0.15)',
+            color: copiado ? '#22C55E' : '#C9A227',
+            border: `1px solid ${copiado ? 'rgba(34,197,94,0.4)' : 'rgba(201,162,39,0.3)'}`,
+          }}
+        >
+          {copiado ? (
+            <>
+              <CheckCircle size={16} />
+              Código Copiado!
+            </>
+          ) : (
+            <>
+              <Copy size={16} />
+              Copiar Copia e Cola
+            </>
+          )}
+        </button>
+
+        <button
+          onClick={async () => {
+            await navigator.clipboard.writeText(PIX_CHAVE);
+            toast.success('Chave PIX copiada!', { style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' } });
+          }}
+          className="w-full py-2.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all duration-200 active:scale-95"
+          style={{ background: 'transparent', color: '#8A7A5A', border: '1px solid rgba(201,162,39,0.2)' }}
+        >
+          <Copy size={14} />
+          Copiar apenas a Chave PIX
+        </button>
+      </div>
 
       {/* Instrução */}
       <div
