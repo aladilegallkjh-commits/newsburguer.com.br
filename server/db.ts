@@ -1,7 +1,7 @@
 import { eq, desc, and, gte, lte } from 'drizzle-orm';
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
-import { InsertUser, users, orders, InsertOrder, orderStatusHistory, InsertOrderStatusHistory, notifications, InsertNotification, storeSettings, InsertStoreSettings, menuItems, InsertMenuItem, promotions, InsertPromotion, adminUsers, InsertAdminUser, whatsappSettings, InsertWhatsappSettings, whatsappMessagesLog, InsertWhatsappMessagesLog, deliveryDrivers, InsertDeliveryDriver, coupons, InsertCoupon } from "../drizzle/schema";
+import { InsertUser, users, orders, InsertOrder, orderStatusHistory, InsertOrderStatusHistory, notifications, InsertNotification, storeSettings, InsertStoreSettings, menuItems, InsertMenuItem, customIngredients, InsertCustomIngredient, promotions, InsertPromotion, adminUsers, InsertAdminUser, whatsappSettings, InsertWhatsappSettings, whatsappMessagesLog, InsertWhatsappMessagesLog, deliveryDrivers, InsertDeliveryDriver, coupons, InsertCoupon } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -262,9 +262,31 @@ export async function updateMenuItem(id: number, data: Partial<InsertMenuItem>) 
 
 export async function deleteMenuItem(id: number) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
   return db.update(menuItems).set({ isActive: 0 }).where(eq(menuItems.id, id));
+}
+
+// CUSTOM INGREDIENTS HELPERS
+
+export async function getCustomIngredients() {
+  const db = await getDb();
+  return db.select().from(customIngredients)
+    .where(eq(customIngredients.isActive, 1))
+    .orderBy(customIngredients.displayOrder, customIngredients.name);
+}
+
+export async function createCustomIngredient(data: InsertCustomIngredient) {
+  const db = await getDb();
+  return db.insert(customIngredients).values(data);
+}
+
+export async function updateCustomIngredient(id: string, data: Partial<InsertCustomIngredient>) {
+  const db = await getDb();
+  return db.update(customIngredients).set(data).where(eq(customIngredients.id, id));
+}
+
+export async function deleteCustomIngredient(id: string) {
+  const db = await getDb();
+  return db.update(customIngredients).set({ isActive: 0 }).where(eq(customIngredients.id, id));
 }
 
 // ============================================

@@ -21,6 +21,7 @@ const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <Clock size={20} /> },
   { id: 'pedidos', label: 'Pedidos', icon: <ShoppingBag size={20} /> },
   { id: 'cardapio', label: 'Cardápio', icon: <FileText size={20} /> },
+  { id: 'ingredientes', label: 'Monte seu Lanche', icon: <span style={{ fontSize: 18 }}>🛠️</span> },
   { id: 'informacoes', label: 'Configurações', icon: <Settings size={20} /> },
   { id: 'promocoes', label: 'Promoções', icon: <Trophy size={20} /> },
   { id: 'entregadores', label: 'Entregadores', icon: <Bike size={20} /> },
@@ -205,6 +206,7 @@ export default function AdminDashboard() {
           {activeTab === 'dashboard' && <DashboardTab />}
           {activeTab === 'pedidos' && <PedidosTab />}
           {activeTab === 'cardapio' && <CardapioTab />}
+          {activeTab === 'ingredientes' && <IngredientsTab />}
           {activeTab === 'informacoes' && <InformacoesTab />}
           {activeTab === 'promocoes' && <PromocoesTab />}
           {activeTab === 'entregadores' && <EntregadoresTab />}
@@ -422,6 +424,231 @@ function PedidosTab() {
   );
 }
 
+
+function IngredientsTab() {
+  const { data: ingredients = [], isLoading, refetch } = trpc.customIngredients.getAll.useQuery();
+  const updateIngredient = trpc.customIngredients.update.useMutation();
+  const deleteIngredient = trpc.customIngredients.delete.useMutation();
+  const createIngredient = trpc.customIngredients.create.useMutation();
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [newForm, setNewForm] = useState({
+    id: '', name: '', emoji: '🍔', price: 0, category: 'extras', categoryLabel: 'Extras & Crocantes', imageUrl: ''
+  });
+
+  const CATEGORY_ORDER = ['paes', 'carnes', 'queijos', 'molhos', 'vegetais', 'extras'];
+  const CATEGORY_LABELS: Record<string, string> = {
+    paes: 'Pães', carnes: 'Carnes', queijos: 'Queijos & Cremes',
+    molhos: 'Molhos', vegetais: 'Vegetais & Saladas', extras: 'Extras & Crocantes'
+  };
+
+  const byCategory = (ingredients as any[]).reduce<Record<string, any[]>>((acc, ing) => {
+    if (!acc[ing.category]) acc[ing.category] = [];
+    acc[ing.category].push(ing);
+    return acc;
+  }, {});
+
+  const handleSave = async () => {
+    if (!editingItem) return;
+    try {
+      await updateIngredient.mutateAsync({ id: editingItem.id, data: {
+        name: editingItem.name, price: editingItem.price, imageUrl: editingItem.imageUrl, emoji: editingItem.emoji
+      }});
+      toast.success('Ingrediente atualizado!', { style: { background: '#111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' } });
+      refetch();
+      setEditingItem(null);
+    } catch (e) {
+      toast.error('Erro ao salvar');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Remover este ingrediente?')) return;
+    try {
+      await deleteIngredient.mutateAsync({ id });
+      toast.success('Ingrediente removido!', { style: { background: '#111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' } });
+      refetch();
+    } catch (e) {
+      toast.error('Erro ao remover');
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!newForm.name || !newForm.id || newForm.price <= 0) {
+      toast.error('Preencha todos os campos obrigatórios'); return;
+    }
+    try {
+      await createIngredient.mutateAsync({ ...newForm, isActive: 1, displayOrder: ingredients.length });
+      toast.success('Ingrediente adicionado!', { style: { background: '#111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' } });
+      refetch();
+      setAddingNew(false);
+      setNewForm({ id: '', name: '', emoji: '🍔', price: 0, category: 'extras', categoryLabel: 'Extras & Crocantes', imageUrl: '' });
+    } catch (e) {
+      toast.error('Erro ao adicionar. ID pode já existir.');
+    }
+  };
+
+  const inputStyle = { background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.25)', borderRadius: 8, padding: '8px 12px', width: '100%' };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-2xl font-bold" style={{ color: '#F5F0E8' }}>🛠️ Monte seu Lanche — Ingredientes</h2>
+          <p className="text-sm mt-1" style={{ color: '#8A7A5A' }}>Edite nome, preço e foto de cada ingrediente exibido na página "Crie seu Lanche".</p>
+        </div>
+        <button
+          onClick={() => setAddingNew(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all hover:opacity-90"
+          style={{ background: '#C9A227', color: '#0A0A0A' }}
+        >
+          + Novo Ingrediente
+        </button>
+      </div>
+
+      {/* Add new form */}
+      {addingNew && (
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: 'rgba(10,16,13,0.9)', border: '1px solid rgba(201,162,39,0.4)' }}>
+          <h3 className="font-bold text-lg" style={{ color: '#C9A227' }}>Novo Ingrediente</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-[#8A7A5A] mb-1 block">ID único (sem espaços, ex: ci-meu-item)</label>
+              <input style={inputStyle} value={newForm.id} onChange={e => setNewForm({...newForm, id: e.target.value})} placeholder="ci-meu-ingrediente" />
+            </div>
+            <div>
+              <label className="text-xs text-[#8A7A5A] mb-1 block">Nome do ingrediente</label>
+              <input style={inputStyle} value={newForm.name} onChange={e => setNewForm({...newForm, name: e.target.value})} placeholder="Ex: Bacon Extra" />
+            </div>
+            <div>
+              <label className="text-xs text-[#8A7A5A] mb-1 block">Preço (R$)</label>
+              <input type="number" step="0.50" style={inputStyle} value={newForm.price} onChange={e => setNewForm({...newForm, price: parseFloat(e.target.value)})} />
+            </div>
+            <div>
+              <label className="text-xs text-[#8A7A5A] mb-1 block">Categoria</label>
+              <select style={inputStyle} value={newForm.category} onChange={e => setNewForm({...newForm, category: e.target.value, categoryLabel: CATEGORY_LABELS[e.target.value]})}>
+                {CATEGORY_ORDER.map(cat => <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#8A7A5A] mb-1 block">Emoji</label>
+              <input style={inputStyle} value={newForm.emoji} onChange={e => setNewForm({...newForm, emoji: e.target.value})} placeholder="🥩" />
+            </div>
+            <div>
+              <label className="text-xs text-[#8A7A5A] mb-1 block">URL da Foto (opcional)</label>
+              <input style={inputStyle} value={newForm.imageUrl} onChange={e => setNewForm({...newForm, imageUrl: e.target.value})} placeholder="https://..." />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={handleAdd} disabled={createIngredient.isPending} className="px-5 py-2 rounded-lg font-semibold" style={{ background: '#C9A227', color: '#0A0A0A' }}>
+              {createIngredient.isPending ? 'Salvando...' : 'Adicionar'}
+            </button>
+            <button onClick={() => setAddingNew(false)} className="px-5 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', color: '#8A7A5A' }}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)' }}>
+          <div className="w-full max-w-lg rounded-2xl p-6 space-y-4" style={{ background: '#0a100d', border: '1px solid rgba(201,162,39,0.4)' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg" style={{ color: '#F5F0E8' }}>Editar: {editingItem.name}</h3>
+              <button onClick={() => setEditingItem(null)} style={{ color: '#8A7A5A' }}>✕</button>
+            </div>
+            {/* Image preview */}
+            {editingItem.imageUrl && (
+              <img src={editingItem.imageUrl} alt={editingItem.name} className="w-full h-40 object-cover rounded-xl" style={{ border: '1px solid rgba(201,162,39,0.2)' }} />
+            )}
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-[#8A7A5A] mb-1 block">Nome</label>
+                <input style={inputStyle} value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-xs text-[#8A7A5A] mb-1 block">Preço (R$)</label>
+                <input type="number" step="0.50" style={inputStyle} value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: parseFloat(e.target.value)})} />
+              </div>
+              <div>
+                <label className="text-xs text-[#8A7A5A] mb-1 block">Emoji de fallback</label>
+                <input style={inputStyle} value={editingItem.emoji} onChange={e => setEditingItem({...editingItem, emoji: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-xs text-[#8A7A5A] mb-1 block">URL da Foto</label>
+                <input style={inputStyle} value={editingItem.imageUrl || ''} onChange={e => setEditingItem({...editingItem, imageUrl: e.target.value})} placeholder="https://images.unsplash.com/..." />
+                <p className="text-xs mt-1" style={{ color: '#C9A227' }}>
+                  💡 Dica: Vá em <a href="https://unsplash.com" target="_blank" rel="noreferrer" className="underline">unsplash.com</a>, encontre uma foto, clique com o botão direito &rarr; "Copiar endereço da imagem" e cole aqui.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button onClick={handleSave} disabled={updateIngredient.isPending} className="flex-1 py-2.5 rounded-lg font-semibold" style={{ background: '#C9A227', color: '#0A0A0A' }}>
+                {updateIngredient.isPending ? 'Salvando...' : '✓ Salvar Alterações'}
+              </button>
+              <button onClick={() => setEditingItem(null)} className="px-4 py-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', color: '#8A7A5A' }}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ingredient cards grouped by category */}
+      {isLoading ? (
+        <p style={{ color: '#8A7A5A' }}>Carregando ingredientes...</p>
+      ) : (
+        <div className="space-y-6">
+          {CATEGORY_ORDER.map(catKey => {
+            const items = byCategory[catKey] || [];
+            if (items.length === 0) return null;
+            return (
+              <div key={catKey}>
+                <h3 className="font-bold text-sm uppercase tracking-wider mb-3" style={{ color: '#C9A227' }}>{CATEGORY_LABELS[catKey]}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {items.map((ing: any) => (
+                    <div
+                      key={ing.id}
+                      className="rounded-xl overflow-hidden"
+                      style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.2)' }}
+                    >
+                      {/* Image or emoji placeholder */}
+                      <div className="relative h-28 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
+                        {ing.imageUrl ? (
+                          <img src={ing.imageUrl} alt={ing.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-5xl">{ing.emoji}</span>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="font-medium text-sm text-[#F5F0E8] truncate">{ing.name}</p>
+                        <p className="font-bold text-xs mt-0.5" style={{ color: '#C9A227' }}>R$ {parseFloat(ing.price).toFixed(2)}</p>
+                        <div className="flex gap-1.5 mt-2.5">
+                          <button
+                            onClick={() => setEditingItem({ ...ing })}
+                            className="flex-1 py-1.5 text-xs rounded-lg font-semibold transition-all hover:opacity-90"
+                            style={{ background: 'rgba(201,162,39,0.2)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)' }}
+                          >
+                            ✏️ Editar
+                          </button>
+                          <button
+                            onClick={() => handleDelete(ing.id)}
+                            disabled={deleteIngredient.isPending}
+                            className="py-1.5 px-2.5 text-xs rounded-lg transition-all hover:opacity-90"
+                            style={{ background: 'rgba(255,60,60,0.1)', color: '#FF6B6B', border: '1px solid rgba(255,60,60,0.2)' }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CardapioTab() {
   const { data: items, isLoading, refetch } = trpc.menu.getAll.useQuery();

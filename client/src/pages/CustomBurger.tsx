@@ -1,36 +1,36 @@
 import { useState, useMemo } from 'react';
-import { Plus, Minus, ShoppingCart, Trash2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Trash2, ChevronDown, ChevronUp, Sparkles, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
-import { customIngredients, CustomIngredient, formatPrice } from '@/lib/menuData';
+import { formatPrice } from '@/lib/menuData';
+import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-
-// Group ingredients by category
-const ingredientsByCategory = customIngredients.reduce<Record<string, { label: string; emoji: string; items: CustomIngredient[] }>>(
-  (acc, ing) => {
-    if (!acc[ing.category]) {
-      const emojiMap: Record<string, string> = {
-        paes: '🍞',
-        carnes: '🥩',
-        queijos: '🧀',
-        molhos: '🫙',
-        vegetais: '🥬',
-        extras: '🍟',
-      };
-      acc[ing.category] = { label: ing.categoryLabel, emoji: emojiMap[ing.category] || '🍴', items: [] };
-    }
-    acc[ing.category].items.push(ing);
-    return acc;
-  },
-  {}
-);
 
 const CATEGORY_ORDER = ['paes', 'carnes', 'queijos', 'molhos', 'vegetais', 'extras'];
 
+const CATEGORY_EMOJI: Record<string, string> = {
+  paes: '🍞',
+  carnes: '🥩',
+  queijos: '🧀',
+  molhos: '🫙',
+  vegetais: '🥬',
+  extras: '🍟',
+};
+
+type DbIngredient = {
+  id: string;
+  name: string;
+  emoji: string;
+  imageUrl?: string | null;
+  price: number;
+  category: string;
+  categoryLabel: string;
+};
+
 interface SelectedIngredient {
-  ingredient: CustomIngredient;
+  ingredient: DbIngredient;
   quantity: number;
 }
 
@@ -44,11 +44,28 @@ export default function CustomBurger() {
   const { addItem } = useCart();
   const [, navigate] = useLocation();
 
+  // Load from DB
+  const { data: dbIngredients = [], isLoading: isLoadingIngredients } = trpc.customIngredients.getAll.useQuery();
+
+  // Group them by category
+  const ingredientsByCategory = useMemo(() => {
+    return (dbIngredients as DbIngredient[]).reduce<Record<string, { label: string; emoji: string; items: DbIngredient[] }>>(
+      (acc, ing) => {
+        if (!acc[ing.category]) {
+          acc[ing.category] = { label: ing.categoryLabel, emoji: CATEGORY_EMOJI[ing.category] || '🍴', items: [] };
+        }
+        acc[ing.category].items.push(ing);
+        return acc;
+      },
+      {}
+    );
+  }, [dbIngredients]);
+
   const selectedList = useMemo<SelectedIngredient[]>(() => {
-    return customIngredients
+    return (dbIngredients as DbIngredient[])
       .filter(ing => (selected[ing.id] || 0) > 0)
       .map(ing => ({ ingredient: ing, quantity: selected[ing.id] }));
-  }, [selected]);
+  }, [selected, dbIngredients]);
 
   const total = useMemo(() => {
     return selectedList.reduce((sum, { ingredient, quantity }) => sum + ingredient.price * quantity, 0);
@@ -167,7 +184,13 @@ export default function CustomBurger() {
 
           {/* LEFT — Ingredient Picker */}
           <div className="flex-1 space-y-4">
-            {CATEGORY_ORDER.map(catKey => {
+            {isLoadingIngredients ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Loader2 size={36} className="animate-spin" style={{ color: '#C9A227' }} />
+                <p style={{ color: '#8A7A5A' }}>Carregando ingredientes...</p>
+              </div>
+            ) : (
+            <>{CATEGORY_ORDER.map(catKey => {
               const cat = ingredientsByCategory[catKey];
               if (!cat) return null;
               const isOpen = expandedCategories[catKey];
@@ -265,7 +288,8 @@ export default function CustomBurger() {
                   )}
                 </div>
               );
-            })}
+            })}</>
+            )}
 
             {/* Notes */}
             <div

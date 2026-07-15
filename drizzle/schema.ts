@@ -216,6 +216,24 @@ export type MenuItem = typeof menuItems.$inferSelect;
 export type InsertMenuItem = typeof menuItems.$inferInsert;
 
 /**
+ * Custom Ingredients table - Stores ingredients for the "Crie Seu Lanche" section
+ */
+export const customIngredients = sqliteTable("customIngredients", {
+  id: text("id").primaryKey(), // using string ID like 'ci-pao-brioche' to maintain compatibility
+  name: text("name").notNull(),
+  emoji: text("emoji").notNull(),
+  imageUrl: text("imageUrl"),
+  price: real("price").notNull(),
+  category: text("category", { enum: ["paes", "carnes", "queijos", "molhos", "vegetais", "extras"] }).notNull(),
+  categoryLabel: text("categoryLabel").notNull(),
+  isActive: integer("isActive").default(1).notNull(), // 1 for true, 0 for false
+  displayOrder: integer("displayOrder").default(0).notNull(),
+});
+
+export type CustomIngredientItem = typeof customIngredients.$inferSelect;
+export type InsertCustomIngredient = typeof customIngredients.$inferInsert;
+
+/**
  * Promotions - Special offers and discounts
  */
 export const promotions = sqliteTable("promotions", {
