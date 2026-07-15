@@ -21,7 +21,7 @@ const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <Clock size={20} /> },
   { id: 'pedidos', label: 'Pedidos', icon: <ShoppingBag size={20} /> },
   { id: 'cardapio', label: 'Cardápio', icon: <FileText size={20} /> },
-  { id: 'ingredientes', label: 'Monte seu Lanche', icon: <span style={{ fontSize: 18 }}>🛠️</span> },
+  { id: 'ingredientes', label: 'Monte seu Lanche', icon: <span style={{ fontSize: 18 }}>👨‍🍳</span> },
   { id: 'informacoes', label: 'Configurações', icon: <Settings size={20} /> },
   { id: 'promocoes', label: 'Promoções', icon: <Trophy size={20} /> },
   { id: 'entregadores', label: 'Entregadores', icon: <Bike size={20} /> },
@@ -594,7 +594,7 @@ function IngredientsTab() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold" style={{ color: '#F5F0E8' }}>🛠️ Monte seu Lanche — Ingredientes</h2>
+          <h2 className="text-2xl font-bold" style={{ color: '#F5F0E8' }}>👨‍🍳 Monte seu Lanche — Ingredientes</h2>
           <p className="text-sm mt-1" style={{ color: '#8A7A5A' }}>Edite nome, preço e foto de cada ingrediente exibido na página "Crie seu Lanche".</p>
         </div>
         <button

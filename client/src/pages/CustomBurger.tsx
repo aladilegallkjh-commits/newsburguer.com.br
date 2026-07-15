@@ -113,9 +113,9 @@ export default function CustomBurger() {
 
     addItem({
       id: customItemId,
-      name: '🛠️ Meu Lanche Especial',
+      name: '👨‍🍳 Meu Lanche Especial',
       price: total,
-      emoji: '🛠️',
+      emoji: '👨‍🍳',
       customization: {
         removedIngredients: [],
         addedExtras: selectedList.map(({ ingredient, quantity }) => ({
@@ -326,7 +326,7 @@ export default function CustomBurger() {
               <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(201,162,39,0.15)' }}>
                 <div className="flex items-center justify-between">
                   <h2 className="font-serif font-bold text-base text-[#F5F0E8] flex items-center gap-2">
-                    🛠️ Seu Lanche
+                    👨‍🍳 Seu Lanche
                     {itemCount > 0 && (
                       <span
                         className="text-xs font-bold px-2 py-0.5 rounded-full"
