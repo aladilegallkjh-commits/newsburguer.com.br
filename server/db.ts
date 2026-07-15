@@ -225,15 +225,21 @@ export async function updateStoreSettings(data: Partial<InsertStoreSettings>) {
 // MENU ITEMS HELPERS
 // ============================================
 
-export async function getMenuItems(category?: string) {
+export async function getMenuItems(category?: string, includeUnavailable: boolean = false) {
   const db = await getDb();
   if (!db) return [];
   
-  let query: any = db.select().from(menuItems).where(eq(menuItems.isActive, 1));
+  let conditions = [eq(menuItems.isActive, 1)];
+  
+  if (!includeUnavailable) {
+    conditions.push(eq(menuItems.isAvailable, 1));
+  }
   
   if (category) {
-    query = db.select().from(menuItems).where(eq(menuItems.category, category as any));
+    conditions.push(eq(menuItems.category, category as any));
   }
+  
+  const query = db.select().from(menuItems).where(and(...conditions));
   
   return query.orderBy(menuItems.displayOrder, menuItems.name);
 }
@@ -262,6 +268,7 @@ export async function updateMenuItem(id: number, data: Partial<InsertMenuItem>) 
 
 export async function deleteMenuItem(id: number) {
   const db = await getDb();
+  if (!db) throw new Error('Database not available');
   return db.update(menuItems).set({ isActive: 0 }).where(eq(menuItems.id, id));
 }
 
@@ -269,24 +276,41 @@ export async function deleteMenuItem(id: number) {
 
 export async function getCustomIngredients() {
   const db = await getDb();
+  if (!db) return [];
   return db.select().from(customIngredients)
     .where(eq(customIngredients.isActive, 1))
     .orderBy(customIngredients.displayOrder, customIngredients.name);
 }
 
+export async function getAllCustomIngredients() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(customIngredients)
+    .orderBy(customIngredients.displayOrder, customIngredients.name);
+}
+
 export async function createCustomIngredient(data: InsertCustomIngredient) {
   const db = await getDb();
+  if (!db) throw new Error('Database not available');
   return db.insert(customIngredients).values(data);
 }
 
 export async function updateCustomIngredient(id: string, data: Partial<InsertCustomIngredient>) {
   const db = await getDb();
+  if (!db) throw new Error('Database not available');
   return db.update(customIngredients).set(data).where(eq(customIngredients.id, id));
 }
 
 export async function deleteCustomIngredient(id: string) {
   const db = await getDb();
+  if (!db) throw new Error('Database not available');
   return db.update(customIngredients).set({ isActive: 0 }).where(eq(customIngredients.id, id));
+}
+
+export async function toggleCustomIngredientAvailability(id: string, isActive: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.update(customIngredients).set({ isActive }).where(eq(customIngredients.id, id));
 }
 
 // ============================================

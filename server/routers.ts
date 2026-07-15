@@ -437,6 +437,18 @@ export const appRouter = router({
       return db.getMenuItems();
     }),
 
+    getAdminAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
+      return db.getMenuItems(undefined, true);
+    }),
+
+    toggleAvailability: protectedProcedure
+      .input(z.object({ id: z.number(), isAvailable: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
+        return db.updateMenuItem(input.id, { isAvailable: input.isAvailable });
+      }),
+
     getByCategory: publicProcedure
       .input(z.object({ category: z.string() }))
       .query(async ({ input }) => {
@@ -493,7 +505,67 @@ export const appRouter = router({
       }),
   }),
 
-  // Promotions Router
+  // Custom Ingredients Router (Monte seu Lanche)
+  customIngredients: router({
+    getAll: publicProcedure.query(async () => {
+      return db.getCustomIngredients();
+    }),
+
+    getAllAdmin: publicProcedure.query(async () => {
+      return db.getAllCustomIngredients();
+    }),
+
+    create: publicProcedure
+      .input(
+        z.object({
+          id: z.string().min(1),
+          name: z.string().min(1),
+          emoji: z.string().optional().default('🍔'),
+          imageUrl: z.string().optional(),
+          price: z.number().min(0),
+          category: z.enum(['paes', 'carnes', 'queijos', 'molhos', 'vegetais', 'extras']),
+          categoryLabel: z.string().min(1),
+          isActive: z.number().optional().default(1),
+          displayOrder: z.number().optional().default(0),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return db.createCustomIngredient(input as any);
+      }),
+
+    update: publicProcedure
+      .input(
+        z.object({
+          id: z.string().min(1),
+          data: z.object({
+            name: z.string().optional(),
+            emoji: z.string().optional(),
+            imageUrl: z.string().optional(),
+            price: z.number().optional(),
+            category: z.enum(['paes', 'carnes', 'queijos', 'molhos', 'vegetais', 'extras']).optional(),
+            categoryLabel: z.string().optional(),
+            displayOrder: z.number().optional(),
+          }),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return db.updateCustomIngredient(input.id, input.data as any);
+      }),
+
+    toggleAvailability: publicProcedure
+      .input(z.object({ id: z.string(), isActive: z.number() }))
+      .mutation(async ({ input }) => {
+        return db.toggleCustomIngredientAvailability(input.id, input.isActive);
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        return db.deleteCustomIngredient(input.id);
+      }),
+  }),
+
+
   promotions: router({
     getAll: publicProcedure.query(async () => {
       return db.getPromotions(false);

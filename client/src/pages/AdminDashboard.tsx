@@ -498,11 +498,13 @@ function PedidosTab() {
 
 
 function IngredientsTab() {
-  const { data: ingredients = [], isLoading, refetch } = trpc.customIngredients.getAll.useQuery();
+  const { data: ingredients = [], isLoading, refetch } = trpc.customIngredients.getAllAdmin.useQuery();
   const updateIngredient = trpc.customIngredients.update.useMutation();
+  const toggleIngredient = trpc.customIngredients.toggleAvailability.useMutation();
   const deleteIngredient = trpc.customIngredients.delete.useMutation();
   const createIngredient = trpc.customIngredients.create.useMutation();
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingImageItem, setEditingImageItem] = useState<any>(null);
   const [addingNew, setAddingNew] = useState(false);
   const [newForm, setNewForm] = useState({
     id: '', name: '', emoji: '🍔', price: 0, category: 'extras', categoryLabel: 'Extras & Crocantes', imageUrl: ''
@@ -534,6 +536,31 @@ function IngredientsTab() {
     }
   };
 
+  const handleToggle = async (ing: any) => {
+    const newActive = ing.isActive === 1 ? 0 : 1;
+    try {
+      await toggleIngredient.mutateAsync({ id: ing.id, isActive: newActive });
+      toast.success(newActive === 1 ? 'Ingrediente disponibilizado!' : 'Ingrediente indisponibilizado!', {
+        style: { background: '#111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' }
+      });
+      refetch();
+    } catch (e) {
+      toast.error('Erro ao alterar disponibilidade');
+    }
+  };
+
+  const handleSaveImage = async (imageUrl: string) => {
+    if (!editingImageItem) return;
+    try {
+      await updateIngredient.mutateAsync({ id: editingImageItem.id, data: { imageUrl } });
+      toast.success('Foto atualizada!', { style: { background: '#111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' } });
+      refetch();
+      setEditingImageItem(null);
+    } catch (e) {
+      toast.error('Erro ao salvar foto');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Remover este ingrediente?')) return;
     try {
@@ -550,7 +577,7 @@ function IngredientsTab() {
       toast.error('Preencha todos os campos obrigatórios'); return;
     }
     try {
-      await createIngredient.mutateAsync({ ...newForm, isActive: 1, displayOrder: ingredients.length });
+      await createIngredient.mutateAsync({ ...newForm, isActive: 1, displayOrder: ingredients.length } as any);
       toast.success('Ingrediente adicionado!', { style: { background: '#111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' } });
       refetch();
       setAddingNew(false);
@@ -678,8 +705,12 @@ function IngredientsTab() {
                   {items.map((ing: any) => (
                     <div
                       key={ing.id}
-                      className="rounded-xl overflow-hidden"
-                      style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.2)' }}
+                      className="rounded-xl overflow-hidden transition-opacity"
+                      style={{
+                        background: 'rgba(10,16,13,0.85)',
+                        border: `1px solid ${ing.isActive === 1 ? 'rgba(201,162,39,0.2)' : 'rgba(255,60,60,0.25)'}`,
+                        opacity: ing.isActive === 1 ? 1 : 0.65,
+                      }}
                     >
                       {/* Image or emoji placeholder */}
                       <div className="relative h-28 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
@@ -688,6 +719,26 @@ function IngredientsTab() {
                         ) : (
                           <span className="text-5xl">{ing.emoji}</span>
                         )}
+                        {/* Availability badge */}
+                        <span
+                          className="absolute top-1.5 right-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background: ing.isActive === 1 ? 'rgba(74,222,128,0.15)' : 'rgba(255,60,60,0.2)',
+                            color: ing.isActive === 1 ? '#4ade80' : '#FF6B6B',
+                            border: `1px solid ${ing.isActive === 1 ? 'rgba(74,222,128,0.3)' : 'rgba(255,60,60,0.3)'}`,
+                          }}
+                        >
+                          {ing.isActive === 1 ? '✓ Ativo' : '✗ Inativo'}
+                        </span>
+                        {/* Edit photo button overlay */}
+                        <button
+                          onClick={() => setEditingImageItem(ing)}
+                          className="absolute bottom-1.5 right-1.5 text-[10px] font-semibold px-2 py-1 rounded-lg transition-all hover:opacity-100 opacity-80"
+                          style={{ background: 'rgba(0,0,0,0.7)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.4)' }}
+                          title="Editar foto"
+                        >
+                          📷 Foto
+                        </button>
                       </div>
                       <div className="p-3">
                         <p className="font-medium text-sm text-[#F5F0E8] truncate">{ing.name}</p>
@@ -699,6 +750,19 @@ function IngredientsTab() {
                             style={{ background: 'rgba(201,162,39,0.2)', color: '#C9A227', border: '1px solid rgba(201,162,39,0.3)' }}
                           >
                             ✏️ Editar
+                          </button>
+                          <button
+                            onClick={() => handleToggle(ing)}
+                            disabled={toggleIngredient.isPending}
+                            className="py-1.5 px-2 text-xs rounded-lg transition-all hover:opacity-90"
+                            style={{
+                              background: ing.isActive === 1 ? 'rgba(255,60,60,0.1)' : 'rgba(74,222,128,0.1)',
+                              color: ing.isActive === 1 ? '#FF6B6B' : '#4ade80',
+                              border: `1px solid ${ing.isActive === 1 ? 'rgba(255,60,60,0.2)' : 'rgba(74,222,128,0.2)'}`,
+                            }}
+                            title={ing.isActive === 1 ? 'Indisponibilizar' : 'Disponibilizar'}
+                          >
+                            {ing.isActive === 1 ? <Power size={13} /> : '✓'}
                           </button>
                           <button
                             onClick={() => handleDelete(ing.id)}
@@ -718,12 +782,54 @@ function IngredientsTab() {
           })}
         </div>
       )}
+
+      {/* Image Upload Modal for Ingredient */}
+      {editingImageItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)' }}>
+          <div className="w-full max-w-lg rounded-2xl p-6 space-y-4" style={{ background: '#0a100d', border: '1px solid rgba(201,162,39,0.4)' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg" style={{ color: '#F5F0E8' }}>📷 Editar Foto: {editingImageItem.name}</h3>
+              <button onClick={() => setEditingImageItem(null)} style={{ color: '#8A7A5A' }}>✕</button>
+            </div>
+            {editingImageItem.imageUrl && (
+              <img src={editingImageItem.imageUrl} alt={editingImageItem.name} className="w-full h-40 object-cover rounded-xl" style={{ border: '1px solid rgba(201,162,39,0.2)' }} />
+            )}
+            <MenuImageUpload
+              currentImage={editingImageItem.imageUrl || ''}
+              onImageUploaded={(url: string) => {
+                setEditingImageItem({ ...editingImageItem, imageUrl: url });
+              }}
+            />
+            <p className="text-xs" style={{ color: '#C9A227' }}>
+              💡 Ou cole a URL diretamente:
+            </p>
+            <input
+              style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.25)', borderRadius: 8, padding: '8px 12px', width: '100%' }}
+              value={editingImageItem.imageUrl || ''}
+              onChange={e => setEditingImageItem({ ...editingImageItem, imageUrl: e.target.value })}
+              placeholder="https://images.unsplash.com/..."
+            />
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => handleSaveImage(editingImageItem.imageUrl || '')}
+                disabled={updateIngredient.isPending}
+                className="flex-1 py-2.5 rounded-lg font-semibold"
+                style={{ background: '#C9A227', color: '#0A0A0A' }}
+              >
+                {updateIngredient.isPending ? 'Salvando...' : '✓ Salvar Foto'}
+              </button>
+              <button onClick={() => setEditingImageItem(null)} className="px-4 py-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', color: '#8A7A5A' }}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function CardapioTab() {
-  const { data: items, isLoading, refetch } = trpc.menu.getAll.useQuery();
+  const { data: items, isLoading, refetch } = trpc.menu.getAdminAll.useQuery();
+  const toggleAvailability = trpc.menu.toggleAvailability.useMutation();
   const createItem = trpc.menu.create.useMutation();
   const updateItem = trpc.menu.update.useMutation();
   const deleteItem = trpc.menu.delete.useMutation();
@@ -770,6 +876,17 @@ function CardapioTab() {
       } catch (error) {
         toast.error('Erro ao deletar item');
       }
+    }
+  };
+
+  const handleToggleAvailability = async (item: any) => {
+    try {
+      const newStatus = item.isAvailable === 0 ? 1 : 0;
+      await toggleAvailability.mutateAsync({ id: item.id, isAvailable: newStatus });
+      toast.success(newStatus === 1 ? 'Item disponível no cardápio!' : 'Item marcado como esgotado!');
+      refetch();
+    } catch (error) {
+      toast.error('Erro ao atualizar disponibilidade');
     }
   };
 
@@ -869,9 +986,14 @@ function CardapioTab() {
           {items.map((item: any) => (
             <div
               key={item.id}
-              className="rounded-lg overflow-hidden"
-              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}
+              className="rounded-lg overflow-hidden relative"
+              style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)', opacity: item.isAvailable === 0 ? 0.6 : 1 }}
             >
+              {item.isAvailable === 0 && (
+                <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+                  Esgotado
+                </div>
+              )}
               {item.imageUrl && (
                 <img
                   src={item.imageUrl}
@@ -891,6 +1013,15 @@ function CardapioTab() {
                     R$ {parseFloat(item.price).toFixed(2)}
                   </p>
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleAvailability(item)}
+                      disabled={toggleAvailability.isPending}
+                      className="p-2 rounded hover:opacity-80"
+                      style={{ background: item.isAvailable === 0 ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)', color: item.isAvailable === 0 ? '#4CAF50' : '#FF9800' }}
+                      title={item.isAvailable === 0 ? "Tornar Disponível" : "Marcar Indisponível"}
+                    >
+                      <Power size={16} />
+                    </button>
                     <button
                       onClick={() => setEditingFullItem(item)}
                       disabled={updateItem.isPending}
