@@ -8,7 +8,6 @@ import EditMenuItemImageModal from '@/components/EditMenuItemImageModal';
 import EditMenuItemModal from '@/components/EditMenuItemModal';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const LOGO_URL = '/logo.png';
 
@@ -1044,57 +1043,171 @@ function DashboardTab() {
     }
   };
   
-  const exportToPDF = async () => {
+  const exportToPDF = () => {
     const toastId = toast.loading('Gerando PDF...');
     try {
-      // Capturar o elemento do dashboard
-      const dashboardElement = document.getElementById('dashboard-content');
-      if (!dashboardElement) {
-        toast.error('Erro ao gerar PDF', { id: toastId });
-        return;
-      }
-      
-      // Converter para canvas
-      const canvas = await html2canvas(dashboardElement, {
-        backgroundColor: '#0A0A0A',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = 210;
+      const margin = 14;
+      const col = pageW - margin * 2;
+      let y = margin;
+
+      const periodStr = startDate && endDate
+        ? `${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}`
+        : 'Todos os períodos';
+
+      // ── Cabeçalho ──────────────────────────────────────────────────────────
+      pdf.setFillColor(10, 10, 10);
+      pdf.rect(0, 0, pageW, 30, 'F');
+      pdf.setTextColor(201, 162, 39);
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text("NEW S'BURGUER", margin, y + 7);
+      pdf.setFontSize(10);
+      pdf.setTextColor(138, 122, 90);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Relatório de Vendas', margin, y + 14);
+      pdf.text(periodStr, margin, y + 20);
+      pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageW - margin, y + 14, { align: 'right' });
+      y = 38;
+
+      // ── Estatísticas Principais ────────────────────────────────────────────
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(245, 240, 232);
+      pdf.text('Estatísticas do Período', margin, y);
+      y += 6;
+
+      pdf.setDrawColor(201, 162, 39);
+      pdf.setLineWidth(0.3);
+      pdf.line(margin, y, pageW - margin, y);
+      y += 5;
+
+      const statItems = [
+        ['Vendas Hoje', `R$ ${stats.todaySales}`, `${parseFloat(stats.salesGrowth) >= 0 ? '+' : ''}${stats.salesGrowth}%`],
+        ['Pedidos Hoje', String(stats.todayOrders), `${parseFloat(stats.ordersGrowth) >= 0 ? '+' : ''}${stats.ordersGrowth}%`],
+        ['Ticket Médio', `R$ ${stats.avgTicket}`, `${parseFloat(stats.avgTicketGrowth) >= 0 ? '+' : ''}${stats.avgTicketGrowth}%`],
+        ['Total de Pedidos', String(stats.totalOrders), ''],
+      ];
+
+      const boxW = col / 2 - 3;
+      let bx = margin;
+      let by = y;
+      statItems.forEach(([label, value, growth], i) => {
+        pdf.setFillColor(17, 17, 17);
+        pdf.roundedRect(bx, by, boxW, 22, 2, 2, 'F');
+        pdf.setDrawColor(201, 162, 39);
+        pdf.setLineWidth(0.2);
+        pdf.roundedRect(bx, by, boxW, 22, 2, 2, 'S');
+
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(138, 122, 90);
+        pdf.text(label, bx + 4, by + 7);
+
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(201, 162, 39);
+        pdf.text(value, bx + 4, by + 16);
+
+        if (growth) {
+          const g = parseFloat(growth);
+          pdf.setFontSize(8);
+          pdf.setTextColor(g >= 0 ? 76 : 244, g >= 0 ? 175 : 67, g >= 0 ? 80 : 54);
+          pdf.text(growth, bx + boxW - 4, by + 16, { align: 'right' });
+        }
+
+        if (i % 2 === 1) { bx = margin; by += 26; } else { bx += boxW + 6; }
       });
-      
-      // Criar PDF
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      // Adicionar imagem ao PDF
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= 297; // A4 height
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
+      y = by + (bx === margin ? 0 : 26) + 4;
+
+      // ── Vendas por Período ─────────────────────────────────────────────────
+      if (salesData.length > 0) {
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(245, 240, 232);
+        pdf.text('Vendas por Período', margin, y);
+        y += 6;
+        pdf.line(margin, y, pageW - margin, y);
+        y += 5;
+
+        // Cabeçalho da tabela
+        pdf.setFillColor(25, 25, 25);
+        pdf.rect(margin, y, col, 7, 'F');
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(201, 162, 39);
+        pdf.text('Período', margin + 2, y + 5);
+        pdf.text('Vendas (R$)', margin + col * 0.5, y + 5);
+        pdf.text('Pedidos', margin + col * 0.8, y + 5);
+        y += 7;
+
+        salesData.slice(0, 15).forEach((row: any, i: number) => {
+          if (i % 2 === 0) {
+            pdf.setFillColor(20, 20, 20);
+            pdf.rect(margin, y, col, 6, 'F');
+          }
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(245, 240, 232);
+          pdf.setFontSize(8);
+          pdf.text(String(row.day || row.date || `Período ${i + 1}`), margin + 2, y + 4);
+          pdf.text(`R$ ${Number(row.sales || 0).toFixed(2)}`, margin + col * 0.5, y + 4);
+          pdf.text(String(row.orders || 0), margin + col * 0.8, y + 4);
+          y += 6;
+        });
+        y += 4;
       }
-      
-      // Download do PDF
-      const fileName = `relatorio-vendas-${startDate?.toISOString().split('T')[0]}-${endDate?.toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
-      
+
+      // ── Produtos Mais Vendidos ─────────────────────────────────────────────
+      if (topProductsData.length > 0) {
+        if (y > 230) { pdf.addPage(); y = margin; }
+
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(245, 240, 232);
+        pdf.text('Produtos Mais Vendidos', margin, y);
+        y += 6;
+        pdf.line(margin, y, pageW - margin, y);
+        y += 5;
+
+        pdf.setFillColor(25, 25, 25);
+        pdf.rect(margin, y, col, 7, 'F');
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(201, 162, 39);
+        pdf.text('Produto', margin + 2, y + 5);
+        pdf.text('Participação (%)', margin + col * 0.65, y + 5);
+        y += 7;
+
+        topProductsData.slice(0, 10).forEach((prod: any, i: number) => {
+          if (i % 2 === 0) {
+            pdf.setFillColor(20, 20, 20);
+            pdf.rect(margin, y, col, 6, 'F');
+          }
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(245, 240, 232);
+          pdf.setFontSize(8);
+          pdf.text(`${i + 1}. ${prod.name}`, margin + 2, y + 4);
+          pdf.text(`${prod.value}%`, margin + col * 0.65, y + 4);
+          y += 6;
+        });
+      }
+
+      // ── Rodapé ─────────────────────────────────────────────────────────────
+      const totalPages = (pdf as any).internal.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        pdf.setPage(p);
+        pdf.setFontSize(7);
+        pdf.setTextColor(74, 58, 42);
+        pdf.text(`Pág. ${p} de ${totalPages}  •  New S'Burguer  •  Relatório gerado automaticamente`, pageW / 2, 292, { align: 'center' });
+      }
+
+      const dateStr = startDate ? startDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      pdf.save(`relatorio-newsburguer-${dateStr}.pdf`);
       toast.success('PDF gerado com sucesso!', { id: toastId });
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF', { id: toastId });
+      toast.error('Erro ao gerar PDF. Tente novamente.', { id: toastId });
     }
   };
   
