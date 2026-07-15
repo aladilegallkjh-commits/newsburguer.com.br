@@ -20,14 +20,17 @@ export default function PixQRCode({ valor, pedidoNumero }: PixQRCodeProps) {
 
   useEffect(() => {
     try {
+      // txid baseado no número do pedido (só alfanumérico, sem '***')
+      const txidLimpo = pedidoNumero.replace(/[^a-zA-Z0-9]/g, '').substring(0, 25);
+
       const payload = gerarPixCopiaECola({
         chave: PIX_CHAVE,
         nome: PIX_NOME,
         cidade: PIX_CIDADE,
         valor,
-        txid: '***',
+        txid: txidLimpo || undefined, // undefined = omite campo 62 (mais compatível)
       });
-      console.log('[PixQRCode] payload gerado:', payload);
+      console.log('[PixQRCode] payload:', payload);
       setPixPayload(payload);
     } catch (e) {
       console.error('[PixQRCode] erro ao gerar payload:', e);
@@ -65,15 +68,15 @@ export default function PixQRCode({ valor, pedidoNumero }: PixQRCodeProps) {
       {/* QR Code */}
       <div
         className="p-3 rounded-lg flex justify-center"
-        style={{ background: '#FFFFFF', minWidth: 180, minHeight: 180 }}
+        style={{ background: '#FFFFFF', minWidth: 220, minHeight: 220 }}
       >
         {pixPayload ? (
           <QRCodeCanvas
             value={pixPayload}
-            size={180}
+            size={220}
             bgColor="#FFFFFF"
             fgColor="#000000"
-            level="M"
+            level="L"
           />
         ) : (
           <div style={{ width: 180, height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
