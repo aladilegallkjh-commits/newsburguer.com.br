@@ -230,7 +230,7 @@ function PedidosTab() {
   const [alarmActive, setAlarmActive] = useState(false);
 
   useEffect(() => {
-    audioRef.current = new Audio('/beep.wav');
+    audioRef.current = new Audio('/phone.mp3');
   }, []);
 
   const playBeep = () => {
