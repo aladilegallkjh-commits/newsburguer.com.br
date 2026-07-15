@@ -214,8 +214,12 @@ export default function CustomBurger() {
                             }}
                           >
                             {/* Info */}
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className="text-xl flex-shrink-0">{ing.emoji}</span>
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {ing.image ? (
+                                <img src={ing.image} alt={ing.name} className="w-12 h-12 rounded-lg object-cover shadow-sm" style={{ border: '1px solid rgba(201,162,39,0.3)' }} />
+                              ) : (
+                                <span className="text-2xl flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>{ing.emoji}</span>
+                              )}
                               <div className="min-w-0">
                                 <p className="text-sm font-medium text-[#F5F0E8] truncate">{ing.name}</p>
                                 <p className="text-xs font-bold" style={{ color: '#C9A227' }}>
