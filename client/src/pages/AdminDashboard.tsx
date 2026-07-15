@@ -226,8 +226,8 @@ function PedidosTab() {
   const [hasNewOrder, setHasNewOrder] = useState(false);
 
   useEffect(() => {
-    // Inicializa o áudio apenas no client-side
-    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    // Inicializa o áudio com arquivo local (sem bloqueios de rede/CORS)
+    audioRef.current = new Audio('/beep.wav');
   }, []);
 
   const playBeep = () => {
@@ -340,7 +340,7 @@ function PedidosTab() {
             localStorage.setItem('audioEnabled', String(nextState));
             if (nextState) {
               playBeep();
-              toast.success('Som de notificação ativado!');
+              toast.success('Som ativado! Você deve ouvir um bipe.', { style: { background: '#C9A227', color: '#111', fontWeight: 'bold' } });
             } else {
               toast('Som desativado.', { style: { background: '#111', color: '#8A7A5A' } });
             }
