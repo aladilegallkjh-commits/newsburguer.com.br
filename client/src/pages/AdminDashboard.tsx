@@ -221,30 +221,21 @@ function PedidosTab() {
   const updateStatus = trpc.orders.updateStatus.useMutation();
   const assignDriver = trpc.orders.assignDriver.useMutation();
   const prevOrdersCount = useRef(0);
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(() => localStorage.getItem('audioEnabled') === 'true');
   const [hasNewOrder, setHasNewOrder] = useState(false);
 
+  useEffect(() => {
+    // Inicializa o áudio apenas no client-side
+    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+  }, []);
+
   const playBeep = () => {
     try {
-      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-        audioCtxRef.current = new AudioContext();
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(e => console.warn('Audio autoplay blocked by browser', e));
       }
-      const ctx = audioCtxRef.current;
-      // Play 3 quick beeps like iFood
-      [0, 0.25, 0.5].forEach(delay => {
-        const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        osc.frequency.value = 880;
-        osc.type = 'sine';
-        gainNode.gain.setValueAtTime(0, ctx.currentTime + delay);
-        gainNode.gain.linearRampToValueAtTime(0.6, ctx.currentTime + delay + 0.05);
-        gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + delay + 0.2);
-        osc.start(ctx.currentTime + delay);
-        osc.stop(ctx.currentTime + delay + 0.25);
-      });
     } catch (e) {
       console.warn('Audio playback failed', e);
     }
