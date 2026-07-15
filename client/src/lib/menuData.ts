@@ -38,6 +38,7 @@ export const categories: MenuCategory[] = [
 ];
 
 export interface CustomIngredient {
+  image?: string;
   id: string;
   name: string;
   emoji: string;
@@ -48,43 +49,43 @@ export interface CustomIngredient {
 
 export const customIngredients: CustomIngredient[] = [
   // Pães
-  { id: 'ci-pao-brioche', name: 'Pão Brioche', emoji: '🍞', price: 4.00, category: 'paes', categoryLabel: 'Pães' },
-  { id: 'ci-pao-hotdog', name: 'Pão Hot Dog Tradicional', emoji: '🌭', price: 3.00, category: 'paes', categoryLabel: 'Pães' },
-  { id: 'ci-pao-hotdog-25cm', name: 'Pão Hot Dog 25cm (Prensado)', emoji: '🌭', price: 5.00, category: 'paes', categoryLabel: 'Pães' },
+  { id: 'ci-pao-brioche', name: 'Pão Brioche', emoji: '🍞', price: 4.00, category: 'paes', categoryLabel: 'Pães' , image: 'https://images.unsplash.com/photo-1577906096429-f73c2c312435?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-pao-hotdog', name: 'Pão Hot Dog Tradicional', emoji: '🌭', price: 3.00, category: 'paes', categoryLabel: 'Pães' , image: 'https://images.unsplash.com/photo-1619881589316-56c7f9e6b587?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-pao-hotdog-25cm', name: 'Pão Hot Dog 25cm (Prensado)', emoji: '🌭', price: 5.00, category: 'paes', categoryLabel: 'Pães' , image: 'https://images.unsplash.com/photo-1619881589316-56c7f9e6b587?q=80&w=200&auto=format&fit=crop' },
 
   // Carnes
-  { id: 'ci-burger-180', name: 'Hambúrguer Artesanal 180g', emoji: '🥩', price: 10.00, category: 'carnes', categoryLabel: 'Carnes' },
-  { id: 'ci-smash-90', name: 'Hambúrguer Smash 90g', emoji: '🥩', price: 5.50, category: 'carnes', categoryLabel: 'Carnes' },
-  { id: 'ci-salsicha', name: 'Salsicha', emoji: '🌭', price: 3.50, category: 'carnes', categoryLabel: 'Carnes' },
-  { id: 'ci-frango', name: 'Frango Desfiado Temperado', emoji: '🍗', price: 4.00, category: 'carnes', categoryLabel: 'Carnes' },
-  { id: 'ci-bacon', name: 'Bacon Crocante', emoji: '🥓', price: 4.50, category: 'carnes', categoryLabel: 'Carnes' },
-  { id: 'ci-calabresa', name: 'Calabresa', emoji: '🌶️', price: 3.50, category: 'carnes', categoryLabel: 'Carnes' },
-  { id: 'ci-ovo', name: 'Ovo Frito', emoji: '🍳', price: 2.50, category: 'carnes', categoryLabel: 'Carnes' },
+  { id: 'ci-burger-180', name: 'Hambúrguer Artesanal 180g', emoji: '🥩', price: 10.00, category: 'carnes', categoryLabel: 'Carnes' , image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-smash-90', name: 'Hambúrguer Smash 90g', emoji: '🥩', price: 5.50, category: 'carnes', categoryLabel: 'Carnes' , image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-salsicha', name: 'Salsicha', emoji: '🌭', price: 3.50, category: 'carnes', categoryLabel: 'Carnes' , image: 'https://images.unsplash.com/photo-1534122119098-b80c5ce3d800?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-frango', name: 'Frango Desfiado Temperado', emoji: '🍗', price: 4.00, category: 'carnes', categoryLabel: 'Carnes' , image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-bacon', name: 'Bacon Crocante', emoji: '🥓', price: 4.50, category: 'carnes', categoryLabel: 'Carnes' , image: 'https://images.unsplash.com/photo-1528607929212-2636ec44253e?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-calabresa', name: 'Calabresa', emoji: '🌶️', price: 3.50, category: 'carnes', categoryLabel: 'Carnes' , image: 'https://images.unsplash.com/photo-1529177114674-cfaea0f5139a?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-ovo', name: 'Ovo Frito', emoji: '🍳', price: 2.50, category: 'carnes', categoryLabel: 'Carnes' , image: 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?q=80&w=200&auto=format&fit=crop' },
 
   // Queijos
-  { id: 'ci-cheddar', name: 'Queijo Cheddar', emoji: '🧀', price: 3.00, category: 'queijos', categoryLabel: 'Queijos & Cremes' },
-  { id: 'ci-cream-cheese', name: 'Cream Cheese', emoji: '🧀', price: 2.50, category: 'queijos', categoryLabel: 'Queijos & Cremes' },
-  { id: 'ci-catupiry', name: 'Catupiry Original', emoji: '🧀', price: 3.00, category: 'queijos', categoryLabel: 'Queijos & Cremes' },
+  { id: 'ci-cheddar', name: 'Queijo Cheddar', emoji: '🧀', price: 3.00, category: 'queijos', categoryLabel: 'Queijos & Cremes' , image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-cream-cheese', name: 'Cream Cheese', emoji: '🧀', price: 2.50, category: 'queijos', categoryLabel: 'Queijos & Cremes' , image: 'https://images.unsplash.com/photo-1628178652431-89d8db18f3a8?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-catupiry', name: 'Catupiry Original', emoji: '🧀', price: 3.00, category: 'queijos', categoryLabel: 'Queijos & Cremes' , image: 'https://images.unsplash.com/photo-1628178652431-89d8db18f3a8?q=80&w=200&auto=format&fit=crop' },
 
   // Molhos
-  { id: 'ci-molho-barbecue', name: 'Molho Barbecue', emoji: '🫙', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' },
-  { id: 'ci-molho-especial', name: 'Molho Especial da Casa', emoji: '🫙', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' },
-  { id: 'ci-molho-picante', name: 'Molho Picante', emoji: '🌶️', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' },
-  { id: 'ci-molho-news', name: "Molho New's", emoji: '⭐', price: 2.00, category: 'molhos', categoryLabel: 'Molhos' },
-  { id: 'ci-maionese', name: 'Maionese da Casa', emoji: '🫙', price: 1.00, category: 'molhos', categoryLabel: 'Molhos' },
+  { id: 'ci-molho-barbecue', name: 'Molho Barbecue', emoji: '🫙', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' , image: 'https://images.unsplash.com/photo-1585325701165-351af916e581?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-molho-especial', name: 'Molho Especial da Casa', emoji: '🫙', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' , image: 'https://images.unsplash.com/photo-1622978135891-b9627715ecda?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-molho-picante', name: 'Molho Picante', emoji: '🌶️', price: 1.50, category: 'molhos', categoryLabel: 'Molhos' , image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-molho-news', name: "Molho New's", emoji: '⭐', price: 2.00, category: 'molhos', categoryLabel: 'Molhos' , image: 'https://images.unsplash.com/photo-1622978135891-b9627715ecda?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-maionese', name: 'Maionese da Casa', emoji: '🫙', price: 1.00, category: 'molhos', categoryLabel: 'Molhos' , image: 'https://images.unsplash.com/photo-1577906096429-f73c2c312435?q=80&w=200&auto=format&fit=crop' },
 
   // Vegetais
-  { id: 'ci-alface', name: 'Alface Americana', emoji: '🥬', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
-  { id: 'ci-tomate', name: 'Tomate', emoji: '🍅', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
-  { id: 'ci-cebola', name: 'Cebola', emoji: '🧅', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
-  { id: 'ci-picles', name: 'Picles', emoji: '🥒', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
-  { id: 'ci-milho', name: 'Milho', emoji: '🌽', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' },
+  { id: 'ci-alface', name: 'Alface Americana', emoji: '🥬', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' , image: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-tomate', name: 'Tomate', emoji: '🍅', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' , image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-cebola', name: 'Cebola', emoji: '🧅', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' , image: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-picles', name: 'Picles', emoji: '🥒', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' , image: 'https://images.unsplash.com/photo-1520696956693-455b57223e74?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-milho', name: 'Milho', emoji: '🌽', price: 1.00, category: 'vegetais', categoryLabel: 'Vegetais & Saladas' , image: 'https://images.unsplash.com/photo-1533038662993-4d4361abcc0f?q=80&w=200&auto=format&fit=crop' },
 
   // Extras
-  { id: 'ci-onion-rings', name: 'Onion Rings', emoji: '🧅', price: 4.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
-  { id: 'ci-doritos', name: 'Doritos', emoji: '🌮', price: 2.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
-  { id: 'ci-batata-palha', name: 'Batata Palha', emoji: '🍟', price: 1.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
-  { id: 'ci-oregano', name: 'Orégano', emoji: '🌿', price: 0.50, category: 'extras', categoryLabel: 'Extras & Crocantes' },
+  { id: 'ci-onion-rings', name: 'Onion Rings', emoji: '🧅', price: 4.50, category: 'extras', categoryLabel: 'Extras & Crocantes' , image: 'https://images.unsplash.com/photo-1639024471210-203b573a6eeb?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-doritos', name: 'Doritos', emoji: '🌮', price: 2.50, category: 'extras', categoryLabel: 'Extras & Crocantes' , image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-batata-palha', name: 'Batata Palha', emoji: '🍟', price: 1.50, category: 'extras', categoryLabel: 'Extras & Crocantes' , image: 'https://images.unsplash.com/photo-1541592102775-7b8ac428ce0c?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ci-oregano', name: 'Orégano', emoji: '🌿', price: 0.50, category: 'extras', categoryLabel: 'Extras & Crocantes' , image: 'https://images.unsplash.com/photo-1596647242171-ec59d04bc2ad?q=80&w=200&auto=format&fit=crop' },
 ];
 
 // Extras disponíveis para hambúrgueres
