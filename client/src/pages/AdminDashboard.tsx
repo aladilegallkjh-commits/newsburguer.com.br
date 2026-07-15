@@ -1046,7 +1046,9 @@ function DashboardTab() {
   const exportToPDF = () => {
     const toastId = toast.loading('Gerando PDF...');
     try {
+      console.log('Iniciando geração de PDF...');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      console.log('jsPDF instanciado com sucesso.');
       const pageW = 210;
       const margin = 14;
       const col = pageW - margin * 2;
@@ -1094,11 +1096,12 @@ function DashboardTab() {
       let bx = margin;
       let by = y;
       statItems.forEach(([label, value, growth], i) => {
+        console.log(`Rendering stat box ${i}`);
         pdf.setFillColor(17, 17, 17);
-        pdf.roundedRect(bx, by, boxW, 22, 2, 2, 'F');
+        pdf.rect(bx, by, boxW, 22, 'F');
         pdf.setDrawColor(201, 162, 39);
         pdf.setLineWidth(0.2);
-        pdf.roundedRect(bx, by, boxW, 22, 2, 2, 'S');
+        pdf.rect(bx, by, boxW, 22, 'S');
 
         pdf.setFontSize(8);
         pdf.setFont('helvetica', 'normal');
