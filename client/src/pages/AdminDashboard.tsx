@@ -218,17 +218,18 @@ export default function AdminDashboard() {
 }
 
 function PedidosTab() {
-  const { data: orders, isLoading } = trpc.orders.getAll.useQuery(undefined, { refetchInterval: 5000 });
+  const { data: orders, isLoading, refetch } = trpc.orders.getAll.useQuery(undefined, { refetchInterval: 5000 });
   const { data: drivers } = trpc.drivers.getAll.useQuery();
   const updateStatus = trpc.orders.updateStatus.useMutation();
   const assignDriver = trpc.orders.assignDriver.useMutation();
   const prevOrdersCount = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(() => localStorage.getItem('audioEnabled') === 'true');
   const [hasNewOrder, setHasNewOrder] = useState(false);
+  const [alarmActive, setAlarmActive] = useState(false);
 
   useEffect(() => {
-    // Inicializa o áudio com arquivo local (sem bloqueios de rede/CORS)
     audioRef.current = new Audio('/beep.wav');
   }, []);
 
@@ -236,26 +237,68 @@ function PedidosTab() {
     try {
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(e => console.warn('Audio autoplay blocked by browser', e));
+        audioRef.current.play().catch(e => console.warn('Audio autoplay blocked', e));
       }
     } catch (e) {
       console.warn('Audio playback failed', e);
     }
   };
 
+  // Start looping alarm
+  const startAlarm = () => {
+    if (alarmIntervalRef.current) return; // already running
+    setAlarmActive(true);
+    playBeep();
+    alarmIntervalRef.current = setInterval(() => {
+      playBeep();
+    }, 2500);
+  };
+
+  // Stop looping alarm
+  const stopAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+    setAlarmActive(false);
+    setHasNewOrder(false);
+  };
+
+  // Check for new/pending orders and manage alarm
   useEffect(() => {
-    if (orders && prevOrdersCount.current > 0 && orders.length > prevOrdersCount.current) {
-      setHasNewOrder(true);
-      toast('🔔 Novo pedido recebido!', {
-        duration: 8000,
-        style: { background: '#C9A227', color: '#0A0A0A', fontWeight: 'bold' },
-      });
-      if (audioEnabled) {
-        playBeep();
+    if (!orders) return;
+
+    const pendingOrders = orders.filter((o: any) => o.status === 'pending');
+    const hasPending = pendingOrders.length > 0;
+    const newOrderArrived = prevOrdersCount.current > 0 && orders.length > prevOrdersCount.current;
+
+    if (hasPending && audioEnabled) {
+      if (!alarmIntervalRef.current) {
+        setHasNewOrder(true);
+        if (newOrderArrived) {
+          toast('🔔 Novo pedido recebido! Aceite para silenciar.', {
+            duration: 10000,
+            style: { background: '#C9A227', color: '#0A0A0A', fontWeight: 'bold' },
+          });
+        }
+        startAlarm();
+      }
+    } else {
+      // No more pending orders — stop alarm
+      if (alarmIntervalRef.current) {
+        stopAlarm();
       }
     }
-    if (orders) prevOrdersCount.current = orders.length;
+
+    prevOrdersCount.current = orders.length;
   }, [orders, audioEnabled]);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
+    };
+  }, []);
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
@@ -342,11 +385,11 @@ function PedidosTab() {
             localStorage.setItem('audioEnabled', String(nextState));
             if (nextState) {
               playBeep();
-              toast.success('Som ativado! Você deve ouvir um bipe.', { style: { background: '#C9A227', color: '#111', fontWeight: 'bold' } });
+              toast.success('Som ativado! Você ouvirá um alerta para cada novo pedido pendente.', { style: { background: '#C9A227', color: '#111', fontWeight: 'bold' } });
             } else {
+              stopAlarm();
               toast('Som desativado.', { style: { background: '#111', color: '#8A7A5A' } });
             }
-            setHasNewOrder(false);
           }}
           className="px-4 py-2 rounded font-semibold text-sm flex items-center gap-2 transition-all relative"
           style={{ 
@@ -361,11 +404,40 @@ function PedidosTab() {
             <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-ping" style={{ background: '#C9A227' }} />
           )}
         </button>
+        {/* Silenciar alarm button — shown while alarm is ringing */}
+        {alarmActive && (
+          <button
+            onClick={stopAlarm}
+            className="px-4 py-2 rounded font-bold text-sm flex items-center gap-2 animate-pulse"
+            style={{ background: 'rgba(255,60,60,0.25)', color: '#FF4444', border: '2px solid rgba(255,60,60,0.6)' }}
+          >
+            🔕 Silenciar Alerta
+          </button>
+        )}
       </div>
       {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
         <div className="space-y-4">
           {orders.map((order: any) => (
-            <div key={order.id} className="rounded-2xl p-6" style={{ background: 'rgba(10,16,13,0.85)', border: '1px solid rgba(201,162,39,0.3)', boxShadow: '0 0 30px rgba(201,162,39,0.3)' }}>
+            <div key={order.id} className="rounded-2xl p-6" style={{ background: order.status === 'pending' ? 'rgba(201,162,39,0.07)' : 'rgba(10,16,13,0.85)', border: order.status === 'pending' ? '2px solid rgba(201,162,39,0.6)' : '1px solid rgba(201,162,39,0.3)', boxShadow: order.status === 'pending' ? '0 0 30px rgba(201,162,39,0.4)' : '0 0 30px rgba(201,162,39,0.15)' }}>
+              {/* Pending banner + Accept button */}
+              {order.status === 'pending' && (
+                <div className="flex items-center justify-between mb-4 p-3 rounded-xl" style={{ background: 'rgba(201,162,39,0.15)', border: '1px solid rgba(201,162,39,0.4)' }}>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full animate-ping inline-block" style={{ background: '#C9A227' }} />
+                    <span className="font-bold text-sm" style={{ color: '#C9A227' }}>⚠️ PEDIDO AGUARDANDO ACEITE</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await handleStatusChange(order.id, 'confirmed');
+                      refetch();
+                    }}
+                    className="px-5 py-2 rounded-lg font-bold text-sm transition-all hover:opacity-90 active:scale-95"
+                    style={{ background: '#22c55e', color: '#fff', boxShadow: '0 0 15px rgba(34,197,94,0.4)' }}
+                  >
+                    ✅ ACEITAR PEDIDO
+                  </button>
+                </div>
+              )}
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="font-bold flex items-center gap-2" style={{ color: '#F5F0E8' }}>
