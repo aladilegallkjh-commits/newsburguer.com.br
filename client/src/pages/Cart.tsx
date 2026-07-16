@@ -164,7 +164,6 @@ export default function Cart() {
   const [pixFinalTotal, setPixFinalTotal] = React.useState(0);
   const [pixItems, setPixItems] = React.useState(items);
   const [pixName, setPixName] = React.useState('');
-  const [pixName, setPixName] = React.useState('');
   
   // Delivery State
   const [deliveryType, setDeliveryType] = React.useState<'delivery' | 'pickup'>('pickup');
