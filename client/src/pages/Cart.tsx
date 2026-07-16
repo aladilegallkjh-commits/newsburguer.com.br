@@ -164,6 +164,18 @@ export default function Cart() {
   const [pixFinalTotal, setPixFinalTotal] = React.useState(0);
   const [pixItems, setPixItems] = React.useState(items);
   const [pixName, setPixName] = React.useState('');
+  const [pixName, setPixName] = React.useState('');
+  
+  // Delivery State
+  const [deliveryType, setDeliveryType] = React.useState<'delivery' | 'pickup'>('pickup');
+  const [cep, setCep] = React.useState(() => localStorage.getItem('customerCep') || '');
+  const [street, setStreet] = React.useState(() => localStorage.getItem('customerStreet') || '');
+  const [neighborhood, setNeighborhood] = React.useState(() => localStorage.getItem('customerNeighborhood') || '');
+  const [city, setCity] = React.useState(() => localStorage.getItem('customerCity') || '');
+  const [number, setNumber] = React.useState(() => localStorage.getItem('customerNumber') || '');
+  const [complement, setComplement] = React.useState(() => localStorage.getItem('customerComplement') || '');
+  const [cepLoading, setCepLoading] = React.useState(false);
+
   const { data: settings } = trpc.storeSettings.get.useQuery();
   const isStoreOpen = settings?.isOpen === 1;
 
@@ -179,6 +191,34 @@ export default function Cart() {
     localStorage.setItem('customerPhone', val);
   };
 
+  const handleCepChange = async (val: string) => {
+    const rawCep = val.replace(/\D/g, '');
+    setCep(val);
+    localStorage.setItem('customerCep', val);
+    
+    if (rawCep.length === 8) {
+      setCepLoading(true);
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setStreet(data.logradouro);
+          setNeighborhood(data.bairro);
+          setCity(data.localidade);
+          localStorage.setItem('customerStreet', data.logradouro);
+          localStorage.setItem('customerNeighborhood', data.bairro);
+          localStorage.setItem('customerCity', data.localidade);
+        } else {
+          toast.error('CEP não encontrado');
+        }
+      } catch (err) {
+        toast.error('Erro ao buscar CEP');
+      } finally {
+        setCepLoading(false);
+      }
+    }
+  };
+
   const handleCouponApplied = (discount: number, couponCode: string) => {
     setAppliedDiscount(discount);
     setAppliedCoupon(couponCode);
@@ -190,7 +230,10 @@ export default function Cart() {
   };
 
   const handleSendWhatsApp = () => {
-    const message = formatOrderForWhatsApp(pixItems, pixFinalTotal, pixName, customerPhone);
+    const formattedAddress = deliveryType === 'delivery' 
+      ? `${street}, ${number}${complement ? ` (${complement})` : ''} - ${neighborhood}, ${city} - CEP: ${cep}`
+      : undefined;
+    const message = formatOrderForWhatsApp(pixItems, pixFinalTotal, pixName, customerPhone, deliveryType, formattedAddress);
     openWhatsAppChat(message);
     setShowPix(false);
     clearCart();
@@ -210,7 +253,10 @@ export default function Cart() {
         style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
       });
       // Fallback direto pro WhatsApp
-      const message = formatOrderForWhatsApp(items, finalTotal, customerName, customerPhone);
+      const formattedAddress = deliveryType === 'delivery' 
+        ? `${street}, ${number}${complement ? ` (${complement})` : ''} - ${neighborhood}, ${city} - CEP: ${cep}`
+        : undefined;
+      const message = formatOrderForWhatsApp(items, finalTotal, customerName, customerPhone, deliveryType, formattedAddress);
       openWhatsAppChat(message);
     }
   });
@@ -242,6 +288,20 @@ export default function Cart() {
       return;
     }
     
+    if (deliveryType === 'delivery') {
+      if (!cep.trim() || !street.trim() || !number.trim() || !neighborhood.trim() || !city.trim()) {
+        toast.error('Preencha todos os campos do endereço obrigatórios', {
+          duration: 2000,
+          style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
+        });
+        return;
+      }
+    }
+    
+    const formattedAddress = deliveryType === 'delivery' 
+      ? `${street}, ${number}${complement ? ` (${complement})` : ''} - ${neighborhood}, ${city} - CEP: ${cep}`
+      : undefined;
+    
     createOrder.mutate({
       customerName,
       customerPhone,
@@ -256,7 +316,8 @@ export default function Cart() {
       totalAmount: total,
       discount: appliedDiscount,
       finalAmount: finalTotal,
-      deliveryType: "delivery",
+      deliveryType: deliveryType,
+      address: formattedAddress,
     });
   }
 
@@ -385,8 +446,116 @@ export default function Cart() {
                       style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
                     />
                   </div>
-
                 </div>
+
+                {/* Delivery Type */}
+                <div className="mb-3 sm:mb-4">
+                  <label className="text-xs font-semibold mb-2 block" style={{ color: '#C9A227' }}>
+                    Como deseja receber?
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setDeliveryType('pickup')}
+                      className="flex-1 py-2 rounded-sm text-xs sm:text-sm font-semibold transition-colors"
+                      style={{
+                        background: deliveryType === 'pickup' ? '#C9A227' : '#0A0A0A',
+                        color: deliveryType === 'pickup' ? '#0A0A0A' : '#8A7A5A',
+                        border: '1px solid rgba(201,162,39,0.2)',
+                      }}
+                    >
+                      Retirar no Local
+                    </button>
+                    <button
+                      onClick={() => setDeliveryType('delivery')}
+                      className="flex-1 py-2 rounded-sm text-xs sm:text-sm font-semibold transition-colors"
+                      style={{
+                        background: deliveryType === 'delivery' ? '#C9A227' : '#0A0A0A',
+                        color: deliveryType === 'delivery' ? '#0A0A0A' : '#8A7A5A',
+                        border: '1px solid rgba(201,162,39,0.2)',
+                      }}
+                    >
+                      Entrega
+                    </button>
+                  </div>
+                </div>
+
+                {/* Address Info (only if delivery) */}
+                {deliveryType === 'delivery' && (
+                  <div className="mb-3 sm:mb-4 space-y-2 sm:space-y-3 animate-fade-in">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: '#C9A227' }}>
+                        CEP
+                      </label>
+                      <input
+                        type="text"
+                        value={cep}
+                        onChange={(e) => handleCepChange(e.target.value)}
+                        placeholder="00000-000"
+                        className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
+                        style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                      />
+                      {cepLoading && <span className="text-xs text-[#8A7A5A] mt-1 block">Buscando CEP...</span>}
+                    </div>
+                    
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="col-span-3">
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#C9A227' }}>Rua</label>
+                        <input
+                          type="text"
+                          value={street}
+                          onChange={(e) => setStreet(e.target.value)}
+                          className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
+                          style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#C9A227' }}>Nº</label>
+                        <input
+                          type="text"
+                          value={number}
+                          onChange={(e) => setNumber(e.target.value)}
+                          className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
+                          style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#C9A227' }}>Bairro</label>
+                        <input
+                          type="text"
+                          value={neighborhood}
+                          onChange={(e) => setNeighborhood(e.target.value)}
+                          className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
+                          style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#C9A227' }}>Cidade</label>
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
+                          style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: '#C9A227' }}>Complemento</label>
+                      <input
+                        type="text"
+                        value={complement}
+                        onChange={(e) => setComplement(e.target.value)}
+                        placeholder="Apto, Bloco, etc (Opcional)"
+                        className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
+                        style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Divider */}
                 <div style={{ height: '1px', background: 'rgba(201,162,39,0.15)', marginBottom: '1rem' }} />

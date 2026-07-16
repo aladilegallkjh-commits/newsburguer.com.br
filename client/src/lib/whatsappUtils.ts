@@ -3,7 +3,7 @@ import { formatPrice } from './menuData';
 
 export const WHATSAPP_NUMBER = '5541987019702'; // New S'Burguer
 
-export function formatOrderForWhatsApp(items: CartItem[], total: number, customerName?: string, customerPhone?: string): string {
+export function formatOrderForWhatsApp(items: CartItem[], total: number, customerName?: string, customerPhone?: string, deliveryType?: 'delivery' | 'pickup', address?: string): string {
   const timestamp = new Date().toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
@@ -19,6 +19,13 @@ export function formatOrderForWhatsApp(items: CartItem[], total: number, custome
   }
   if (customerName || customerPhone) {
     message += `\n`;
+  }
+  
+  if (deliveryType === 'delivery' && address) {
+    message += `🛵 *Tipo:* Entrega\n`;
+    message += `📍 *Endereço:* ${address}\n\n`;
+  } else if (deliveryType === 'pickup') {
+    message += `🛍️ *Tipo:* Retirar no Local\n\n`;
   }
 
   items.forEach((item, index) => {
