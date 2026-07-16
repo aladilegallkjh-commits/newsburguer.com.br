@@ -28,7 +28,7 @@ export default function Menu() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const [activeCategory, setActiveCategory] = useState('hamburgers');
+  const [activeCategory, setActiveCategory] = useState('burgers');
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
   const { addItem } = useCart();
