@@ -475,7 +475,7 @@ export default function Cart() {
       {showPix && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)' }}>
           <div
-            className="w-full max-w-sm rounded-2xl p-5 relative"
+            className="w-full max-w-sm rounded-2xl p-5 relative max-h-[95vh] overflow-y-auto scrollbar-hide"
             style={{ background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.3)' }}
           >
             {/* Fechar */}

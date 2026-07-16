@@ -68,12 +68,12 @@ export default function PixQRCode({ valor, pedidoNumero }: PixQRCodeProps) {
       {/* QR Code */}
       <div
         className="p-3 rounded-lg flex justify-center"
-        style={{ background: '#FFFFFF', minWidth: 220, minHeight: 220 }}
+        style={{ background: '#FFFFFF', minWidth: 180, minHeight: 180 }}
       >
         {pixPayload ? (
           <QRCodeCanvas
             value={pixPayload}
-            size={220}
+            size={180}
             bgColor="#FFFFFF"
             fgColor="#000000"
             level="L"
