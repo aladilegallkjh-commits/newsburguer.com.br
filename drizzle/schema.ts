@@ -207,6 +207,7 @@ export const menuItems = sqliteTable("menuItems", {
   ingredients: text("ingredients", { mode: "json" }),
   extras: text("extras", { mode: "json" }),
   isActive: integer("isActive").default(1),
+  isAvailable: integer("isAvailable").default(1),
   displayOrder: integer("displayOrder").default(0),
   createdAt: integer("createdAt", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`).notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`).notNull(),
