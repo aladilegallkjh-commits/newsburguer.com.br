@@ -17,6 +17,8 @@ import CustomBurger from "./pages/CustomBurger";
 import Ratings from "./pages/Ratings";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import FloatingCartButton from "./components/FloatingCartButton";
+
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -46,6 +48,7 @@ function App() {
         <CartProvider>
           <TooltipProvider>
             <Toaster />
+            <FloatingCartButton />
             <Router />
           </TooltipProvider>
         </CartProvider>
