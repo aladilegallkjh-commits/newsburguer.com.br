@@ -41,6 +41,10 @@ export default function GlobalOrderAlarm() {
       clearInterval(alarmIntervalRef.current);
       alarmIntervalRef.current = null;
     }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     setAlarmActive(false);
     setHasNewOrder(false);
   };
