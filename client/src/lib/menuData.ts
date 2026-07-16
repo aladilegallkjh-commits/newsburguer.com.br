@@ -30,11 +30,11 @@ export interface ProductCustomization {
 }
 
 export const categories: MenuCategory[] = [
-  { id: 'burgers', name: 'Hambúrgueres', emoji: '🍔' },
+  { id: 'hamburgers', name: 'Hambúrgueres', emoji: '🍔' },
   { id: 'hotdogs', name: 'Hot Dogs', emoji: '🌭' },
   { id: 'combos', name: 'Combos', emoji: '🔥' },
   { id: 'drinks', name: 'Bebidas', emoji: '🥤' },
-  { id: 'custom', name: 'Crie Seu Lanche', emoji: '🛠️' },
+  { id: 'custom', name: 'Crie Seu Lanche', emoji: '👨‍🍳' },
 ];
 
 export interface CustomIngredient {
