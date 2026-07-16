@@ -6,6 +6,7 @@ import { trpc } from '@/lib/trpc';
 import MenuImageUpload from '@/components/MenuImageUpload';
 import EditMenuItemImageModal from '@/components/EditMenuItemImageModal';
 import EditMenuItemModal from '@/components/EditMenuItemModal';
+import GlobalOrderAlarm from '@/components/GlobalOrderAlarm';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 
@@ -197,6 +198,7 @@ export default function AdminDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-6">
+              <GlobalOrderAlarm />
               <StoreToggle />
               <div className="text-sm" style={{ color: '#8A7A5A' }}>
                 {new Date().toLocaleDateString('pt-BR')}
@@ -222,83 +224,6 @@ function PedidosTab() {
   const { data: drivers } = trpc.drivers.getAll.useQuery();
   const updateStatus = trpc.orders.updateStatus.useMutation();
   const assignDriver = trpc.orders.assignDriver.useMutation();
-  const prevOrdersCount = useRef(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [audioEnabled, setAudioEnabled] = useState(() => localStorage.getItem('audioEnabled') === 'true');
-  const [hasNewOrder, setHasNewOrder] = useState(false);
-  const [alarmActive, setAlarmActive] = useState(false);
-
-  useEffect(() => {
-    audioRef.current = new Audio('/phone.mp3');
-  }, []);
-
-  const playBeep = () => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(e => console.warn('Audio autoplay blocked', e));
-      }
-    } catch (e) {
-      console.warn('Audio playback failed', e);
-    }
-  };
-
-  // Start looping alarm
-  const startAlarm = () => {
-    if (alarmIntervalRef.current) return; // already running
-    setAlarmActive(true);
-    playBeep();
-    alarmIntervalRef.current = setInterval(() => {
-      playBeep();
-    }, 2500);
-  };
-
-  // Stop looping alarm
-  const stopAlarm = () => {
-    if (alarmIntervalRef.current) {
-      clearInterval(alarmIntervalRef.current);
-      alarmIntervalRef.current = null;
-    }
-    setAlarmActive(false);
-    setHasNewOrder(false);
-  };
-
-  // Check for new/pending orders and manage alarm
-  useEffect(() => {
-    if (!orders) return;
-
-    const pendingOrders = orders.filter((o: any) => o.status === 'pending');
-    const hasPending = pendingOrders.length > 0;
-    const newOrderArrived = prevOrdersCount.current > 0 && orders.length > prevOrdersCount.current;
-
-    if (hasPending && audioEnabled) {
-      if (!alarmIntervalRef.current) {
-        setHasNewOrder(true);
-        if (newOrderArrived) {
-          toast('🔔 Novo pedido recebido! Aceite para silenciar.', {
-            duration: 10000,
-            style: { background: '#C9A227', color: '#0A0A0A', fontWeight: 'bold' },
-          });
-        }
-        startAlarm();
-      }
-    } else {
-      // No more pending orders — stop alarm
-      if (alarmIntervalRef.current) {
-        stopAlarm();
-      }
-    }
-
-    prevOrdersCount.current = orders.length;
-  }, [orders, audioEnabled]);
-
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
-    };
-  }, []);
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
@@ -378,42 +303,6 @@ function PedidosTab() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-xl font-bold" style={{ color: '#F5F0E8' }}>Gerenciar Pedidos</h2>
-        <button
-          onClick={() => {
-            const nextState = !audioEnabled;
-            setAudioEnabled(nextState);
-            localStorage.setItem('audioEnabled', String(nextState));
-            if (nextState) {
-              playBeep();
-              toast.success('Som ativado! Você ouvirá um alerta para cada novo pedido pendente.', { style: { background: '#C9A227', color: '#111', fontWeight: 'bold' } });
-            } else {
-              stopAlarm();
-              toast('Som desativado.', { style: { background: '#111', color: '#8A7A5A' } });
-            }
-          }}
-          className="px-4 py-2 rounded font-semibold text-sm flex items-center gap-2 transition-all relative"
-          style={{ 
-            background: audioEnabled ? 'rgba(201,162,39,0.2)' : 'rgba(255,107,107,0.1)', 
-            color: audioEnabled ? '#C9A227' : '#FF6B6B',
-            border: `1px solid ${audioEnabled ? 'rgba(201,162,39,0.5)' : 'rgba(255,107,107,0.3)'}`
-          }}
-        >
-          {audioEnabled ? <Bell size={16} /> : <Bell size={16} className="opacity-50" />}
-          {audioEnabled ? 'Som Ativado' : 'Ativar Som de Notificação'}
-          {hasNewOrder && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-ping" style={{ background: '#C9A227' }} />
-          )}
-        </button>
-        {/* Silenciar alarm button — shown while alarm is ringing */}
-        {alarmActive && (
-          <button
-            onClick={stopAlarm}
-            className="px-4 py-2 rounded font-bold text-sm flex items-center gap-2 animate-pulse"
-            style={{ background: 'rgba(255,60,60,0.25)', color: '#FF4444', border: '2px solid rgba(255,60,60,0.6)' }}
-          >
-            🔕 Silenciar Alerta
-          </button>
-        )}
       </div>
       {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
         <div className="space-y-4">
