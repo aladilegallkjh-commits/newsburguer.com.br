@@ -241,14 +241,17 @@ export const appRouter = router({
       .input(z.object({ code: z.string(), type: z.enum(["percentage", "fixed"]), discountValue: z.number(), minOrderAmount: z.number().optional(), maxUses: z.number().optional(), expiresAt: z.date().optional() }))
       .mutation(async ({ input, ctx }) => {
         if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
-        return db.createCoupon(input as any);
+        const { type, ...rest } = input;
+        return db.createCoupon({ ...rest, discountType: type });
       }),
     update: protectedProcedure
       .input(z.object({ id: z.number(), code: z.string().optional(), type: z.enum(["percentage", "fixed"]).optional(), discountValue: z.number().optional(), isActive: z.number().optional() }))
       .mutation(async ({ input, ctx }) => {
         if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
-        const { id, ...data } = input;
-        return db.updateCoupon(id, data as any);
+        const { id, type, ...data } = input;
+        const updateData: any = { ...data };
+        if (type) updateData.discountType = type;
+        return db.updateCoupon(id, updateData);
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
