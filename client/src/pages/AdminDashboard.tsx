@@ -315,16 +315,30 @@ function PedidosTab() {
                     <span className="w-2.5 h-2.5 rounded-full animate-ping inline-block" style={{ background: '#C9A227' }} />
                     <span className="font-bold text-sm" style={{ color: '#C9A227' }}>⚠️ PEDIDO AGUARDANDO ACEITE</span>
                   </div>
-                  <button
-                    onClick={async () => {
-                      await handleStatusChange(order.id, 'confirmed');
-                      refetch();
-                    }}
-                    className="px-5 py-2 rounded-lg font-bold text-sm transition-all hover:opacity-90 active:scale-95"
-                    style={{ background: '#22c55e', color: '#fff', boxShadow: '0 0 15px rgba(34,197,94,0.4)' }}
-                  >
-                    ✅ ACEITAR PEDIDO
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (window.confirm('Tem certeza que deseja recusar e cancelar este pedido?')) {
+                          await handleStatusChange(order.id, 'cancelled');
+                          refetch();
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg font-bold text-sm transition-all hover:opacity-90 active:scale-95"
+                      style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)' }}
+                    >
+                      ❌ RECUSAR
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await handleStatusChange(order.id, 'confirmed');
+                        refetch();
+                      }}
+                      className="px-5 py-2 rounded-lg font-bold text-sm transition-all hover:opacity-90 active:scale-95"
+                      style={{ background: '#22c55e', color: '#fff', boxShadow: '0 0 15px rgba(34,197,94,0.4)' }}
+                    >
+                      ✅ ACEITAR PEDIDO
+                    </button>
+                  </div>
                 </div>
               )}
               <div className="flex items-start justify-between mb-4">
