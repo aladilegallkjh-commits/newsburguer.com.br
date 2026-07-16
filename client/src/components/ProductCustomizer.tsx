@@ -219,13 +219,13 @@ export default function ProductCustomizer({
               placeholder="Ex: Carne bem passada, pouco molho..."
               className="w-full p-3 rounded-lg text-sm resize-none"
               style={{
-                background: '#0D1A14',
-                border: '1px solid rgba(201,162,39,0.15)',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(201,162,39,0.2)',
                 color: '#F5F0E8',
               }}
               rows={3}
             />
-            <p className="text-xs mt-2" style={{ color: '#4A3A2A' }}>
+            <p className="text-xs mt-2" style={{ color: '#8A7A5A' }}>
               {notes.length}/200 caracteres
             </p>
           </div>
