@@ -62,9 +62,6 @@ export default function Menu() {
       return s;
     });
 
-    toast.success(`${product.name} adicionado ao pedido!`, {
-      style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
-    });
 
     if (goToCart) {
       setTimeout(() => {
@@ -329,3 +326,4 @@ export default function Menu() {
     </div>
   );
 }
+

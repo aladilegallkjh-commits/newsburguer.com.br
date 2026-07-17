@@ -128,9 +128,6 @@ export default function CustomBurger() {
       customizationPrice: 0,
     });
 
-    toast.success('Lanche especial adicionado ao carrinho! 🎉', {
-      style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
-    });
 
     setTimeout(() => {
       setIsAdding(false);
