@@ -34,7 +34,7 @@ export default function Home() {
 
       {/* Hero Section with Parallax */}
       <section
-        className="relative min-h-screen flex items-center justify-center overflow-hidden pt-12 md:pt-16"
+        className="relative min-h-screen flex items-center justify-center pt-24 md:pt-28"
         style={{ background: '#0A0A0A' }}
       >
         {/* Parallax background image */}
