@@ -4,7 +4,10 @@ import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 
 export default function GlobalOrderAlarm() {
-  const { data: orders } = trpc.orders.getAll.useQuery(undefined, { refetchInterval: 5000 });
+  const { data: orders } = trpc.orders.getAll.useQuery(undefined, { 
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true 
+  });
   const prevOrdersCount = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);

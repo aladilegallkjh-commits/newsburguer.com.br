@@ -268,27 +268,38 @@ function PedidosTab() {
   const handlePrint = (order: any) => {
     const printWindow = window.open('', '', 'width=300,height=600');
     if (!printWindow) return;
-    printWindow.document.write(`
-      <html><head><style>
-        body { font-family: monospace; font-size: 14px; margin: 0; padding: 10px; width: 80mm; }
-        .center { text-align: center; }
-        .line { border-bottom: 1px dashed black; margin: 10px 0; }
-        h1, h2 { margin: 5px 0; }
-      </style></head><body>
-        <div class="center">
-          <h2>NEW S'BURGUER</h2>
+    
+    const isDelivery = order.deliveryType === 'delivery';
+    
+    const generateVia = (viaName: string) => `
+        <div class="center" style="margin-top: 15px;">
+          <h3 style="margin: 0; padding: 5px; border-top: 1px dashed black; border-bottom: 1px dashed black;">${viaName}</h3>
+          <h2 style="margin-top: 10px;">NEW S'BURGUER</h2>
           <p>Pedido: ${order.orderNumber}</p>
           <p>${new Date(order.createdAt).toLocaleString('pt-BR')}</p>
         </div>
         <div class="line"></div>
         <p><b>Cliente:</b> ${order.customerName}</p>
         <p><b>Telefone:</b> ${order.customerPhone}</p>
-        <p><b>Entrega:</b> ${order.deliveryType === 'delivery' ? 'Delivery' : 'Retirada'}</p>
+        <p><b>Entrega:</b> ${isDelivery ? 'Delivery' : 'Retirada'}</p>
         ${order.address ? `<p><b>Endereço:</b> ${order.address}</p>` : ''}
         <div class="line"></div>
         ${Array.isArray(order.items) ? order.items.map((i:any) => `<p>${i.quantity}x ${i.name} (R$ ${(i.price * i.quantity).toFixed(2)})</p>`).join('') : ''}
         <div class="line"></div>
         <p><b>Total: R$ ${parseFloat(order.finalAmount).toFixed(2)}</b></p>
+        <br/><br/>
+    `;
+
+    printWindow.document.write(`
+      <html><head><style>
+        body { font-family: monospace; font-size: 14px; margin: 0; padding: 10px; width: 80mm; }
+        .center { text-align: center; }
+        .line { border-bottom: 1px dashed black; margin: 10px 0; }
+        h1, h2, h3 { margin: 5px 0; }
+      </style></head><body>
+        ${generateVia('1ª VIA - LOJA')}
+        ${generateVia('2ª VIA - CLIENTE')}
+        ${isDelivery ? generateVia('3ª VIA - MOTOBOY') : ''}
       </body></html>
     `);
     printWindow.document.close();
