@@ -512,7 +512,7 @@ export async function deleteDriver(id: number) {
 export async function getCoupons() {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
-  return db.select().from(coupons);
+  return db.select().from(coupons).where(eq(coupons.isActive, 1));
 }
 export async function createCoupon(data: InsertCoupon) {
   const db = await getDb();
@@ -527,7 +527,7 @@ export async function updateCoupon(id: number, data: Partial<InsertCoupon>) {
 export async function deleteCoupon(id: number) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
-  return db.update(coupons).set({ isActive: 0 }).where(eq(coupons.id, id));
+  return db.delete(coupons).where(eq(coupons.id, id));
 }
 export async function updateOrderDriver(orderId: number, driverId: number | null) {
   const db = await getDb();

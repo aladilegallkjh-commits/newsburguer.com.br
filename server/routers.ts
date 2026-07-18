@@ -63,6 +63,7 @@ export const appRouter = router({
           ),
           totalAmount: z.number().min(0),
           discount: z.number().min(0).optional(),
+          deliveryFee: z.number().min(0).optional(),
           finalAmount: z.number().min(0),
           deliveryType: z.enum(["delivery", "pickup"]),
           address: z.string().optional(),
@@ -83,6 +84,7 @@ export const appRouter = router({
           items: input.items as OrderItem[],
           totalAmount: input.totalAmount,
           discount: input.discount || 0,
+          deliveryFee: input.deliveryFee || 0,
           finalAmount: input.finalAmount,
           deliveryType: input.deliveryType as any,
           address: input.address,
@@ -427,10 +429,80 @@ export const appRouter = router({
           logoUrl: z.string().optional(),
           bannerUrl: z.string().optional(),
           description: z.string().optional(),
+          freeDeliveryDistance: z.number().optional(),
+          baseDeliveryFee: z.number().optional(),
+          deliveryFeePerKm: z.number().optional(),
+          maxDeliveryDistance: z.number().optional(),
+          storeLatitude: z.number().optional(),
+          storeLongitude: z.number().optional(),
         })
       )
       .mutation(async ({ input }) => {
         return db.updateStoreSettings(input);
+      }),
+      
+    calculateDelivery: publicProcedure
+      .input(
+        z.object({
+          address: z.string().min(1),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const settings = await db.getStoreSettings();
+        const maxDist = settings?.maxDeliveryDistance || 10;
+        const baseFee = settings?.baseDeliveryFee || 0;
+        const perKmFee = settings?.deliveryFeePerKm || 0;
+        const freeDist = settings?.freeDeliveryDistance || 6;
+        const storeLat = settings?.storeLatitude;
+        const storeLon = settings?.storeLongitude;
+        
+        if (!storeLat || !storeLon) {
+          return { deliverable: true, distance: 0, fee: 0 };
+        }
+        
+        try {
+          // Geocode using Nominatim
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input.address)}`, {
+            headers: { 'User-Agent': 'NewsBurguerApp/1.0' }
+          });
+          const data = await res.json();
+          
+          if (!data || data.length === 0) {
+            // Fallback se não encontrar: retorna taxa 0 mas diz que entrega (deixa passar com aviso)
+            return { deliverable: true, distance: 0, fee: 0, warning: "Endereço não encontrado com precisão." };
+          }
+          
+          const customerLat = parseFloat(data[0].lat);
+          const customerLon = parseFloat(data[0].lon);
+          
+          // Haversine
+          const R = 6371; // km
+          const dLat = (customerLat - storeLat) * Math.PI / 180;
+          const dLon = (customerLon - storeLon) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(storeLat * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
+          
+          if (distance > 6) {
+            return { deliverable: false, distance, fee: 0, message: `Fora da área de entrega (MÁX: 6km). Sua distância: ${distance.toFixed(1)}km.` };
+          }
+          
+          let fee = 0;
+          if (distance <= 4) {
+            fee = 0;
+          } else if (distance <= 5) {
+            fee = 2;
+          } else if (distance <= 6) {
+            fee = 6;
+          }
+          
+          return { deliverable: true, distance, fee };
+        } catch (e) {
+          console.error("Erro no geocoding", e);
+          return { deliverable: true, distance: 0, fee: 0, warning: "Erro ao calcular distância." };
+        }
       }),
   }),
 

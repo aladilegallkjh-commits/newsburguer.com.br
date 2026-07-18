@@ -36,6 +36,7 @@ export const orders = sqliteTable("orders", {
   discount: real("discount").default(0),
   couponId: integer("couponId"),
   finalAmount: real("finalAmount").notNull(),
+  deliveryFee: real("deliveryFee").default(0),
   
   deliveryType: text("deliveryType", { enum: ["delivery", "pickup"] }).notNull(),
   address: text("address"),
@@ -188,6 +189,12 @@ export const storeSettings = sqliteTable("storeSettings", {
   logoUrl: text("logoUrl"),
   bannerUrl: text("bannerUrl"),
   description: text("description"),
+  freeDeliveryDistance: real("freeDeliveryDistance").default(6),
+  baseDeliveryFee: real("baseDeliveryFee").default(0),
+  deliveryFeePerKm: real("deliveryFeePerKm").default(0),
+  maxDeliveryDistance: real("maxDeliveryDistance").default(10),
+  storeLatitude: real("storeLatitude"),
+  storeLongitude: real("storeLongitude"),
   updatedAt: integer("updatedAt", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`).notNull(),
 });
 

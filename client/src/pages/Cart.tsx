@@ -174,11 +174,39 @@ export default function Cart() {
   const [number, setNumber] = React.useState(() => localStorage.getItem('customerNumber') || '');
   const [complement, setComplement] = React.useState(() => localStorage.getItem('customerComplement') || '');
   const [cepLoading, setCepLoading] = React.useState(false);
+  const [deliveryFee, setDeliveryFee] = React.useState(0);
+  const [deliveryMessage, setDeliveryMessage] = React.useState('');
+  const [isDeliverable, setIsDeliverable] = React.useState(true);
+  const [calculatingDelivery, setCalculatingDelivery] = React.useState(false);
 
   const { data: settings } = trpc.storeSettings.get.useQuery();
   const isStoreOpen = settings?.isOpen === 1;
 
-  const finalTotal = Math.max(0, total - appliedDiscount);
+  const calculateDeliveryMutation = trpc.storeSettings.calculateDelivery.useMutation({
+    onSuccess: (data) => {
+      setIsDeliverable(data.deliverable);
+      if (data.deliverable) {
+        setDeliveryFee(data.fee);
+        setDeliveryMessage(data.warning || (data.fee === 0 ? 'Entrega Grátis' : `Taxa de entrega: ${formatPrice(data.fee)}`));
+      } else {
+        setDeliveryFee(0);
+        setDeliveryMessage(data.message || 'Fora da área de entrega');
+      }
+      setCalculatingDelivery(false);
+    },
+    onError: () => {
+      setCalculatingDelivery(false);
+    }
+  });
+
+  const triggerDeliveryCalc = (addrStreet: string, addrNum: string, addrCity: string) => {
+    if (addrStreet && addrNum && addrCity) {
+      setCalculatingDelivery(true);
+      calculateDeliveryMutation.mutate({ address: `${addrStreet}, ${addrNum}, ${addrCity}` });
+    }
+  };
+
+  const finalTotal = Math.max(0, total - appliedDiscount) + (deliveryType === 'delivery' ? deliveryFee : 0);
 
   const handleNameChange = (val: string) => {
     setCustomerName(val);
@@ -207,6 +235,8 @@ export default function Cart() {
           localStorage.setItem('customerStreet', data.logradouro);
           localStorage.setItem('customerNeighborhood', data.bairro);
           localStorage.setItem('customerCity', data.localidade);
+          // if number is already filled, we can calculate
+          if (number) triggerDeliveryCalc(data.logradouro, number, data.localidade);
         } else {
           toast.error('CEP não encontrado');
         }
@@ -232,7 +262,7 @@ export default function Cart() {
     const formattedAddress = deliveryType === 'delivery' 
       ? `${street}, ${number}${complement ? ` (${complement})` : ''} - ${neighborhood}, ${city} - CEP: ${cep}`
       : undefined;
-    const message = formatOrderForWhatsApp(pixItems, pixFinalTotal, pixName, customerPhone, deliveryType, formattedAddress);
+    const message = formatOrderForWhatsApp(pixItems, pixFinalTotal, pixName, customerPhone, deliveryType, formattedAddress, deliveryType === 'delivery' ? deliveryFee : undefined);
     openWhatsAppChat(message);
     setShowPix(false);
     clearCart();
@@ -255,7 +285,7 @@ export default function Cart() {
       const formattedAddress = deliveryType === 'delivery' 
         ? `${street}, ${number}${complement ? ` (${complement})` : ''} - ${neighborhood}, ${city} - CEP: ${cep}`
         : undefined;
-      const message = formatOrderForWhatsApp(items, finalTotal, customerName, customerPhone, deliveryType, formattedAddress);
+      const message = formatOrderForWhatsApp(items, finalTotal, customerName, customerPhone, deliveryType, formattedAddress, deliveryType === 'delivery' ? deliveryFee : undefined);
       openWhatsAppChat(message);
     }
   });
@@ -314,6 +344,7 @@ export default function Cart() {
       })),
       totalAmount: total,
       discount: appliedDiscount,
+      deliveryFee: deliveryType === 'delivery' ? deliveryFee : 0,
       finalAmount: finalTotal,
       deliveryType: deliveryType,
       address: formattedAddress,
@@ -512,7 +543,10 @@ export default function Cart() {
                         <input
                           type="text"
                           value={number}
-                          onChange={(e) => setNumber(e.target.value)}
+                          onChange={(e) => {
+                            setNumber(e.target.value);
+                            if (street && city) triggerDeliveryCalc(street, e.target.value, city);
+                          }}
                           className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
                           style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
                         />
@@ -584,6 +618,18 @@ export default function Cart() {
                       <span style={{ color: '#C9A227' }}>-{formatPrice(appliedDiscount)}</span>
                     </div>
                   )}
+                  {deliveryType === 'delivery' && (
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span style={{ color: '#8A7A5A' }}>Entrega</span>
+                      {calculatingDelivery ? (
+                        <span style={{ color: '#8A7A5A' }}>Calculando...</span>
+                      ) : (
+                        <span style={{ color: isDeliverable ? '#F5F0E8' : '#ff4444' }}>
+                          {deliveryMessage || formatPrice(deliveryFee)}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Divider */}
@@ -607,15 +653,15 @@ export default function Cart() {
 
                 <button
                   onClick={handleOrder}
-                  disabled={items.length === 0 || createOrder.isPending || !isStoreOpen}
+                  disabled={items.length === 0 || createOrder.isPending || !isStoreOpen || (deliveryType === 'delivery' && !isDeliverable)}
                   className="w-full py-3 sm:py-3 rounded-sm font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mb-2 sm:mb-3 min-h-[44px]"
                   style={{
-                    background: items.length > 0 && isStoreOpen ? '#C9A227' : 'rgba(201,162,39,0.3)',
-                    color: items.length > 0 && isStoreOpen ? '#0A0A0A' : '#4A3A2A',
+                    background: items.length > 0 && isStoreOpen && (deliveryType !== 'delivery' || isDeliverable) ? '#C9A227' : 'rgba(201,162,39,0.3)',
+                    color: items.length > 0 && isStoreOpen && (deliveryType !== 'delivery' || isDeliverable) ? '#0A0A0A' : '#4A3A2A',
                   }}
                 >
                   <MessageCircle size={18} />
-                  {createOrder.isPending ? 'Processando...' : !isStoreOpen ? 'Loja Fechada' : 'Finalizar Pedido'}
+                  {createOrder.isPending ? 'Processando...' : !isStoreOpen ? 'Loja Fechada' : (deliveryType === 'delivery' && !isDeliverable) ? 'Fora da Área' : 'Finalizar Pedido'}
                 </button>
 
                 {/* Clear cart button */}

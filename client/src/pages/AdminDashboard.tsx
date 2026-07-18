@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { LogOut, Menu, X, Settings, FileText, Clock, Trophy, ShoppingBag, Plus, Trash2, Edit2, Download, Bike, Ticket, Printer, Bell, Power } from 'lucide-react';
+import { LogOut, Menu, X, Settings, FileText, Clock, Trophy, ShoppingBag, Plus, Trash2, Edit2, Download, Bike, Ticket, Printer, Bell, Power, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import MenuImageUpload from '@/components/MenuImageUpload';
@@ -27,6 +27,7 @@ const menuItems: MenuItem[] = [
   { id: 'promocoes', label: 'Promoções', icon: <Trophy size={20} /> },
   { id: 'entregadores', label: 'Entregadores', icon: <Bike size={20} /> },
   { id: 'cupons', label: 'Cupons', icon: <Ticket size={20} /> },
+  { id: 'calculadora', label: 'Calculadora de Frete', icon: <MapPin size={20} /> },
 ];
 
 export default function AdminDashboard() {
@@ -210,9 +211,10 @@ export default function AdminDashboard() {
           {activeTab === 'cardapio' && <CardapioTab />}
           {activeTab === 'ingredientes' && <IngredientsTab />}
           {activeTab === 'informacoes' && <InformacoesTab />}
-          {activeTab === 'promocoes' && <PromocoesTab />}
-          {activeTab === 'entregadores' && <EntregadoresTab />}
-          {activeTab === 'cupons' && <CuponsTab />}
+          { activeTab === 'promocoes' && <PromocoesTab /> }
+          { activeTab === 'entregadores' && <EntregadoresTab /> }
+          { activeTab === 'cupons' && <CuponsTab /> }
+          { activeTab === 'calculadora' && <CalculadoraTab /> }
         </div>
       </div>
     </div>
@@ -1012,14 +1014,53 @@ function InformacoesTab() {
     state: settings?.state || '',
     openingTime: settings?.openingTime || '',
     closingTime: settings?.closingTime || '',
+    freeDeliveryDistance: settings?.freeDeliveryDistance ?? 6,
+    baseDeliveryFee: settings?.baseDeliveryFee ?? 0,
+    deliveryFeePerKm: settings?.deliveryFeePerKm ?? 0,
+    maxDeliveryDistance: settings?.maxDeliveryDistance ?? 10,
+    storeLatitude: settings?.storeLatitude || '',
+    storeLongitude: settings?.storeLongitude || '',
   });
 
   const handleSave = async () => {
     try {
-      await updateSettings.mutateAsync(formData as any);
+      await updateSettings.mutateAsync({
+        ...formData,
+        freeDeliveryDistance: Number(formData.freeDeliveryDistance),
+        baseDeliveryFee: Number(formData.baseDeliveryFee),
+        deliveryFeePerKm: Number(formData.deliveryFeePerKm),
+        maxDeliveryDistance: Number(formData.maxDeliveryDistance),
+        storeLatitude: formData.storeLatitude ? Number(formData.storeLatitude) : undefined,
+        storeLongitude: formData.storeLongitude ? Number(formData.storeLongitude) : undefined,
+      } as any);
       toast.success('Configurações atualizadas!');
     } catch (error) {
       toast.error('Erro ao atualizar configurações');
+    }
+  };
+
+  const getCoordinates = async () => {
+    if (!formData.address || !formData.city) {
+      toast.error('Preencha endereço e cidade primeiro');
+      return;
+    }
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.address + ', ' + formData.city)}`, {
+        headers: { 'User-Agent': 'NewsBurguerApp/1.0' }
+      });
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setFormData({
+          ...formData,
+          storeLatitude: data[0].lat,
+          storeLongitude: data[0].lon
+        });
+        toast.success('Coordenadas obtidas!');
+      } else {
+        toast.error('Endereço não encontrado');
+      }
+    } catch (e) {
+      toast.error('Erro ao buscar coordenadas');
     }
   };
 
@@ -1151,6 +1192,57 @@ function InformacoesTab() {
               className="w-full px-3 py-2 rounded"
               style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
             />
+          </div>
+        </div>
+
+        <h3 className="font-display text-lg font-bold mt-8 mb-4 pt-6 border-t border-[#C9A227]/20" style={{ color: '#F5F0E8' }}>
+          Configurações de Entrega
+        </h3>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2 bg-[#0A0A0A] border border-[#C9A227]/30 p-4 rounded-lg">
+            <h4 className="font-bold text-[#F5F0E8] mb-2">Regras de Frete Atuais</h4>
+            <ul className="text-sm text-[#8A7A5A] list-disc list-inside space-y-1">
+              <li>Até 4 km: <b>Grátis</b></li>
+              <li>De 4 km até 5 km: <b>R$ 2,00</b></li>
+              <li>De 5 km até 6 km: <b>R$ 6,00</b></li>
+              <li>Acima de 6 km: <b>Fora da área limite</b></li>
+            </ul>
+            <p className="text-xs text-[#8A7A5A] mt-4 italic">
+              As regras de entrega foram customizadas de forma fixa no sistema para se adequarem aos seus valores exatos.
+            </p>
+          </div>
+          
+          <div className="col-span-2">
+            <button
+              onClick={getCoordinates}
+              className="mb-4 text-sm font-semibold transition-colors hover:text-[#C9A227] underline"
+              style={{ color: '#8A7A5A' }}
+            >
+              Obter coordenadas automaticamente pelo endereço
+            </button>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm mb-2" style={{ color: '#8A7A5A' }}>Latitude</label>
+                <input
+                  type="text"
+                  value={formData.storeLatitude}
+                  onChange={(e) => setFormData({ ...formData, storeLatitude: e.target.value })}
+                  className="w-full px-3 py-2 rounded"
+                  style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-2" style={{ color: '#8A7A5A' }}>Longitude</label>
+                <input
+                  type="text"
+                  value={formData.storeLongitude}
+                  onChange={(e) => setFormData({ ...formData, storeLongitude: e.target.value })}
+                  className="w-full px-3 py-2 rounded"
+                  style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1921,7 +2013,83 @@ function CuponsTab() {
   );
 }
 
+function CalculadoraTab() {
+  const [address, setAddress] = useState('');
+  const calculateDelivery = trpc.storeSettings.calculateDelivery.useMutation();
 
+  const handleCalculate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address.trim()) return toast.error('Digite um endereço');
+    
+    try {
+      await calculateDelivery.mutateAsync({ address });
+    } catch (e) {
+      toast.error('Erro ao calcular frete');
+    }
+  };
 
+  const formatMoney = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
+  return (
+    <div>
+      <h2 className="text-xl font-display font-bold mb-6 text-[#F5F0E8]">Calculadora de Frete</h2>
+      <p className="text-sm text-[#8A7A5A] mb-6">
+        Simule o valor da entrega para um determinado endereço com base nas suas configurações atuais de raio e quilometragem.
+      </p>
 
+      <div className="p-6 rounded-xl bg-[#111] border border-[#C9A227]/20 max-w-2xl">
+        <form onSubmit={handleCalculate} className="flex gap-4 items-end mb-6">
+          <div className="flex-1">
+            <label className="block text-sm text-[#8A7A5A] mb-2">Endereço Completo (Rua, Número, Bairro, Cidade)</label>
+            <input 
+              type="text" 
+              value={address} 
+              onChange={e => setAddress(e.target.value)} 
+              placeholder="Ex: Rua XV de Novembro, 1000, Centro, Curitiba"
+              className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-3 text-white focus:outline-none focus:border-[#C9A227]" 
+            />
+          </div>
+          <button 
+            type="submit" 
+            disabled={calculateDelivery.isPending}
+            className="bg-[#C9A227] text-black px-6 py-3 rounded font-bold disabled:opacity-50 transition-all hover:brightness-110"
+          >
+            {calculateDelivery.isPending ? 'Calculando...' : 'Calcular'}
+          </button>
+        </form>
+
+        {calculateDelivery.data && (
+          <div className="mt-8 p-6 rounded-lg bg-[#0A0A0A] border border-[#C9A227]/10">
+            <h3 className="text-lg font-bold text-[#F5F0E8] mb-4">Resultado:</h3>
+            
+            {!calculateDelivery.data.deliverable ? (
+              <div className="text-red-400 p-4 bg-red-950/20 rounded-md border border-red-900/30">
+                <p className="font-bold mb-1">Fora da área de entrega</p>
+                <p className="text-sm">{calculateDelivery.data.message}</p>
+                {calculateDelivery.data.distance !== undefined && (
+                  <p className="text-xs mt-2 opacity-80">Distância calculada: {calculateDelivery.data.distance.toFixed(1)} km</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-3 border-b border-white/5">
+                  <span className="text-[#8A7A5A]">Distância:</span>
+                  <span className="text-white font-medium">{calculateDelivery.data.distance?.toFixed(1)} km</span>
+                </div>
+                <div className="flex justify-between items-center p-3 border-b border-white/5">
+                  <span className="text-[#8A7A5A]">Valor do Frete:</span>
+                  <span className="text-[#C9A227] font-bold text-lg">
+                    {calculateDelivery.data.fee === 0 ? 'Grátis' : formatMoney(calculateDelivery.data.fee)}
+                  </span>
+                </div>
+                {calculateDelivery.data.warning && (
+                  <p className="text-xs text-yellow-500 mt-2">{calculateDelivery.data.warning}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
