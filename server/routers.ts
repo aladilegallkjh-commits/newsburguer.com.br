@@ -511,12 +511,22 @@ export const appRouter = router({
   // Menu Items Router
   menu: router({
     getAll: publicProcedure.query(async () => {
-      return db.getMenuItems();
+      const items = await db.getMenuItems();
+      return items.map((item: any) => ({
+        ...item,
+        ingredients: typeof item.ingredients === 'string' ? JSON.parse(item.ingredients || '[]') : (item.ingredients || []),
+        availableExtras: typeof item.extras === 'string' ? JSON.parse(item.extras || '[]') : (item.extras || []),
+      }));
     }),
 
     getAdminAll: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
-      return db.getMenuItems(undefined, true);
+      const items = await db.getMenuItems(undefined, true);
+      return items.map((item: any) => ({
+        ...item,
+        ingredients: typeof item.ingredients === 'string' ? JSON.parse(item.ingredients || '[]') : (item.ingredients || []),
+        availableExtras: typeof item.extras === 'string' ? JSON.parse(item.extras || '[]') : (item.extras || []),
+      }));
     }),
 
     toggleAvailability: protectedProcedure

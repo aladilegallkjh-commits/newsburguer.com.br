@@ -1,4 +1,4 @@
-import { eq, desc, and, gte, lte } from 'drizzle-orm';
+import { eq, desc, and, gte, lte, ne } from 'drizzle-orm';
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import { InsertUser, users, orders, InsertOrder, orderStatusHistory, InsertOrderStatusHistory, notifications, InsertNotification, storeSettings, InsertStoreSettings, menuItems, InsertMenuItem, customIngredients, InsertCustomIngredient, promotions, InsertPromotion, adminUsers, InsertAdminUser, whatsappSettings, InsertWhatsappSettings, whatsappMessagesLog, InsertWhatsappMessagesLog, deliveryDrivers, InsertDeliveryDriver, coupons, InsertCoupon } from "../drizzle/schema";
@@ -406,7 +406,8 @@ export async function getOrdersByDateRange(startDate: Date, endDate: Date) {
     .where(
       and(
         gte(orders.createdAt, startDate),
-        lte(orders.createdAt, endDate)
+        lte(orders.createdAt, endDate),
+        ne(orders.status, 'cancelled')
       )
     )
     .orderBy(desc(orders.createdAt));
