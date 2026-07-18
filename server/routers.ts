@@ -467,7 +467,7 @@ export const appRouter = router({
           });
           const data = await res.json();
           
-          if (!data || data.length === 0) {
+          if (!Array.isArray(data) || data.length === 0) {
             // Fallback se não encontrar: retorna taxa 0 mas diz que entrega (deixa passar com aviso)
             return { deliverable: true, distance: 0, fee: 0, warning: "Endereço não encontrado com precisão." };
           }

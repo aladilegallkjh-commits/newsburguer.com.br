@@ -2014,15 +2014,47 @@ function CuponsTab() {
 }
 
 function CalculadoraTab() {
-  const [address, setAddress] = useState('');
+  const [cep, setCep] = useState('');
+  const [street, setStreet] = useState('');
+  const [number, setNumber] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [city, setCity] = useState('');
+  const [cepLoading, setCepLoading] = useState(false);
+
   const calculateDelivery = trpc.storeSettings.calculateDelivery.useMutation();
+
+  const handleCepChange = async (val: string) => {
+    const rawCep = val.replace(/\D/g, '');
+    setCep(val);
+    
+    if (rawCep.length === 8) {
+      setCepLoading(true);
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setStreet(data.logradouro);
+          setNeighborhood(data.bairro);
+          setCity(data.localidade);
+        } else {
+          toast.error('CEP não encontrado');
+        }
+      } catch (err) {
+        toast.error('Erro ao buscar CEP');
+      } finally {
+        setCepLoading(false);
+      }
+    }
+  };
 
   const handleCalculate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!address.trim()) return toast.error('Digite um endereço');
+    if (!street || !city) return toast.error('Preencha pelo menos a rua e a cidade (ou digite um CEP válido).');
+    
+    const fullAddress = `${street}, ${number}, ${neighborhood}, ${city}`;
     
     try {
-      await calculateDelivery.mutateAsync({ address });
+      await calculateDelivery.mutateAsync({ address: fullAddress });
     } catch (e) {
       toast.error('Erro ao calcular frete');
     }
@@ -2034,28 +2066,75 @@ function CalculadoraTab() {
     <div>
       <h2 className="text-xl font-display font-bold mb-6 text-[#F5F0E8]">Calculadora de Frete</h2>
       <p className="text-sm text-[#8A7A5A] mb-6">
-        Simule o valor da entrega para um determinado endereço com base nas suas configurações atuais de raio e quilometragem.
+        Simule o valor da entrega informando o endereço do cliente. Digite o CEP para preencher automaticamente.
       </p>
 
       <div className="p-6 rounded-xl bg-[#111] border border-[#C9A227]/20 max-w-2xl">
-        <form onSubmit={handleCalculate} className="flex gap-4 items-end mb-6">
-          <div className="flex-1">
-            <label className="block text-sm text-[#8A7A5A] mb-2">Endereço Completo (Rua, Número, Bairro, Cidade)</label>
+        <form onSubmit={handleCalculate} className="space-y-4 mb-6">
+          <div className="w-1/3">
+            <label className="block text-sm text-[#C9A227] font-semibold mb-1">CEP</label>
             <input 
               type="text" 
-              value={address} 
-              onChange={e => setAddress(e.target.value)} 
-              placeholder="Ex: Rua XV de Novembro, 1000, Centro, Curitiba"
+              value={cep} 
+              onChange={e => handleCepChange(e.target.value)} 
+              placeholder="00000-000"
+              maxLength={9}
               className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-3 text-white focus:outline-none focus:border-[#C9A227]" 
             />
+            {cepLoading && <span className="text-xs text-[#8A7A5A] mt-1 block">Buscando CEP...</span>}
           </div>
-          <button 
-            type="submit" 
-            disabled={calculateDelivery.isPending}
-            className="bg-[#C9A227] text-black px-6 py-3 rounded font-bold disabled:opacity-50 transition-all hover:brightness-110"
-          >
-            {calculateDelivery.isPending ? 'Calculando...' : 'Calcular'}
-          </button>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm text-[#8A7A5A] mb-1">Rua</label>
+              <input 
+                type="text" 
+                value={street} 
+                onChange={e => setStreet(e.target.value)} 
+                className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-3 text-white focus:outline-none focus:border-[#C9A227]" 
+              />
+            </div>
+            <div className="w-1/4">
+              <label className="block text-sm text-[#8A7A5A] mb-1">Número</label>
+              <input 
+                type="text" 
+                value={number} 
+                onChange={e => setNumber(e.target.value)} 
+                className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-3 text-white focus:outline-none focus:border-[#C9A227]" 
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm text-[#8A7A5A] mb-1">Bairro</label>
+              <input 
+                type="text" 
+                value={neighborhood} 
+                onChange={e => setNeighborhood(e.target.value)} 
+                className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-3 text-white focus:outline-none focus:border-[#C9A227]" 
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm text-[#8A7A5A] mb-1">Cidade</label>
+              <input 
+                type="text" 
+                value={city} 
+                onChange={e => setCity(e.target.value)} 
+                className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-3 text-white focus:outline-none focus:border-[#C9A227]" 
+              />
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button 
+              type="submit" 
+              disabled={calculateDelivery.isPending}
+              className="bg-[#C9A227] text-black px-8 py-3 rounded font-bold disabled:opacity-50 transition-all hover:brightness-110"
+            >
+              {calculateDelivery.isPending ? 'Calculando...' : 'Calcular'}
+            </button>
+          </div>
         </form>
 
         {calculateDelivery.data && (
