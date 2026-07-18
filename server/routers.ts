@@ -90,6 +90,8 @@ export const appRouter = router({
           address: input.address,
           notes: input.notes,
           status: "pending" as any,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         });
 
         // Add status history

@@ -1877,7 +1877,7 @@ function DashboardTab() {
   );
 }
 function StoreToggle() {
-  const { data: settings } = trpc.storeSettings.get.useQuery();
+  const { data: settings, refetch } = trpc.storeSettings.get.useQuery();
   const updateSettings = trpc.storeSettings.update.useMutation();
   const isOpen = settings?.isOpen === 1;
 
@@ -1885,6 +1885,7 @@ function StoreToggle() {
     try {
       await updateSettings.mutateAsync({ isOpen: isOpen ? 0 : 1 });
       toast.success(isOpen ? 'Loja fechada' : 'Loja aberta');
+      await refetch();
     } catch (e) {
       toast.error('Erro ao alterar status da loja');
     }
