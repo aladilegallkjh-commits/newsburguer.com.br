@@ -512,10 +512,17 @@ export const appRouter = router({
   menu: router({
     getAll: publicProcedure.query(async () => {
       const items = await db.getMenuItems();
+      // Always load extras from the live custom ingredients table
+      const allExtras = await db.getCustomIngredients();
+      const extrasForMenu = allExtras.map((ing: any) => ({
+        id: ing.id,
+        name: ing.name,
+        price: ing.price,
+      }));
       return items.map((item: any) => ({
         ...item,
         ingredients: typeof item.ingredients === 'string' ? JSON.parse(item.ingredients || '[]') : (item.ingredients || []),
-        availableExtras: typeof item.extras === 'string' ? JSON.parse(item.extras || '[]') : (item.extras || []),
+        availableExtras: extrasForMenu,
       }));
     }),
 
