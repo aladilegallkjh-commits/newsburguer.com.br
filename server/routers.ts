@@ -519,20 +519,54 @@ export const appRouter = router({
         name: ing.name,
         price: ing.price,
       }));
+      
+      const getFilteredExtras = (itemCategory: string) => {
+        if (itemCategory === 'drinks' || itemCategory === 'combos') return [];
+        return extrasForMenu.filter((extra: any) => {
+          if (itemCategory === 'hamburgers' || itemCategory === 'burgers') {
+             if (extra.id.includes('hotdog') || extra.id.includes('salsicha')) return false;
+          }
+          if (itemCategory === 'hotdogs') {
+             if (extra.id.includes('burger') || extra.id.includes('smash') || extra.id.includes('brioche')) return false;
+          }
+          return true;
+        });
+      };
+
       return items.map((item: any) => ({
         ...item,
         ingredients: typeof item.ingredients === 'string' ? JSON.parse(item.ingredients || '[]') : (item.ingredients || []),
-        availableExtras: extrasForMenu,
+        availableExtras: getFilteredExtras(item.category),
       }));
     }),
 
     getAdminAll: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
       const items = await db.getMenuItems(undefined, true);
+      const allExtras = await db.getCustomIngredients();
+      const extrasForMenu = allExtras.map((ing: any) => ({
+        id: ing.id,
+        name: ing.name,
+        price: ing.price,
+      }));
+      
+      const getFilteredExtras = (itemCategory: string) => {
+        if (itemCategory === 'drinks' || itemCategory === 'combos') return [];
+        return extrasForMenu.filter((extra: any) => {
+          if (itemCategory === 'hamburgers' || itemCategory === 'burgers') {
+             if (extra.id.includes('hotdog') || extra.id.includes('salsicha')) return false;
+          }
+          if (itemCategory === 'hotdogs') {
+             if (extra.id.includes('burger') || extra.id.includes('smash') || extra.id.includes('brioche')) return false;
+          }
+          return true;
+        });
+      };
+
       return items.map((item: any) => ({
         ...item,
         ingredients: typeof item.ingredients === 'string' ? JSON.parse(item.ingredients || '[]') : (item.ingredients || []),
-        availableExtras: typeof item.extras === 'string' ? JSON.parse(item.extras || '[]') : (item.extras || []),
+        availableExtras: getFilteredExtras(item.category),
       }));
     }),
 
