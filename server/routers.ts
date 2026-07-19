@@ -486,7 +486,10 @@ export const appRouter = router({
                     Math.cos(storeLat * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) *
                     Math.sin(dLon/2) * Math.sin(dLon/2);
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          const distance = R * c;
+          const straightDistance = R * c;
+          
+          // Fator de conversão de linha reta para distância de rua (aprox 1.5x em áreas urbanas)
+          const distance = straightDistance * 1.5;
           
           if (distance > maxDist) {
             return { deliverable: false, distance, fee: 0, message: `Fora da área de entrega (MÁX: ${maxDist}km). Sua distância: ${distance.toFixed(1)}km.` };
