@@ -458,8 +458,10 @@ export const appRouter = router({
         const storeLat = settings?.storeLatitude;
         const storeLon = settings?.storeLongitude;
         
+        console.log(`[calculateDelivery] storeLat: ${storeLat}, storeLon: ${storeLon}`);
+        
         if (!storeLat || !storeLon) {
-          return { deliverable: true, distance: 0, fee: 0 };
+          return { deliverable: false, distance: 0, fee: 0, message: "A localização do restaurante não está configurada." };
         }
         
         try {
@@ -470,8 +472,7 @@ export const appRouter = router({
           const data = await res.json();
           
           if (!Array.isArray(data) || data.length === 0) {
-            // Fallback se não encontrar: retorna taxa 0 mas diz que entrega (deixa passar com aviso)
-            return { deliverable: true, distance: 0, fee: 0, warning: "Endereço não encontrado com precisão." };
+            return { deliverable: false, distance: 0, fee: 0, message: "Endereço não encontrado com precisão. Verifique os dados ou contate o restaurante." };
           }
           
           const customerLat = parseFloat(data[0].lat);
@@ -487,23 +488,20 @@ export const appRouter = router({
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
           const distance = R * c;
           
-          if (distance > 6) {
-            return { deliverable: false, distance, fee: 0, message: `Fora da área de entrega (MÁX: 6km). Sua distância: ${distance.toFixed(1)}km.` };
+          if (distance > maxDist) {
+            return { deliverable: false, distance, fee: 0, message: `Fora da área de entrega (MÁX: ${maxDist}km). Sua distância: ${distance.toFixed(1)}km.` };
           }
           
           let fee = 0;
-          if (distance <= 4) {
-            fee = 0;
-          } else if (distance <= 5) {
-            fee = 2;
-          } else if (distance <= 6) {
-            fee = 6;
+          if (distance > freeDist) {
+            const extraDistance = distance - freeDist;
+            fee = baseFee + (Math.ceil(extraDistance) * perKmFee);
           }
           
           return { deliverable: true, distance, fee };
         } catch (e) {
           console.error("Erro no geocoding", e);
-          return { deliverable: true, distance: 0, fee: 0, warning: "Erro ao calcular distância." };
+          return { deliverable: false, distance: 0, fee: 0, message: "Erro ao calcular distância." };
         }
       }),
   }),
