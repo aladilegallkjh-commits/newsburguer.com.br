@@ -138,6 +138,13 @@ export async function updateOrderStatus(orderId: number, status: string) {
   return db.update(orders).set({ status: status as any }).where(eq(orders.id, orderId));
 }
 
+export async function updateOrderDriver(orderId: number, driverId: number | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return db.update(orders).set({ driverId: driverId }).where(eq(orders.id, orderId));
+}
+
 export async function addOrderStatusHistory(history: InsertOrderStatusHistory) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -530,8 +537,4 @@ export async function deleteCoupon(id: number) {
   if (!db) throw new Error('Database not available');
   return db.update(coupons).set({ isActive: 0 }).where(eq(coupons.id, id));
 }
-export async function updateOrderDriver(orderId: number, driverId: number | null) {
-  const db = await getDb();
-  if (!db) throw new Error('Database not available');
-  return db.update(orders).set({ driverId }).where(eq(orders.id, orderId));
-}
+

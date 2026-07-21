@@ -36,7 +36,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
       
       if (result.success) {
         localStorage.setItem('adminEmail', result.admin.email);
-        localStorage.setItem('adminToken', 'admin-' + Date.now());
+        localStorage.setItem('adminToken', 'logged_in_' + Date.now());
         onLogin(result.admin);
         toast.success('Login realizado com sucesso!');
       }

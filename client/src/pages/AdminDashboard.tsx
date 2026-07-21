@@ -1916,10 +1916,15 @@ function EntregadoresTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return toast.error('Preencha nome e telefone');
-    await createDriver.mutateAsync(formData);
-    toast.success('Entregador adicionado');
-    setFormData({ name: '', phone: '', vehicleType: '' });
-    refetch();
+    try {
+      await createDriver.mutateAsync(formData);
+      toast.success('Entregador adicionado');
+      setFormData({ name: '', phone: '', vehicleType: '' });
+      refetch();
+    } catch (err: any) {
+      console.error('Erro ao adicionar entregador:', err);
+      toast.error('Erro ao adicionar: ' + (err?.message || 'Tente novamente'));
+    }
   };
 
   return (
@@ -2162,8 +2167,8 @@ function CalculadoraTab() {
                     {calculateDelivery.data.fee === 0 ? 'Grátis' : formatMoney(calculateDelivery.data.fee)}
                   </span>
                 </div>
-                {calculateDelivery.data.warning && (
-                  <p className="text-xs text-yellow-500 mt-2">{calculateDelivery.data.warning}</p>
+                {(calculateDelivery.data as any).warning && (
+                  <p className="text-xs text-yellow-500 mt-2">{(calculateDelivery.data as any).warning}</p>
                 )}
               </div>
             )}

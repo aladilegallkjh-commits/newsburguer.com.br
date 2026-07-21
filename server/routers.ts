@@ -1019,13 +1019,13 @@ export const appRouter = router({
       return db.getDrivers();
     }),
     create: protectedProcedure
-      .input(z.object({ name: z.string(), phone: z.string(), vehicle: z.string().optional() }))
+      .input(z.object({ name: z.string(), phone: z.string(), vehicleType: z.string().optional() }))
       .mutation(async ({ input, ctx }) => {
         if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
         return db.createDriver(input);
       }),
     update: protectedProcedure
-      .input(z.object({ id: z.number(), name: z.string().optional(), phone: z.string().optional(), vehicle: z.string().optional(), isActive: z.number().optional() }))
+      .input(z.object({ id: z.number(), name: z.string().optional(), phone: z.string().optional(), vehicleType: z.string().optional(), isActive: z.number().optional() }))
       .mutation(async ({ input, ctx }) => {
         if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
         const { id, ...data } = input;
