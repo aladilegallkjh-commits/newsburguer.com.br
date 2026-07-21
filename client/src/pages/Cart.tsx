@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { formatOrderForWhatsApp, openWhatsAppChat } from '@/lib/whatsappUtils';
 import CouponInput from '@/components/CouponInput';
 import { trpc } from '@/lib/trpc';
+import { maskPhone, maskCep, unmaskedPhone } from '@/lib/masks';
 import PixQRCode from '@/components/PixQRCode';
 
 const LOGO_URL = '/logo.png';
@@ -187,7 +188,7 @@ export default function Cart() {
       setIsDeliverable(data.deliverable);
       if (data.deliverable) {
         setDeliveryFee(data.fee);
-        setDeliveryMessage(data.warning || (data.fee === 0 ? 'Entrega Grátis' : `Taxa de entrega: ${formatPrice(data.fee)}`));
+        setDeliveryMessage((data as any).warning || (data.fee === 0 ? 'Entrega Grátis' : `Taxa de entrega: ${formatPrice(data.fee)}`));
       } else {
         setDeliveryFee(0);
         setDeliveryMessage(data.message || 'Fora da área de entrega');
@@ -214,14 +215,16 @@ export default function Cart() {
   };
 
   const handlePhoneChange = (val: string) => {
-    setCustomerPhone(val);
-    localStorage.setItem('customerPhone', val);
+    const masked = maskPhone(val);
+    setCustomerPhone(masked);
+    localStorage.setItem('customerPhone', masked);
   };
 
   const handleCepChange = async (val: string) => {
-    const rawCep = val.replace(/\D/g, '');
-    setCep(val);
-    localStorage.setItem('customerCep', val);
+    const masked = maskCep(val);
+    const rawCep = masked.replace(/\D/g, '');
+    setCep(masked);
+    localStorage.setItem('customerCep', masked);
     
     if (rawCep.length === 8) {
       setCepLoading(true);
@@ -309,8 +312,8 @@ export default function Cart() {
       });
       return;
     }
-    if (!customerPhone.trim()) {
-      toast.error('Digite seu telefone', {
+    if (!customerPhone.trim() || unmaskedPhone(customerPhone).length < 10) {
+      toast.error('Digite um telefone válido com DDD', {
         duration: 2000,
         style: { background: '#111111', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
       });
@@ -333,7 +336,7 @@ export default function Cart() {
     
     createOrder.mutate({
       customerName,
-      customerPhone,
+      customerPhone: unmaskedPhone(customerPhone),
       items: items.map(i => ({
         name: i.name,
         quantity: i.quantity,
@@ -471,7 +474,8 @@ export default function Cart() {
                       type="tel"
                       value={customerPhone}
                       onChange={(e) => handlePhoneChange(e.target.value)}
-                      placeholder="(41) 98701-9702"
+                      placeholder="(41) 99999-9999"
+                      maxLength={15}
                       className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
                       style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
                     />
@@ -521,6 +525,7 @@ export default function Cart() {
                         value={cep}
                         onChange={(e) => handleCepChange(e.target.value)}
                         placeholder="00000-000"
+                        maxLength={9}
                         className="w-full px-3 py-2 rounded-sm text-xs sm:text-sm"
                         style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}
                       />

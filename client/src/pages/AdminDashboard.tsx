@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { LogOut, Menu, X, Settings, FileText, Clock, Trophy, ShoppingBag, Plus, Trash2, Edit2, Download, Bike, Ticket, Printer, Bell, Power, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
+import { maskPhone, unmaskedPhone } from '@/lib/masks';
 import MenuImageUpload from '@/components/MenuImageUpload';
 import EditMenuItemImageModal from '@/components/EditMenuItemImageModal';
 import EditMenuItemModal from '@/components/EditMenuItemModal';
@@ -1916,8 +1917,9 @@ function EntregadoresTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return toast.error('Preencha nome e telefone');
+    if (unmaskedPhone(formData.phone).length < 10) return toast.error('Telefone inválido, inclua DDD');
     try {
-      await createDriver.mutateAsync(formData);
+      await createDriver.mutateAsync({ ...formData, phone: unmaskedPhone(formData.phone) });
       toast.success('Entregador adicionado');
       setFormData({ name: '', phone: '', vehicleType: '' });
       refetch();
@@ -1937,7 +1939,11 @@ function EntregadoresTab() {
         </div>
         <div className="flex-1">
           <label className="block text-sm text-[#8A7A5A] mb-1">Telefone</label>
-          <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
+          <input type="text" value={formData.phone}
+            onChange={e => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
+            placeholder="(41) 99999-9999"
+            maxLength={15}
+            className="w-full bg-[#0A0A0A] border border-[#C9A227]/30 rounded p-2 text-white" />
         </div>
         <div className="flex-1">
           <label className="block text-sm text-[#8A7A5A] mb-1">Veículo</label>
