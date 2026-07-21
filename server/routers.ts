@@ -232,7 +232,27 @@ export const appRouter = router({
           throw new Error("Unauthorized");
         }
         await db.updateOrderDriver(input.orderId, input.driverId);
-        return { success: true };
+        // Return order + driver so frontend can send WhatsApp
+        const order = await db.getOrderById(input.orderId);
+        let driver = null;
+        if (input.driverId) {
+          const drivers = await db.getDrivers();
+          driver = drivers.find((d: any) => d.id === input.driverId) || null;
+        }
+        return { success: true, order, driver };
+      }),
+
+    // Motoboy: Get orders assigned to a driver by phone
+    getByDriver: publicProcedure
+      .input(z.object({ phone: z.string() }))
+      .query(async ({ input }) => {
+        const rawPhone = input.phone.replace(/\D/g, '');
+        const drivers = await db.getDrivers();
+        const driver = drivers.find((d: any) => d.phone && d.phone.replace(/\D/g, '') === rawPhone);
+        if (!driver) return { driver: null, orders: [] };
+        const allOrders = await db.getRecentOrders(200);
+        const driverOrders = allOrders.filter((o: any) => o.driverId === driver.id && ['confirmed','preparing','ready','out_for_delivery'].includes(o.status));
+        return { driver, orders: driverOrders };
       }),
   }),
 

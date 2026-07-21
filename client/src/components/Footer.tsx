@@ -158,11 +158,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="text-center mt-6 sm:mt-8 pt-4 border-t" style={{ borderColor: 'rgba(201,162,39,0.15)' }}>
-          <p className="text-xs" style={{ color: '#4A3A2A' }}>
+        {/* Copyright & Quick Links */}
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 sm:mt-8 pt-4 border-t gap-4" style={{ borderColor: 'rgba(201,162,39,0.15)' }}>
+          <p className="text-xs text-center sm:text-left" style={{ color: '#4A3A2A' }}>
             © 2025 {STORE_INFO.name}. Todos os direitos reservados.
           </p>
+          <div className="flex gap-4 text-xs" style={{ color: '#8A7A5A' }}>
+            <a href="/entregador" className="hover:text-[#C9A227] transition-colors">Portal do Entregador</a>
+            <a href="/admin" className="hover:text-[#C9A227] transition-colors">Painel Admin</a>
+          </div>
         </div>
       </div>
     </footer>

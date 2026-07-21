@@ -228,13 +228,24 @@ function PedidosTab() {
   const updateStatus = trpc.orders.updateStatus.useMutation();
   const assignDriver = trpc.orders.assignDriver.useMutation();
 
-  const handleStatusChange = async (orderId: number, newStatus: string) => {
+  const handleStatusChange = async (orderId: number, newStatus: string, order?: any) => {
     try {
       await updateStatus.mutateAsync({ orderId, status: newStatus as any });
       toast.success('Status atualizado!', {
         duration: 2000,
         style: { background: 'rgba(10,16,13,0.85)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
       });
+      // Se saindo para entrega e tem motoboy, abre WhatsApp do motoboy
+      if (newStatus === 'out_for_delivery' && order?.driverId && drivers) {
+        const driver = drivers.find((d: any) => d.id === order.driverId);
+        if (driver?.phone) {
+          const items = Array.isArray(order.items) ? order.items.map((i: any) => `• ${i.quantity}x ${i.name}`).join('\n') : '';
+          const msg = `🚗 *SAINDO PARA ENTREGA!*\n\nPedido: *${order.orderNumber}*\nCliente: ${order.customerName}\nEndereço: ${order.address || 'Retirada'}\n\n${items}\n\nTotal: R$ ${parseFloat(order.finalAmount).toFixed(2)}\n\n_New S'Burguer_ 🍔`;
+          const phone = driver.phone.replace(/\D/g, '');
+          const phoneCC = phone.startsWith('55') ? phone : `55${phone}`;
+          window.open(`https://wa.me/${phoneCC}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+      }
     } catch (error) {
       toast.error('Erro ao atualizar status');
     }
@@ -259,10 +270,20 @@ function PedidosTab() {
     window.open(waLink, '_blank');
   };
 
-  const handleDriverChange = async (orderId: number, driverId: string) => {
+  const handleDriverChange = async (orderId: number, driverId: string, order: any) => {
     try {
-      await assignDriver.mutateAsync({ orderId, driverId: driverId ? Number(driverId) : null });
+      const result = await assignDriver.mutateAsync({ orderId, driverId: driverId ? Number(driverId) : null });
       toast.success('Entregador atribuído!');
+      // Enviar WhatsApp para o motoboy com os detalhes do pedido
+      if (result.driver && (result.driver as any).phone && result.order) {
+        const o = result.order as any;
+        const d = result.driver as any;
+        const items = Array.isArray(o.items) ? o.items.map((i: any) => `• ${i.quantity}x ${i.name}`).join('\n') : '';
+        const msg = `🍔 *Novo pedido para você, ${d.name}!*\n\nPedido: *${o.orderNumber}*\nCliente: ${o.customerName} | ${o.customerPhone}\nEndereço: ${o.address || 'Retirada no local'}\n\n*Itens:*\n${items}\n\nTotal: R$ ${parseFloat(o.finalAmount).toFixed(2)}\n\n_New S'Burguer_ 🏍️`;
+        const phone = d.phone.replace(/\D/g, '');
+        const phoneCC = phone.startsWith('55') ? phone : `55${phone}`;
+        window.open(`https://wa.me/${phoneCC}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
     } catch (error) {
       toast.error('Erro ao atribuir entregador');
     }
@@ -377,13 +398,13 @@ function PedidosTab() {
                 <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>{statusLabels[order.status]}</span>
                 <div className="flex items-center gap-4">
                   {order.deliveryType === 'delivery' && (
-                    <select value={order.driverId || ''} onChange={e => handleDriverChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+                    <select value={order.driverId || ''} onChange={e => handleDriverChange(order.id, e.target.value, order)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
                       <option value="">Atribuir Entregador</option>
                       {drivers?.filter((d: any) => d.isActive).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   )}
                   <div className="flex gap-2">
-                    <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+                    <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value, order)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
                       <option value="pending">Pendente</option>
                       <option value="confirmed">Confirmado</option>
                       <option value="preparing">Preparando</option>
