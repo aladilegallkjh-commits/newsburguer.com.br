@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Check } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navbar from '@/components/Navbar';
+import PromoBanner from '@/components/PromoBanner';
 import ProductCustomizer from '@/components/ProductCustomizer';
 import Footer from '@/components/Footer';
 import { useCart, CartItemCustomization } from '@/contexts/CartContext';
@@ -131,6 +132,8 @@ export default function Menu() {
           </div>
         </div>
       </div>
+
+      <PromoBanner />
 
       {/* Categories */}
       <div className="container max-w-4xl mx-auto py-6">

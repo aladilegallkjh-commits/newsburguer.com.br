@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PromoBanner from '@/components/PromoBanner';
 
 const LOGO_URL = '/logo.png';
 const HERO_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663785681503/hw2XZYFpsWbStHSB92WGwu/hero-bg-5ZMaG7H6TSsgzEUvPhS5fs.webp';
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
-  const [visibleElements, setVisibleElements] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -136,10 +136,15 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Promo Banner */}
+      <div className="pt-8 pb-4" style={{ background: 'linear-gradient(to bottom, #0A0A0A, #0D1A14)' }}>
+        <PromoBanner />
+      </div>
+
       {/* Features Section with scroll reveal */}
       <section
         className="py-12 sm:py-20 px-4"
-        style={{ background: 'linear-gradient(to bottom, #0A0A0A, #0D1A14)' }}
+        style={{ background: 'linear-gradient(to bottom, #0D1A14, #0A0A0A)' }}
       >
         <div className="container">
           {/* Section header */}
