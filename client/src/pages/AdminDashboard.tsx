@@ -8,6 +8,7 @@ import MenuImageUpload from '@/components/MenuImageUpload';
 import EditMenuItemImageModal from '@/components/EditMenuItemImageModal';
 import EditMenuItemModal from '@/components/EditMenuItemModal';
 import GlobalOrderAlarm from '@/components/GlobalOrderAlarm';
+import AdminPromocoesTab from '@/components/AdminPromocoesTab';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 
@@ -212,7 +213,7 @@ export default function AdminDashboard() {
           {activeTab === 'cardapio' && <CardapioTab />}
           {activeTab === 'ingredientes' && <IngredientsTab />}
           {activeTab === 'informacoes' && <InformacoesTab />}
-          { activeTab === 'promocoes' && <PromocoesTab /> }
+          { activeTab === 'promocoes' && <AdminPromocoesTab /> }
           { activeTab === 'entregadores' && <EntregadoresTab /> }
           { activeTab === 'cupons' && <CuponsTab /> }
           { activeTab === 'calculadora' && <CalculadoraTab /> }
