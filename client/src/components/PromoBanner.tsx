@@ -84,41 +84,46 @@ export default function PromoBanner() {
                   style={{ backgroundImage: 'radial-gradient(#C9A227 1px, transparent 1px)', backgroundSize: '16px 16px' }}
                 />
 
-                {/* Conteúdo do Banner (Compacto e Discreto) */}
-                <div className="flex flex-row items-center p-3 sm:p-4 gap-3 sm:gap-4 relative z-10 h-full">
+                {/* Conteúdo do Banner (Tamanho Intermediário) */}
+                <div className="flex flex-row items-center p-4 sm:p-5 gap-4 relative z-10 h-full">
                   
-                  {/* Esquerda: Imagem Pequena */}
-                  {promo.imageUrl && (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-[#0A0E0B] border border-[#C9A227]/20 flex items-center justify-center shadow-inner group-hover:border-[#C9A227]/40 transition-colors">
-                      <img 
-                        src={promo.imageUrl} 
-                        alt={promo.title}
-                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-                      />
-                    </div>
-                  )}
-
-                  {/* Meio: Textos */}
-                  <div className="flex-1 flex flex-col items-start justify-center text-left overflow-hidden">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#C9A227]" />
-                      <span className="text-[8px] sm:text-[9px] font-serif uppercase tracking-widest text-[#C9A227] font-bold">
-                        Oferta
+                  {/* Esquerda: Textos */}
+                  <div className="flex-1 flex flex-col items-start justify-center text-left">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Sparkles className="w-3 h-3 text-[#C9A227]" />
+                      <span className="text-[10px] font-serif uppercase tracking-widest text-[#C9A227] font-bold">
+                        Oferta Exclusiva
                       </span>
                     </div>
-                    <h2 className="text-sm sm:text-base font-serif font-bold text-[#F5F0E8] leading-tight truncate w-full drop-shadow-md">
+                    <h2 className="text-lg sm:text-xl font-serif font-bold text-[#F5F0E8] leading-tight drop-shadow-md mb-1">
                       {promo.title}
                     </h2>
-                    <span className="text-sm sm:text-base font-bold text-[#C9A227] mt-0.5 drop-shadow-md">
-                      R$ {parseFloat(promo.discountValue).toFixed(2).replace('.', ',')}
-                    </span>
+                    {promo.description && (
+                      <p className="text-xs text-[#8A7A5A] line-clamp-2 mb-2">
+                        {promo.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 mt-auto">
+                      <span className="text-lg font-bold text-[#C9A227] drop-shadow-md">
+                        R$ {parseFloat(promo.discountValue).toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
                   </div>
-                  
-                  {/* Direita: Botão Discreto */}
-                  <div className="flex-shrink-0 pr-1 sm:pr-2">
-                    <button className="bg-[#C9A227] text-[#0A0A0A] font-bold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 hover:bg-[#D4B242] transition-colors shadow-[0_0_10px_rgba(201,162,39,0.2)] hover:shadow-[0_0_15px_rgba(201,162,39,0.4)] text-xs sm:text-sm">
-                      <span className="hidden sm:inline">Eu quero</span>
-                      <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+
+                  {/* Direita: Imagem e Botão */}
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    {promo.imageUrl && (
+                      <div className="w-28 h-20 sm:w-36 sm:h-24 rounded-lg overflow-hidden bg-[#0A0E0B] border border-[#C9A227]/20 flex items-center justify-center shadow-inner group-hover:border-[#C9A227]/40 transition-colors">
+                        <img 
+                          src={promo.imageUrl} 
+                          alt={promo.title}
+                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                        />
+                      </div>
+                    )}
+                    <button className="w-full bg-[#C9A227] text-[#0A0A0A] font-bold py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-[#D4B242] transition-colors shadow-[0_0_10px_rgba(201,162,39,0.2)] hover:shadow-[0_0_15px_rgba(201,162,39,0.4)] text-xs">
+                      <span>Eu quero!</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
