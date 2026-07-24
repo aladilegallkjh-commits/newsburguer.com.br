@@ -180,11 +180,10 @@ export default function Menu() {
                 key={item.id}
                 className="relative rounded-2xl cursor-pointer flex flex-row items-stretch p-3 sm:p-4 hover:scale-[1.01] gap-3 group"
                 style={{
-                  border: '1px solid rgba(201,162,39,0.35)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
-                  transition: 'all 0.3s ease',
+                  border: '4px solid orange',
+                  background: 'rgba(30,10,0,0.9)',
                   overflow: 'hidden',
-                  background: 'transparent',
+                  transition: 'all 0.3s ease',
                 }}
                 onClick={() => setSelectedProduct(item)}
               >
