@@ -44,17 +44,27 @@ export default function Ranking() {
   };
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{
-        background: 'linear-gradient(135deg, #0A0A0A 0%, #0D1A14 50%, #1a2f24 100%)',
-        backgroundAttachment: 'fixed',
-        position: 'relative'
-      }}
-    >
+    <div className="min-h-screen text-[#F5F0E8] relative" style={{ background: '#0A0A0A' }}>
+      {/* Imagem de fundo em tela cheia - bem visível */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/fundo-ranking.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          opacity: 0.85,
+        }}
+      />
+      {/* Overlay escuro para manter legibilidade e realçar o vidro */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.4) 0%, rgba(5,5,5,0.3) 50%, rgba(5,5,5,0.7) 100%)' }}
+      />
+
       {/* Elegant background pattern */}
       <div
-        className="absolute inset-0 opacity-5"
+        className="fixed inset-0 opacity-5 pointer-events-none z-0"
         style={{
           backgroundImage: `
             repeating-linear-gradient(
@@ -64,14 +74,14 @@ export default function Ranking() {
               rgba(201, 162, 39, 0.1) 10px,
               rgba(201, 162, 39, 0.1) 20px
             )
-          `,
-          pointerEvents: 'none'
+          `
         }}
       />
 
-      <Navbar />
+      <div className="relative z-10">
+        <Navbar />
 
-      <div className="container pt-20 pb-12 relative z-10">
+        <div className="container pt-20 pb-12 relative z-10">
         {/* Header Section */}
         <div className="mb-12">
           <Link href="/">
@@ -304,6 +314,7 @@ export default function Ranking() {
       </div>
 
       <Footer />
+      </div>
     </div>
   );
 }
