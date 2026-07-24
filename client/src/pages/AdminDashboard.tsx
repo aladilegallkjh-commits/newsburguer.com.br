@@ -1537,9 +1537,11 @@ function DashboardTab() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   
-  const { data: dashboardData, isLoading } = trpc.dashboard.getStats.useQuery({
+  const { data: dashboardData, isLoading, isFetching } = trpc.dashboard.getStats.useQuery({
     startDate: startDate || undefined,
     endDate: endDate || undefined,
+  }, {
+    refetchInterval: 10000 // Atualização em tempo real a cada 10 segundos
   });
   
   const salesData = dashboardData?.salesData || [];
@@ -1750,9 +1752,15 @@ function DashboardTab() {
   
   return (
     <div>
-      <h2 className="font-display text-3xl font-bold mb-8" style={{ color: '#F5F0E8' }}>
-        Dashboard de Vendas
-      </h2>
+      <div className="flex items-center gap-3 mb-8">
+        <h2 className="font-display text-3xl font-bold" style={{ color: '#F5F0E8' }}>
+          Dashboard de Vendas
+        </h2>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+          <span className={`w-2 h-2 rounded-full bg-green-500 ${isFetching ? 'animate-pulse' : 'animate-none'}`} style={{ boxShadow: '0 0 8px rgba(34,197,94,0.5)' }} />
+          <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider">Ao Vivo</span>
+        </div>
+      </div>
       
       {/* Seletor de Datas */}
       <div className="mb-6 flex gap-3 flex-wrap items-center">
