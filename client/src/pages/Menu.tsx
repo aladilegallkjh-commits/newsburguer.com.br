@@ -180,10 +180,10 @@ export default function Menu() {
                 key={item.id}
                 className="relative rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-row items-stretch p-3 sm:p-4 hover:scale-[1.01] gap-3 shadow-2xl border group"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(201,162,39,0.12) 0%, rgba(10,14,11,0.85) 100%)',
-                  borderColor: 'rgba(201,162,39,0.25)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
+                  background: 'linear-gradient(135deg, rgba(201,162,39,0.15) 0%, rgba(10,14,11,0.6) 100%)',
+                  borderColor: 'rgba(201,162,39,0.3)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
                 }}
                 onClick={() => setSelectedProduct(item)}
               >
