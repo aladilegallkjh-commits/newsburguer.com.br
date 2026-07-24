@@ -178,16 +178,24 @@ export default function Menu() {
             {filtered.map((item: any) => (
               <div
                 key={item.id}
-                className="rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-row items-stretch p-3 sm:p-4 hover:scale-[1.01] gap-3"
+                className="relative rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-row items-stretch p-3 sm:p-4 hover:scale-[1.01] gap-3 shadow-2xl border group"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(13,38,25,0.7) 0%, rgba(7,11,8,0.9) 100%)',
-                  border: '1px solid rgba(201,162,39,0.25)',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+                  background: 'linear-gradient(135deg, rgba(201,162,39,0.12) 0%, rgba(10,14,11,0.85) 100%)',
+                  borderColor: 'rgba(201,162,39,0.25)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
                 }}
                 onClick={() => setSelectedProduct(item)}
               >
+                {/* Brilho e Padrão Glassmorphism */}
+                <div className="absolute top-0 left-0 w-full h-full bg-[#C9A227] opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none rounded-2xl" />
+                <div 
+                  className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay rounded-2xl"
+                  style={{ backgroundImage: 'radial-gradient(#C9A227 1px, transparent 1px)', backgroundSize: '16px 16px' }}
+                />
+
                 {/* Product Info (Left) */}
-                <div className="flex-1 flex flex-col justify-between">
+                <div className="flex-1 flex flex-col justify-between relative z-10">
                   <div>
                     {/* Badge */}
                     <span className="text-[9px] sm:text-xs font-serif italic mb-0.5 sm:mb-1 block uppercase tracking-wider text-[#C9A227]">
@@ -233,8 +241,8 @@ export default function Menu() {
 
                 {/* Product Image (Right) */}
                 <div
-                  className="w-20 h-20 sm:w-32 sm:h-32 md:w-36 md:h-36 flex-shrink-0 rounded-xl overflow-hidden self-center border border-[#C9A227]/10"
-                  style={{ background: '#0D1A14' }}
+                  className="w-20 h-20 sm:w-32 sm:h-32 md:w-36 md:h-36 flex-shrink-0 rounded-xl overflow-hidden self-center border border-[#C9A227]/20 relative z-10 shadow-inner group-hover:border-[#C9A227]/40 transition-colors"
+                  style={{ background: '#0A0E0B' }}
                 >
                   {item.imageUrl ? (
                     <img
