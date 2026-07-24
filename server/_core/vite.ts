@@ -38,6 +38,8 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
       );
+      // Inject correct PWA manifest based on route
+      template = injectManifest(template, url);
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -45,6 +47,26 @@ export async function setupVite(app: Express, server: Server) {
       next(e);
     }
   });
+}
+
+/**
+ * Returns the correct manifest filename based on the route.
+ */
+function getManifestForRoute(url: string): string {
+  if (url.startsWith("/admin")) return "/manifest-admin.json";
+  if (url.startsWith("/entregador")) return "/manifest-entregador.json";
+  return "/manifest.json";
+}
+
+/**
+ * Injects the correct PWA manifest <link> tag into the HTML template.
+ */
+function injectManifest(html: string, url: string): string {
+  const manifest = getManifestForRoute(url);
+  return html.replace(
+    /<link rel="manifest" href="[^"]*"\s*\/>/,
+    `<link rel="manifest" href="${manifest}" />`
+  );
 }
 
 export function serveStatic(app: Express) {
@@ -60,8 +82,16 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // fall through to index.html with dynamic manifest injection
+  app.use("*", (req, res) => {
+    const indexPath = path.resolve(distPath, "index.html");
+    fs.readFile(indexPath, "utf-8", (err, html) => {
+      if (err) {
+        res.status(500).send("Internal Server Error");
+        return;
+      }
+      const injected = injectManifest(html, req.originalUrl);
+      res.set("Content-Type", "text/html").send(injected);
+    });
   });
 }

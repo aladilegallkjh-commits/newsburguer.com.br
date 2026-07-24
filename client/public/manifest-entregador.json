@@ -1,0 +1,24 @@
+{
+  "name": "NewsBurguer Entregador",
+  "short_name": "NB Motoboy",
+  "description": "App do entregador NewsBurguer",
+  "theme_color": "#f97316",
+  "background_color": "#f97316",
+  "display": "standalone",
+  "scope": "/entregador",
+  "start_url": "/entregador",
+  "icons": [
+    {
+      "src": "/icon-motoboy-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-motoboy-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
