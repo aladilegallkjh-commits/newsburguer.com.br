@@ -1,14 +1,22 @@
-const CACHE_NAME = 'newsburguer-cache-v1';
+const CACHE_NAME = 'newsburguer-cache-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Simple fetch pass-through for PWA installability requirements
-  event.respondWith(fetch(event.request).catch(() => new Response('Offline')));
+  // Pass-through
+  event.respondWith(fetch(event.request));
 });
