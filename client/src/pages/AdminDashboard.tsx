@@ -229,6 +229,11 @@ function PedidosTab() {
   const updateStatus = trpc.orders.updateStatus.useMutation();
   const assignDriver = trpc.orders.assignDriver.useMutation();
 
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+
   const handleStatusChange = async (orderId: number, newStatus: string, order?: any) => {
     try {
       await updateStatus.mutateAsync({ orderId, status: newStatus as any });
@@ -236,7 +241,6 @@ function PedidosTab() {
         duration: 2000,
         style: { background: 'rgba(10,16,13,0.85)', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.3)' },
       });
-      // Se saindo para entrega e tem motoboy, abre WhatsApp do motoboy
       if (newStatus === 'out_for_delivery' && order?.driverId && drivers) {
         const driver = drivers.find((d: any) => d.id === order.driverId);
         if (driver?.phone) {
@@ -275,7 +279,6 @@ function PedidosTab() {
     try {
       const result = await assignDriver.mutateAsync({ orderId, driverId: driverId ? Number(driverId) : null });
       toast.success('Entregador atribuído!');
-      // Enviar WhatsApp para o motoboy com os detalhes do pedido
       if (result.driver && (result.driver as any).phone && result.order) {
         const o = result.order as any;
         const d = result.driver as any;
@@ -333,102 +336,183 @@ function PedidosTab() {
   };
 
   const statusColors: Record<string, string> = { 'pending': '#FF6B35', 'confirmed': '#FFA500', 'preparing': '#C9A227', 'ready': '#4CAF50', 'out_for_delivery': '#2196F3', 'delivered': '#8BC34A', 'cancelled': '#F44336' };
-  const statusLabels: Record<string, string> = { 'pending': 'Pendente', 'confirmed': 'Confirmado', 'preparing': 'Preparando', 'ready': 'Pronto', 'out_for_delivery': 'Saindo para Entrega', 'delivered': 'Entregue', 'cancelled': 'Cancelado' };
+  const statusLabels: Record<string, string> = { 'pending': 'Pendente', 'confirmed': 'Confirmado', 'preparing': 'Preparando', 'ready': 'Pronto', 'out_for_delivery': 'Saindo', 'delivered': 'Entregue', 'cancelled': 'Cancelado' };
+
+  const kanbanColumns = [
+    { id: 'pending', label: '⚠️ Pendente', color: '#FF6B35' },
+    { id: 'confirmed', label: '✅ Confirmado', color: '#FFA500' },
+    { id: 'preparing', label: '👨‍🍳 Preparando', color: '#C9A227' },
+    { id: 'ready', label: '🎉 Pronto', color: '#4CAF50' },
+    { id: 'out_for_delivery', label: '🛵 Na Rua', color: '#2196F3' },
+  ];
+
+  const filteredOrders = (orders || []).filter((o: any) => {
+    const matchSearch = !search || 
+      o.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+      o.orderNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      o.customerPhone?.includes(search);
+    const matchStatus = !filterStatus || o.status === filterStatus;
+    const matchDate = !filterDate || new Date(o.createdAt).toISOString().slice(0,10) === filterDate;
+    return matchSearch && matchStatus && matchDate;
+  });
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return;
+      const pendingOrders = filteredOrders.filter((o: any) => o.status === 'pending');
+      const firstPending = pendingOrders[0];
+      if (!firstPending) return;
+      
+      if (e.key === 'a' || e.key === 'A') {
+        handleStatusChange(firstPending.id, 'confirmed', firstPending);
+        toast.success(`Pedido ${firstPending.orderNumber} aceito!`);
+      }
+      if (e.key === 'p' || e.key === 'P') {
+        handlePrint(firstPending);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [filteredOrders]);
+
+  const OrderCard = ({ order }: { order: any }) => (
+    <div className="rounded-xl p-4 mb-3" style={{ background: order.status === 'pending' ? 'rgba(255,107,53,0.08)' : 'rgba(10,16,13,0.9)', border: order.status === 'pending' ? '2px solid rgba(255,107,53,0.5)' : '1px solid rgba(201,162,39,0.2)', boxShadow: order.status === 'pending' ? '0 0 20px rgba(255,107,53,0.2)' : 'none' }}>
+      {order.status === 'pending' && (
+        <div className="flex items-center gap-1 mb-2">
+          <span className="w-2 h-2 rounded-full animate-ping inline-block" style={{ background: '#FF6B35' }} />
+          <span className="text-xs font-bold" style={{ color: '#FF6B35' }}>AGUARDANDO ACEITE</span>
+        </div>
+      )}
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <p className="font-bold text-sm flex items-center gap-1" style={{ color: '#F5F0E8' }}>
+            {order.orderNumber}
+            <button onClick={() => handlePrint(order)} className="ml-1 p-0.5 rounded transition hover:bg-[#333]" style={{ background: '#222' }} title="Imprimir (P)"><Printer size={12} /></button>
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: '#8A7A5A' }}>{order.customerName}</p>
+          <p className="text-xs" style={{ color: '#6A5A4A' }}>{order.deliveryType === 'delivery' ? '🛵 Delivery' : '🏠 Retirada'}</p>
+        </div>
+        <p className="font-bold text-sm" style={{ color: '#C9A227' }}>R$ {parseFloat(order.finalAmount).toFixed(2)}</p>
+      </div>
+      
+      <div className="text-xs mb-3" style={{ color: '#6A5A4A' }}>
+        {Array.isArray(order.items) && order.items.slice(0,2).map((i: any, idx: number) => (
+          <span key={idx}>{i.quantity}x {i.name}{idx < Math.min(order.items.length, 2) - 1 ? ', ' : ''}</span>
+        ))}
+        {Array.isArray(order.items) && order.items.length > 2 && <span> +{order.items.length - 2} itens</span>}
+      </div>
+
+      <div className="space-y-2">
+        {order.status === 'pending' && (
+          <div className="flex gap-1">
+            <button onClick={() => { handleStatusChange(order.id, 'cancelled', order); refetch(); }} className="flex-1 py-1.5 rounded text-xs font-bold transition hover:opacity-90" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>❌ Recusar</button>
+            <button onClick={() => { handleStatusChange(order.id, 'confirmed', order); refetch(); }} className="flex-1 py-1.5 rounded text-xs font-bold transition hover:opacity-90" style={{ background: '#22c55e', color: '#fff' }}>✅ Aceitar</button>
+          </div>
+        )}
+        <div className="flex gap-1">
+          {order.deliveryType === 'delivery' && (
+            <select value={order.driverId || ''} onChange={e => handleDriverChange(order.id, e.target.value, order)} className="flex-1 px-2 py-1.5 rounded text-xs" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+              <option value="">Motoboy...</option>
+              {drivers?.filter((d: any) => d.isActive).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          )}
+          <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value, order)} className="flex-1 px-2 py-1.5 rounded text-xs" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+            <option value="pending">Pendente</option>
+            <option value="confirmed">Confirmado</option>
+            <option value="preparing">Preparando</option>
+            <option value="ready">Pronto</option>
+            <option value="out_for_delivery">Na Rua</option>
+            <option value="delivered">Entregue</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+        </div>
+        <button onClick={() => handleNotifyCustomer(order, order.status)} className="w-full py-1.5 rounded text-xs font-semibold flex items-center justify-center gap-1 transition hover:opacity-80" style={{ background: '#25D366', color: '#FFF' }}>
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          Avisar Cliente
+        </button>
+      </div>
+    </div>
+  );
+
+  const pendingCount = (orders || []).filter((o: any) => o.status === 'pending').length;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-xl font-bold" style={{ color: '#F5F0E8' }}>Gerenciar Pedidos</h2>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <h2 className="font-display text-xl font-bold" style={{ color: '#F5F0E8' }}>Gerenciar Pedidos</h2>
+          {pendingCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold animate-pulse" style={{ background: 'rgba(255,107,53,0.2)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.4)' }}>
+              {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <input type="text" placeholder="🔍 Buscar pedido/cliente..." value={search} onChange={e => setSearch(e.target.value)} className="px-3 py-2 rounded-lg text-sm w-48 lg:w-64" style={{ background: '#0f1a12', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }} />
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-lg text-sm" style={{ background: '#0f1a12', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
+            <option value="">Status (Todos)</option>
+            {Object.entries(statusLabels).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="px-3 py-2 rounded-lg text-sm" style={{ background: '#0f1a12', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }} />
+          {(search || filterStatus || filterDate) && (
+            <button onClick={() => { setSearch(''); setFilterStatus(''); setFilterDate(''); }} className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(255,107,107,0.1)', color: '#FF6B6B', border: '1px solid rgba(255,107,107,0.2)' }}>Limpar</button>
+          )}
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid rgba(201,162,39,0.2)' }}>
+            <button onClick={() => setViewMode('kanban')} className="px-3 py-2 text-xs font-semibold transition-all" style={{ background: viewMode === 'kanban' ? 'rgba(201,162,39,0.2)' : 'transparent', color: viewMode === 'kanban' ? '#C9A227' : '#8A7A5A' }}>⬛ Kanban</button>
+            <button onClick={() => setViewMode('list')} className="px-3 py-2 text-xs font-semibold transition-all" style={{ background: viewMode === 'list' ? 'rgba(201,162,39,0.2)' : 'transparent', color: viewMode === 'list' ? '#C9A227' : '#8A7A5A' }}>☰ Lista</button>
+          </div>
+        </div>
       </div>
-      {isLoading ? <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p> : !orders || orders.length === 0 ? <p style={{ color: '#8A7A5A' }}>Nenhum pedido recebido</p> : (
-        <div className="space-y-4">
-          {orders.map((order: any) => (
-            <div key={order.id} className="rounded-2xl p-6" style={{ background: order.status === 'pending' ? 'rgba(201,162,39,0.07)' : 'rgba(10,16,13,0.85)', border: order.status === 'pending' ? '2px solid rgba(201,162,39,0.6)' : '1px solid rgba(201,162,39,0.3)', boxShadow: order.status === 'pending' ? '0 0 30px rgba(201,162,39,0.4)' : '0 0 30px rgba(201,162,39,0.15)' }}>
-              {/* Pending banner + Accept button */}
-              {order.status === 'pending' && (
-                <div className="flex items-center justify-between mb-4 p-3 rounded-xl" style={{ background: 'rgba(201,162,39,0.15)', border: '1px solid rgba(201,162,39,0.4)' }}>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full animate-ping inline-block" style={{ background: '#C9A227' }} />
-                    <span className="font-bold text-sm" style={{ color: '#C9A227' }}>⚠️ PEDIDO AGUARDANDO ACEITE</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={async () => {
-                        if (window.confirm('Tem certeza que deseja recusar e cancelar este pedido?')) {
-                          await handleStatusChange(order.id, 'cancelled');
-                          refetch();
-                        }
-                      }}
-                      className="px-4 py-2 rounded-lg font-bold text-sm transition-all hover:opacity-90 active:scale-95"
-                      style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)' }}
-                    >
-                      ❌ RECUSAR
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await handleStatusChange(order.id, 'confirmed');
-                        refetch();
-                      }}
-                      className="px-5 py-2 rounded-lg font-bold text-sm transition-all hover:opacity-90 active:scale-95"
-                      style={{ background: '#22c55e', color: '#fff', boxShadow: '0 0 15px rgba(34,197,94,0.4)' }}
-                    >
-                      ✅ ACEITAR PEDIDO
-                    </button>
-                  </div>
+
+      <div className="mb-4 px-3 py-2 rounded-lg text-xs flex gap-4" style={{ background: 'rgba(201,162,39,0.05)', border: '1px solid rgba(201,162,39,0.1)', color: '#6A5A4A' }}>
+        <span>⌨️ Atalhos: <strong style={{color:'#8A7A5A'}}>A</strong> = Aceitar 1º pendente</span>
+        <span><strong style={{color:'#8A7A5A'}}>P</strong> = Imprimir 1º pendente</span>
+      </div>
+
+      {isLoading ? (
+        <p style={{ color: '#8A7A5A' }}>Carregando pedidos...</p>
+      ) : !filteredOrders || filteredOrders.length === 0 ? (
+        <div className="text-center py-16" style={{ color: '#8A7A5A' }}>
+          <p className="text-4xl mb-2">📭</p>
+          <p>Nenhum pedido encontrado</p>
+        </div>
+      ) : viewMode === 'kanban' ? (
+        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 400 }}>
+          {kanbanColumns.map(col => {
+            const colOrders = filteredOrders.filter((o: any) => o.status === col.id);
+            return (
+              <div key={col.id} className="flex-shrink-0 rounded-xl p-3" style={{ width: 280, background: 'rgba(10,16,13,0.5)', border: `1px solid ${col.color}30` }}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-bold" style={{ color: col.color }}>{col.label}</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: `${col.color}20`, color: col.color }}>{colOrders.length}</span>
                 </div>
-              )}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-bold flex items-center gap-2" style={{ color: '#F5F0E8' }}>
-                    {order.orderNumber}
-                    <button onClick={() => handlePrint(order)} className="p-1 rounded transition" style={{ background: '#222' }} title="Imprimir Comanda"><Printer size={16} /></button>
-                  </h3>
-                  <p className="text-sm" style={{ color: '#8A7A5A' }}>{order.customerName} • {order.customerPhone}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-lg" style={{ color: '#C9A227' }}>R$ {parseFloat(order.finalAmount).toFixed(2)}</p>
+                <div className="overflow-y-auto pr-1" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+                  {colOrders.length === 0 ? <p className="text-xs text-center py-6" style={{ color: '#4A3A2A' }}>Vazio</p> : colOrders.map((o: any) => <OrderCard key={o.id} order={o} />)}
                 </div>
               </div>
-              <div className="mb-4 pb-4" style={{ borderBottom: '1px solid rgba(201,162,39,0.1)' }}>
-                <p className="text-sm font-semibold mb-2" style={{ color: '#C9A227' }}>Itens:</p>
-                {Array.isArray(order.items) && order.items.map((item: any, idx: number) => (
-                  <p key={idx} className="text-sm" style={{ color: '#8A7A5A' }}>• {item.name} x{item.quantity}</p>
-                ))}
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>{statusLabels[order.status]}</span>
-                <div className="flex items-center gap-4">
-                  {order.deliveryType === 'delivery' && (
-                    <select value={order.driverId || ''} onChange={e => handleDriverChange(order.id, e.target.value, order)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
-                      <option value="">Atribuir Entregador</option>
-                      {drivers?.filter((d: any) => d.isActive).map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
-                  )}
-                  <div className="flex gap-2">
-                    <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value, order)} className="px-3 py-2 rounded text-sm" style={{ background: '#0A0A0A', color: '#F5F0E8', border: '1px solid rgba(201,162,39,0.2)' }}>
-                      <option value="pending">Pendente</option>
-                      <option value="confirmed">Confirmado</option>
-                      <option value="preparing">Preparando</option>
-                      <option value="ready">Pronto / Embalado</option>
-                      <option value="out_for_delivery">Saindo para Entrega</option>
-                      <option value="delivered">Entregue</option>
-                      <option value="cancelled">Cancelado</option>
-                    </select>
-                    
-                    <button 
-                      onClick={() => handleNotifyCustomer(order, order.status)}
-                      className="px-3 py-2 rounded flex items-center justify-center gap-2 transition-all hover:opacity-80 text-sm font-semibold"
-                      title="Avisar cliente no WhatsApp"
-                      style={{ background: '#25D366', color: '#FFF' }}
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                      Avisar Cliente
-                    </button>
-                  </div>
-                </div>
-              </div>
+            );
+          })}
+          <div className="flex-shrink-0 rounded-xl p-3" style={{ width: 280, background: 'rgba(10,16,13,0.3)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold" style={{ color: '#8A7A5A' }}>✓ Finalizados</span>
+              <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: 'rgba(255,255,255,0.05)', color: '#8A7A5A' }}>{filteredOrders.filter((o: any) => o.status === 'delivered' || o.status === 'cancelled').length}</span>
             </div>
-          ))}
+            <div className="overflow-y-auto pr-1" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+              {filteredOrders.filter((o: any) => o.status === 'delivered' || o.status === 'cancelled').map((o: any) => (
+                <div key={o.id} className="rounded-lg p-3 mb-2 flex items-center justify-between" style={{ background: 'rgba(10,10,10,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div>
+                    <p className="text-xs font-bold" style={{ color: '#6A5A4A' }}>{o.orderNumber}</p>
+                    <p className="text-xs" style={{ color: '#4A3A2A' }}>{o.customerName}</p>
+                  </div>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${statusColors[o.status]}15`, color: statusColors[o.status] }}>{statusLabels[o.status]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredOrders.map((order: any) => <OrderCard key={order.id} order={order} />)}
         </div>
       )}
     </div>
