@@ -35,7 +35,11 @@ export default function Menu() {
   const { addItem } = useCart();
   const [, navigate] = useLocation();
 
-  const { data: menuItems, isLoading } = trpc.menu.getAll.useQuery();
+  const { data: menuItems, isLoading } = trpc.menu.getAll.useQuery(undefined, {
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
   const filtered = (menuItems || []).filter((item: any) => item.category === activeCategory);
   
   useEffect(() => {

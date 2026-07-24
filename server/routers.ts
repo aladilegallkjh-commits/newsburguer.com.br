@@ -572,8 +572,14 @@ export const appRouter = router({
   }),
 
   // Menu Items Router
+
   menu: router({
     getAll: publicProcedure.query(async () => {
+      const now = Date.now();
+      if ((globalThis as any)._menuCache && now - (globalThis as any)._menuCache.lastFetch < 1000 * 60 * 5) {
+        return (globalThis as any)._menuCache.data;
+      }
+      
       const items = await db.getMenuItems();
       // Always load extras from the live custom ingredients table
       const allExtras = await db.getCustomIngredients();
@@ -596,11 +602,14 @@ export const appRouter = router({
         });
       };
 
-      return items.map((item: any) => ({
+      const result = items.map((item: any) => ({
         ...item,
         ingredients: typeof item.ingredients === 'string' ? JSON.parse(item.ingredients || '[]') : (item.ingredients || []),
         availableExtras: getFilteredExtras(item.category),
       }));
+      
+      (globalThis as any)._menuCache = { data: result, lastFetch: now };
+      return result;
     }),
 
     getAdminAll: protectedProcedure.query(async ({ ctx }) => {
@@ -637,6 +646,7 @@ export const appRouter = router({
       .input(z.object({ id: z.number(), isAvailable: z.number() }))
       .mutation(async ({ input, ctx }) => {
         if (ctx.user?.role !== "admin") throw new Error("Unauthorized");
+        (globalThis as any)._menuCache = null;
         return db.updateMenuItem(input.id, { isAvailable: input.isAvailable });
       }),
 
@@ -666,6 +676,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
+        (globalThis as any)._menuCache = null;
         return db.createMenuItem(input as any);
       }),
 
@@ -686,12 +697,14 @@ export const appRouter = router({
       )
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
+        (globalThis as any)._menuCache = null;
         return db.updateMenuItem(id, data as any);
       }),
 
     delete: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
+        (globalThis as any)._menuCache = null;
         return db.deleteMenuItem(input.id);
       }),
   }),
@@ -721,6 +734,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
+        (globalThis as any)._menuCache = null;
         return db.createCustomIngredient(input as any);
       }),
 
@@ -740,18 +754,21 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
+        (globalThis as any)._menuCache = null;
         return db.updateCustomIngredient(input.id, input.data as any);
       }),
 
     toggleAvailability: publicProcedure
       .input(z.object({ id: z.string(), isActive: z.number() }))
       .mutation(async ({ input }) => {
+        (globalThis as any)._menuCache = null;
         return db.toggleCustomIngredientAvailability(input.id, input.isActive);
       }),
 
     delete: publicProcedure
       .input(z.object({ id: z.string() }))
       .mutation(async ({ input }) => {
+        (globalThis as any)._menuCache = null;
         return db.deleteCustomIngredient(input.id);
       }),
   }),
