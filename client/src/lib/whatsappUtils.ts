@@ -78,5 +78,16 @@ export function getWhatsAppLink(message: string): string {
 
 export function openWhatsAppChat(message: string): void {
   const link = getWhatsAppLink(message);
-  window.open(link, '_blank', 'noopener,noreferrer');
+  
+  // iOS Safari e navegadores in-app (Instagram, Facebook) frequentemente bloqueiam
+  // window.open(). Usar window.location.href é mais seguro para abrir o wa.me nesses casos.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isInstagram = /Instagram/i.test(navigator.userAgent);
+  
+  if (isIOS || isInstagram) {
+    window.location.assign(link);
+  } else {
+    window.open(link, '_blank', 'noopener,noreferrer');
+  }
 }
+
