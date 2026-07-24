@@ -85,17 +85,17 @@ export default function Menu() {
       <div 
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
-          backgroundImage: `url(${MENU_BG})`,
+          backgroundImage: 'url(/fundo-menu.jpg.jpeg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed',
-          opacity: 0.55,
+          opacity: 0.85,
         }}
       />
-      {/* Overlay escuro para manter legibilidade */}
+      {/* Overlay escuro para manter legibilidade e realçar o vidro */}
       <div 
         className="fixed inset-0 z-0 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.55) 0%, rgba(5,5,5,0.45) 50%, rgba(5,5,5,0.6) 100%)' }}
+        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.4) 0%, rgba(5,5,5,0.3) 50%, rgba(5,5,5,0.7) 100%)' }}
       />
 
       {/* Main Content */}
