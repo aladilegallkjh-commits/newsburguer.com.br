@@ -50,49 +50,51 @@ export default function Navbar() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background: navbarBg,
-        backdropFilter: 'blur(12px)',
-        borderBottom: scrolled ? '1px solid rgba(201, 162, 39, 0.2)' : 'none',
+        background: '#000000',
+        borderBottom: '1px solid rgba(201, 162, 39, 0.15)',
       }}
     >
       <div className="container">
-        <div className="flex items-center justify-between py-1 sm:py-2">
+        <div className="flex items-center justify-between py-3 sm:py-4">
 
           {/* Left side: back button + logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {/* Botão voltar — aparece em todas as páginas exceto Home */}
             {!isHome && (
               <button
                 onClick={handleBack}
-                className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90 hover:scale-105 mr-1"
+                className="flex items-center justify-center w-11 h-11 rounded-[14px] transition-all duration-200 active:scale-90 hover:scale-105"
                 style={{
-                  background: 'rgba(201,162,39,0.1)',
-                  border: '1px solid rgba(201,162,39,0.25)',
+                  background: 'transparent',
+                  border: '1px solid #C9A227',
                   color: '#C9A227',
                 }}
                 aria-label="Voltar"
               >
-                <ArrowLeft size={18} />
+                <ArrowLeft size={22} strokeWidth={2.5} />
               </button>
             )}
 
-            {/* Logo */}
+            {/* Logo com anel brilhante */}
             <Link href="/">
-              <div className="flex items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-300">
-                <img
-                  src={LOGO_URL}
-                  alt="New S'Burguer"
-                  className={`${logoSize} object-contain transition-all duration-300`}
-                  style={{ filter: 'drop-shadow(0 0 8px rgba(201, 162, 39, 0.2))' }}
-                />
-                <span
-                  className={`font-display font-bold hidden sm:block transition-all duration-300 text-sm sm:text-base md:text-lg ${
-                    scrolled ? 'text-xs sm:text-base' : 'text-sm sm:text-lg'
-                  }`}
-                  style={{ color: '#C9A227', letterSpacing: '0.02em' }}
+              <div className="flex items-center cursor-pointer transition-all duration-300 group">
+                <div 
+                  className="rounded-full flex items-center justify-center bg-black transition-all duration-300 group-hover:scale-105"
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    border: '1px solid #C9A227',
+                    boxShadow: '0 0 15px rgba(201, 162, 39, 0.4), inset 0 0 10px rgba(201, 162, 39, 0.2)',
+                    padding: '8px'
+                  }}
                 >
-                  New S'Burguer
-                </span>
+                  <img
+                    src={LOGO_URL}
+                    alt="New S'Burguer"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                {/* Removemos o texto lateral da logo para ficar igual à imagem */}
               </div>
             </Link>
           </div>
@@ -100,43 +102,34 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/">
-              <span
-                className="text-sm font-medium transition-colors duration-200 cursor-pointer"
-                style={{ color: location === '/' ? '#C9A227' : '#8A7A5A' }}
-              >
+              <span className="text-sm font-medium transition-colors duration-200 cursor-pointer" style={{ color: location === '/' ? '#C9A227' : '#8A7A5A' }}>
                 Início
               </span>
             </Link>
             <Link href="/menu">
-              <span
-                className="text-sm font-medium transition-colors duration-200 cursor-pointer"
-                style={{ color: location === '/menu' ? '#C9A227' : '#8A7A5A' }}
-              >
+              <span className="text-sm font-medium transition-colors duration-200 cursor-pointer" style={{ color: location === '/menu' ? '#C9A227' : '#8A7A5A' }}>
                 Cardápio
               </span>
             </Link>
             <Link href="/ranking">
-              <span
-                className="text-sm font-medium transition-colors duration-200 cursor-pointer"
-                style={{ color: location === '/ranking' ? '#C9A227' : '#8A7A5A' }}
-              >
+              <span className="text-sm font-medium transition-colors duration-200 cursor-pointer" style={{ color: location === '/ranking' ? '#C9A227' : '#8A7A5A' }}>
                 🏆 Ranking
               </span>
             </Link>
           </nav>
 
           {/* Cart + Mobile Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
             <Link href="/cart">
               <button
-                className="relative p-2 rounded-full transition-all duration-200"
+                className="relative transition-all duration-200 hover:scale-110"
                 style={{ color: '#C9A227' }}
                 aria-label="Carrinho"
               >
-                <ShoppingCart size={scrolled ? 20 : 24} className="transition-all duration-300" />
+                <ShoppingCart size={28} strokeWidth={2} />
                 {itemCount > 0 && (
                   <span
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
                     style={{ background: '#C9A227', color: '#0A0A0A' }}
                   >
                     {itemCount > 9 ? '9+' : itemCount}
@@ -147,7 +140,7 @@ export default function Navbar() {
 
             {/* Mobile menu toggle */}
             <button
-              className="md:hidden p-2 rounded-full transition-colors duration-200"
+              className="md:hidden transition-all duration-200 hover:scale-110"
               style={{ color: '#C9A227' }}
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Menu"
