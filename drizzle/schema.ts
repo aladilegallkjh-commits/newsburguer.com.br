@@ -44,6 +44,10 @@ export const orders = sqliteTable("orders", {
   
   driverId: integer("driverId"),
   
+  driverLatitude: real("driverLatitude"),
+  driverLongitude: real("driverLongitude"),
+  trackingToken: text("trackingToken"),
+  
   status: text("status", { enum: ["pending", "confirmed", "preparing", "ready", "out_for_delivery", "delivered", "cancelled"] }).default("pending").notNull(),
   
   createdAt: integer("createdAt", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`).notNull(),

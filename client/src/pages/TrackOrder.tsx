@@ -3,6 +3,7 @@ import { trpc } from '@/lib/trpc';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
+import GPSMap from '@/components/GPSMap';
 
 const LOGO_URL = '/logo.png';
 
@@ -28,6 +29,29 @@ export default function TrackOrder() {
       retry: false,
     }
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pedido = params.get('pedido');
+    if (pedido) {
+      setOrderNumber(pedido);
+      // Let it render first, then we can trigger a search if we want.
+      // We can do it by listening to changes in orderNumber but that might loop.
+      // So let's just prefill. The user can click 'Rastrear'.
+      // Better yet, just wait 500ms and click the button programmatically or call handleSearch manually.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (orderNumber && !searchedOrder && !isSearching) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('pedido') === orderNumber) {
+        // Auto-trigger search
+        const e = { preventDefault: () => {} } as React.FormEvent;
+        handleSearch(e);
+      }
+    }
+  }, [orderNumber]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,6 +264,17 @@ export default function TrackOrder() {
                   })}
                 </div>
               </div>
+
+              {/* GPS Tracking Map (Only if out_for_delivery) */}
+              {searchedOrder.status === 'out_for_delivery' && (
+                <div className="mb-8">
+                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#C9A227' }}>
+                    Motoboy a caminho
+                  </p>
+                  <p className="text-sm" style={{ color: '#F5F0E8' }}>Acompanhe a localização em tempo real:</p>
+                  <GPSMap orderId={searchedOrder.id} />
+                </div>
+              )}
 
               {/* Items */}
               <div className="mb-8 pb-8 border-t" style={{ borderColor: 'rgba(201,162,39,0.2)' }}>

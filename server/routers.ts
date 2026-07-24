@@ -254,6 +254,48 @@ export const appRouter = router({
         const driverOrders = allOrders.filter((o: any) => o.driverId === driver.id && ['confirmed','preparing','ready','out_for_delivery'].includes(o.status));
         return { driver, orders: driverOrders };
       }),
+
+    // Motoboy: Update GPS location
+    updateLocation: publicProcedure
+      .input(z.object({ orderId: z.number(), lat: z.number(), lng: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updateOrderLocation(input.orderId, input.lat, input.lng);
+        return { success: true };
+      }),
+
+    // Client: Get GPS location
+    getLocation: publicProcedure
+      .input(z.object({ orderId: z.number() }))
+      .query(async ({ input }) => {
+        const order = await db.getOrderById(input.orderId);
+        if (!order) throw new Error("Pedido não encontrado");
+        return { 
+          lat: order.driverLatitude, 
+          lng: order.driverLongitude,
+          status: order.status
+        };
+      }),
+
+    // Motoboy: Mark as delivered
+    driverMarkDelivered: publicProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updateOrderStatus(input.orderId, "delivered");
+        
+        await db.addOrderStatusHistory({
+          orderId: input.orderId,
+          status: "delivered",
+          message: "Entregue pelo motoboy (via App)",
+        });
+
+        // Also recalculate rankings!
+        try {
+          await ranking.calculateWeeklyRankings();
+          await ranking.calculateMonthlyRankings();
+        } catch (error) {}
+
+        return { success: true };
+      }),
   }),
 
   coupons: router({

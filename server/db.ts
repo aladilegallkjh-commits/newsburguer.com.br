@@ -145,6 +145,13 @@ export async function updateOrderDriver(orderId: number, driverId: number | null
   return db.update(orders).set({ driverId: driverId }).where(eq(orders.id, orderId));
 }
 
+export async function updateOrderLocation(orderId: number, driverLatitude: number | null, driverLongitude: number | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return db.update(orders).set({ driverLatitude, driverLongitude }).where(eq(orders.id, orderId));
+}
+
 export async function addOrderStatusHistory(history: InsertOrderStatusHistory) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

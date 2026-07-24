@@ -24,7 +24,7 @@ export function formatOrderStatusMessage(update: WhatsAppOrderUpdate): string {
     confirmed: '✅ Seu pedido foi confirmado! Estamos preparando...',
     preparing: '👨‍🍳 Seu pedido está sendo preparado com muito cuidado!',
     ready: '🎉 Seu pedido está pronto! Saindo para entrega...',
-    out_for_delivery: '🚗 Seu pedido saiu para entrega! Chegando em breve...',
+    out_for_delivery: `🚗 Seu pedido saiu para entrega!\n\n📍 *Acompanhe o motoboy em tempo real:*\n👉 https://newsburguer.com.br/rastrear?pedido=${update.orderNumber.replace('#', '')}`,
     delivered: '🎊 Seu pedido foi entregue! Bom apetite!',
     cancelled: '❌ Seu pedido foi cancelado. Entre em contato conosco.',
   };

@@ -1,18 +1,103 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
-import { Bike, Phone, Clock, MapPin, Package } from 'lucide-react';
+import { Bike, Phone, Clock, MapPin, Package, Navigation, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { maskPhone, unmaskedPhone } from '@/lib/masks';
 
 export default function Motoboy() {
   const [phone, setPhone] = useState('');
   const [submittedPhone, setSubmittedPhone] = useState('');
+  const [activeDeliveryId, setActiveDeliveryId] = useState<number | null>(null);
+  const [isTransmitting, setIsTransmitting] = useState(false);
+  const watchIdRef = useRef<number | null>(null);
 
-  const { data, isLoading, refetch } = trpc.orders.getByDriver.useQuery(
+  const utils = trpc.useContext();
+  const updateLocation = trpc.orders.updateLocation.useMutation();
+  const markDelivered = trpc.orders.driverMarkDelivered.useMutation({
+    onSuccess: () => {
+      toast.success('Entrega finalizada com sucesso!');
+      utils.orders.getByDriver.invalidate();
+      stopTracking();
+    }
+  });
+  
+  const updateStatus = trpc.orders.updateStatus.useMutation({
+    onSuccess: () => utils.orders.getByDriver.invalidate()
+  });
+
+  const { data, isLoading } = trpc.orders.getByDriver.useQuery(
     { phone: submittedPhone },
-    { enabled: submittedPhone.length >= 10, refetchInterval: 30000 } // Refetch a cada 30s
+    { enabled: submittedPhone.length >= 10, refetchInterval: 15000 }
   );
+
+  // Se já houver um pedido "out_for_delivery" associado a este motorista, retoma a entrega
+  useEffect(() => {
+    if (data?.orders && !activeDeliveryId) {
+      const activeOrder = data.orders.find((o: any) => o.status === 'out_for_delivery');
+      if (activeOrder) {
+        setActiveDeliveryId(activeOrder.id);
+        startTracking(activeOrder.id);
+      }
+    }
+  }, [data?.orders]);
+
+  // Limpar rastreamento ao desmontar
+  useEffect(() => {
+    return () => stopTracking();
+  }, []);
+
+  const startTracking = (orderId: number) => {
+    if (!navigator.geolocation) {
+      toast.error('Seu navegador não suporta GPS');
+      return;
+    }
+
+    setIsTransmitting(true);
+    setActiveDeliveryId(orderId);
+
+    // Usa watchPosition para pegar localização a cada instante e atualizar no servidor
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        updateLocation.mutate({
+          orderId,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (error) => {
+        console.error('Erro de GPS:', error);
+        toast.error('Erro ao acessar o GPS. Verifique as permissões.');
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    );
+  };
+
+  const stopTracking = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    setIsTransmitting(false);
+    setActiveDeliveryId(null);
+  };
+
+  const handleStartDelivery = async (orderId: number) => {
+    if (activeDeliveryId && activeDeliveryId !== orderId) {
+      toast.error('Você já tem uma entrega em andamento!');
+      return;
+    }
+    
+    // Mudar status para out_for_delivery
+    await updateStatus.mutateAsync({ orderId, status: 'out_for_delivery' });
+    startTracking(orderId);
+  };
+
+  const handleFinishDelivery = async (orderId: number) => {
+    if (window.confirm('Confirmar entrega finalizada?')) {
+      await markDelivered.mutateAsync({ orderId });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +110,7 @@ export default function Motoboy() {
   };
 
   const handleClear = () => {
+    stopTracking();
     setSubmittedPhone('');
     setPhone('');
   };
@@ -41,7 +127,7 @@ export default function Motoboy() {
             </div>
             <h2 className="text-xl font-bold mb-2 text-white">Portal do Entregador</h2>
             <p className="text-sm mb-6" style={{ color: '#8A7A5A' }}>
-              Digite seu telefone cadastrado para ver seus pedidos em andamento.
+              Digite seu telefone cadastrado para ver seus pedidos.
             </p>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,7 +166,7 @@ export default function Motoboy() {
           </div>
         ) : (
           <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4">
               <div>
                 <h1 className="text-xl font-bold text-white">Olá, {data.driver.name}</h1>
                 <p className="text-sm" style={{ color: '#8A7A5A' }}>{data.orders.length} pedido(s) atribuído(s)</p>
@@ -90,53 +176,85 @@ export default function Motoboy() {
               </button>
             </div>
 
+            {isTransmitting && (
+              <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg mb-6 flex items-center gap-3 text-sm animate-pulse">
+                <Navigation size={18} />
+                <div>
+                  <p className="font-bold">Transmitindo GPS em tempo real</p>
+                  <p className="text-xs opacity-80">Mantenha a tela ligada durante a entrega</p>
+                </div>
+              </div>
+            )}
+
             {data.orders.length === 0 ? (
               <div className="text-center py-12 bg-[#111111] rounded-lg border border-[#C9A227]/10">
                 <Package className="mx-auto mb-3" style={{ color: '#8A7A5A' }} size={32} />
-                <p style={{ color: '#8A7A5A' }}>Você não tem entregas pendentes no momento.</p>
+                <p style={{ color: '#8A7A5A' }}>Nenhuma entrega no momento.</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {data.orders.map((order: any) => (
-                  <div key={order.id} className="bg-[#111111] border border-[#C9A227]/20 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <span className="text-xs font-bold px-2 py-1 rounded bg-[#C9A227]/10 text-[#C9A227]">
-                          #{order.orderNumber}
-                        </span>
-                        <h3 className="font-bold text-white mt-2">{order.customerName}</h3>
+                {data.orders.map((order: any) => {
+                  const isActive = activeDeliveryId === order.id;
+                  const isPending = !isActive && order.status !== 'out_for_delivery';
+                  
+                  return (
+                    <div key={order.id} className={`bg-[#111111] border rounded-lg p-4 transition-colors ${isActive ? 'border-[#C9A227]' : 'border-[#C9A227]/20'}`}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <span className="text-xs font-bold px-2 py-1 rounded bg-[#C9A227]/10 text-[#C9A227]">
+                            #{order.orderNumber}
+                          </span>
+                          <h3 className="font-bold text-white mt-2">{order.customerName}</h3>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[#8A7A5A] text-xs flex items-center gap-1 justify-end mb-1">
+                            <Clock size={12} />
+                            {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <span className="font-bold text-[#C9A227] text-sm">
+                            R$ {parseFloat(order.finalAmount).toFixed(2)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-[#8A7A5A] text-xs flex items-center gap-1 justify-end">
-                          <Clock size={12} />
-                          {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                      
+                      <div className="mb-4">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="text-red-400 mt-1 flex-shrink-0" size={16} />
+                          <p className="text-sm" style={{ color: '#F5F0E8' }}>{order.address}</p>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="mb-3">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="text-red-400 mt-1 flex-shrink-0" size={16} />
-                        <p className="text-sm" style={{ color: '#F5F0E8' }}>{order.address}</p>
-                      </div>
-                    </div>
 
-                    <div className="pt-3 border-t border-[#C9A227]/10 flex justify-between items-center">
-                      <span className="font-bold text-[#C9A227]">
-                        R$ {parseFloat(order.finalAmount).toFixed(2)}
-                      </span>
-                      <a 
-                        href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 transition-colors"
-                        style={{ background: '#25D366', color: 'white' }}
-                      >
-                        <Phone size={14} /> Contatar Cliente
-                      </a>
+                      <div className="flex flex-col gap-2">
+                        <a 
+                          href={`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full py-2.5 rounded text-sm font-semibold flex items-center justify-center gap-2 border border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10"
+                        >
+                          <Phone size={16} /> Contatar Cliente
+                        </a>
+
+                        {isActive ? (
+                          <button 
+                            onClick={() => handleFinishDelivery(order.id)}
+                            disabled={markDelivered.isPending}
+                            className="w-full py-2.5 rounded text-sm font-bold flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600"
+                          >
+                            {markDelivered.isPending ? 'Finalizando...' : <><CheckCircle2 size={16} /> Marcar como Entregue</>}
+                          </button>
+                        ) : isPending ? (
+                          <button 
+                            onClick={() => handleStartDelivery(order.id)}
+                            disabled={updateStatus.isPending || !!activeDeliveryId}
+                            className={`w-full py-2.5 rounded text-sm font-bold flex items-center justify-center gap-2 ${activeDeliveryId ? 'bg-gray-700 text-gray-500' : 'bg-[#C9A227] text-black hover:bg-[#D4B242]'}`}
+                          >
+                            <Navigation size={16} /> Iniciar Entrega (Ativar GPS)
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
