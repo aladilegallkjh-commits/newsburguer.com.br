@@ -6,20 +6,19 @@ import Footer from '@/components/Footer';
 import { trpc } from '@/lib/trpc';
 
 export default function Ranking() {
-  const [activePeriod, setActivePeriod] = useState<'week' | 'month' | 'all'>('week');
+  const [activePeriod, setActivePeriod] = useState<'month' | 'all'>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [showOnlyPrizes, setShowOnlyPrizes] = useState(false);
   const { data: rankings, isLoading } = trpc.ranking.getCurrent.useQuery(undefined, { 
     refetchInterval: 5000 
   });
 
-  const weeklyRankings = rankings?.weeklyRankings || [];
   const monthlyRankings = rankings?.monthlyRankings || [];
   const allTimeRankings = rankings?.allTimeRankings || [];
 
-  const currentRankings = activePeriod === 'week' ? weeklyRankings : activePeriod === 'month' ? monthlyRankings : allTimeRankings;
-  const periodLabel = activePeriod === 'week' ? 'Semana' : activePeriod === 'month' ? 'Mês' : 'Todos os Tempos';
-  const periodIcon = activePeriod === 'week' ? '🔥' : activePeriod === 'month' ? '👑' : '⭐';
+  const currentRankings = activePeriod === 'month' ? monthlyRankings : allTimeRankings;
+  const periodLabel = activePeriod === 'month' ? 'Mês' : 'Todos os Tempos';
+  const periodIcon = activePeriod === 'month' ? '👑' : '⭐';
 
   const filteredRankings = currentRankings.filter((customer: any) => {
     const customerName = customer.customerName || 'Cliente';
@@ -37,7 +36,7 @@ export default function Ranking() {
 
   const handleShareWhatsApp = (customer: any, position: number) => {
     const medal = getMedalEmoji(position);
-    const periodText = activePeriod === 'week' ? 'desta semana' : activePeriod === 'month' ? 'deste mês' : 'de todos os tempos';
+    const periodText = activePeriod === 'month' ? 'deste mês' : 'de todos os tempos';
     const message = `Olá! 🎉 Estou em ${position}º lugar ${medal} no ranking ${periodText} da New S'Burguer! Com ${customer.orderCount} pedidos e R$ ${customer.totalSpent}. Vem pedir também! 🍔`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -56,26 +55,10 @@ export default function Ranking() {
           opacity: 0.85,
         }}
       />
-      {/* Overlay escuro para manter legibilidade e realçar o vidro */}
+      {/* Overlay escuro para manter legibilidade e escurecer a imagem fundo */}
       <div 
         className="fixed inset-0 z-0 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.4) 0%, rgba(5,5,5,0.3) 50%, rgba(5,5,5,0.7) 100%)' }}
-      />
-
-      {/* Elegant background pattern */}
-      <div
-        className="fixed inset-0 opacity-5 pointer-events-none z-0"
-        style={{
-          backgroundImage: `
-            repeating-linear-gradient(
-              45deg,
-              transparent,
-              transparent 10px,
-              rgba(201, 162, 39, 0.1) 10px,
-              rgba(201, 162, 39, 0.1) 20px
-            )
-          `
-        }}
+        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.7) 0%, rgba(5,5,5,0.6) 50%, rgba(5,5,5,0.95) 100%)' }}
       />
 
       <div className="relative z-10">
@@ -121,7 +104,6 @@ export default function Ranking() {
         {/* Filter Tabs */}
         <div className="flex gap-3 mb-8 flex-wrap">
           {[
-            { id: 'week', label: 'Esta Semana', icon: '🔥' },
             { id: 'month', label: 'Este Mês', icon: '👑' },
             { id: 'all', label: 'Todos os Tempos', icon: '⭐' },
             { id: 'prizes', label: 'Apenas Premiados', icon: '🎁' }
@@ -271,14 +253,8 @@ export default function Ranking() {
         </div>
 
         {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
           {[
-            {
-              icon: '🔥',
-              title: 'Esta Semana',
-              description: 'Top 5 clientes da semana ganham prêmios especiais',
-              color: '#FF6B6B'
-            },
             {
               icon: '👑',
               title: 'Este Mês',
