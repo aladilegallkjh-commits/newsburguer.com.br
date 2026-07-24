@@ -82,7 +82,7 @@ export default function Motoboy() {
     setActiveDeliveryId(null);
   };
 
-  const handleStartDelivery = async (orderId: number) => {
+  const handleStartDelivery = async (orderId: number, address: string) => {
     if (activeDeliveryId && activeDeliveryId !== orderId) {
       toast.error('Você já tem uma entrega em andamento!');
       return;
@@ -91,6 +91,12 @@ export default function Motoboy() {
     // Mudar status para out_for_delivery
     await updateStatus.mutateAsync({ orderId, status: 'out_for_delivery' });
     startTracking(orderId);
+
+    // Abrir Google Maps com o endereço do cliente
+    if (address) {
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}&travelmode=driving`;
+      window.open(mapsUrl, '_blank');
+    }
   };
 
   const handleFinishDelivery = async (orderId: number) => {
@@ -234,6 +240,18 @@ export default function Motoboy() {
                           <Phone size={16} /> Contatar Cliente
                         </a>
 
+                        {/* Botão de Navegar sempre visível quando há endereço */}
+                        {order.address && (
+                          <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.address)}&travelmode=driving`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full py-2.5 rounded text-sm font-semibold flex items-center justify-center gap-2 border border-blue-400/30 text-blue-400 hover:bg-blue-400/10"
+                          >
+                            <MapPin size={16} /> Navegar até o Cliente
+                          </a>
+                        )}
+
                         {isActive ? (
                           <button 
                             onClick={() => handleFinishDelivery(order.id)}
@@ -244,11 +262,11 @@ export default function Motoboy() {
                           </button>
                         ) : isPending ? (
                           <button 
-                            onClick={() => handleStartDelivery(order.id)}
+                            onClick={() => handleStartDelivery(order.id, order.address)}
                             disabled={updateStatus.isPending || !!activeDeliveryId}
                             className={`w-full py-2.5 rounded text-sm font-bold flex items-center justify-center gap-2 ${activeDeliveryId ? 'bg-gray-700 text-gray-500' : 'bg-[#C9A227] text-black hover:bg-[#D4B242]'}`}
                           >
-                            <Navigation size={16} /> Iniciar Entrega (Ativar GPS)
+                            <Navigation size={16} /> Iniciar Entrega + Abrir Mapa
                           </button>
                         ) : null}
                       </div>

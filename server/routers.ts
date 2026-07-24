@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
-import { sendOrderConfirmation, sendOrderStatusUpdate } from "./whatsapp";
+import { sendOrderConfirmation, sendOrderStatusUpdate, sendWhatsAppMessage } from "./whatsapp";
 import { OrderItem } from "../drizzle/schema";
 import * as ranking from "./ranking";
 import * as couponsHelper from "./coupons";
@@ -239,6 +239,26 @@ export const appRouter = router({
           const drivers = await db.getDrivers();
           driver = drivers.find((d: any) => d.id === input.driverId) || null;
         }
+
+        // Enviar link automático ao entregador via WhatsApp
+        if (driver && order && driver.phone) {
+          try {
+            const portalUrl = `https://newsburguer-com-br.onrender.com/entregador`;
+            const mapsUrl = order.address
+              ? `\n\n📍 *Endereço:* ${order.address}\n🗺️ *Abrir no Maps:* https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.address)}&travelmode=driving`
+              : '';
+            const message = `🏍️ *Nova entrega atribuída a você!*\n\n` +
+              `Pedido: *${order.orderNumber}*\n` +
+              `Cliente: ${order.customerName}\n` +
+              `Valor: R$ ${parseFloat(order.finalAmount).toFixed(2)}${mapsUrl}\n\n` +
+              `👉 *Acesse o portal do entregador:*\n${portalUrl}\n\n` +
+              `_New S'Burguer 🍔_`;
+            await sendWhatsAppMessage(driver.phone, message);
+          } catch (err) {
+            console.error('[assignDriver] Erro ao notificar entregador:', err);
+          }
+        }
+
         return { success: true, order, driver };
       }),
 
