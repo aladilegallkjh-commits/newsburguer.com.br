@@ -44,60 +44,64 @@ export default function Ranking() {
 
   return (
     <div className="min-h-screen text-[#F5F0E8] relative" style={{ background: '#0A0A0A' }}>
-      {/* Imagem de fundo em tela cheia - bem visível */}
+      {/* Imagem de fundo */}
       <div 
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
-          backgroundImage: 'url(/fundo-ranking.png)',
+          backgroundImage: 'url(/fundo-ranking.jpg.jpeg)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'top center',
           backgroundAttachment: 'fixed',
-          opacity: 0.85,
+          opacity: 0.95,
         }}
       />
-      {/* Overlay escuro para manter legibilidade e escurecer a imagem fundo */}
+      {/* Overlay escuro em gradiente para mesclar com o resto da página */}
       <div 
         className="fixed inset-0 z-0 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.7) 0%, rgba(5,5,5,0.6) 50%, rgba(5,5,5,0.95) 100%)' }}
+        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.4) 0%, rgba(5,5,5,0.8) 40%, rgba(5,5,5,1) 100%)' }}
       />
 
       <div className="relative z-10">
         <Navbar />
 
-        <div className="container pt-20 pb-12 relative z-10">
+        <div className="container pt-24 pb-12 relative z-10">
         {/* Header Section */}
-        <div className="mb-12">
+        <div className="mb-12 relative">
           <Link href="/">
             <button
-              className="flex items-center gap-2 text-sm mb-6 transition-colors duration-200 hover:text-yellow-500"
+              className="absolute left-0 top-0 flex items-center gap-2 text-base transition-colors duration-200 hover:text-yellow-500"
               style={{ color: '#8A7A5A' }}
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={20} />
               Voltar
             </button>
           </Link>
-
-          {/* Title with Trophy */}
-          <div className="flex items-start gap-6 mb-8">
-            <div className="text-6xl md:text-7xl">👑</div>
-            <div>
-              <h1
-                className="font-display text-4xl md:text-5xl font-black leading-tight"
-                style={{ color: '#F5F0E8' }}
-              >
-                Ranking de<br />Clientes
-              </h1>
-              <p className="text-base mt-3" style={{ color: '#C9A227' }}>
-                Os melhores clientes ganham prêmios exclusivos!
-              </p>
+          
+          <div className="flex flex-col items-center justify-center text-center mb-8 pt-8">
+            <h2 
+              className="text-xl tracking-[0.2em] font-bold mb-1" 
+              style={{ color: '#C9A227', textTransform: 'uppercase' }}
+            >
+              Ranking de
+            </h2>
+            <h1
+              className="font-display font-black leading-none"
+              style={{ color: '#F5F0E8', fontSize: '5rem', textTransform: 'uppercase', textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+            >
+              Clientes
+            </h1>
+            
+            {/* Divider com losango (diamond) */}
+            <div className="flex items-center gap-3 w-64 mt-6 mb-4 justify-center">
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #C9A227)' }} />
+              <div className="w-2.5 h-2.5 rotate-45" style={{ background: '#C9A227', flexShrink: 0 }} />
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #C9A227)' }} />
             </div>
-          </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 w-48 mb-8">
-            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #C9A227)' }} />
-            <div className="w-2 h-2 rotate-45" style={{ background: '#C9A227', flexShrink: 0 }} />
-            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #C9A227)' }} />
+            <p className="text-lg mt-2 font-medium" style={{ color: '#F5F0E8' }}>
+              Os melhores clientes ganham <br/>
+              <span style={{ color: '#C9A227' }}>prêmios exclusivos!</span>
+            </p>
           </div>
         </div>
 

@@ -58,43 +58,40 @@ export default function Navbar() {
         <div className="flex items-center justify-between py-3 sm:py-4">
 
           {/* Left side: back button + logo */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             {/* Botão voltar — aparece em todas as páginas exceto Home */}
             {!isHome && (
               <button
                 onClick={handleBack}
-                className="flex items-center justify-center w-11 h-11 rounded-[14px] transition-all duration-200 active:scale-90 hover:scale-105"
+                className="flex items-center justify-center transition-all duration-200 active:scale-90 hover:scale-105"
                 style={{
+                  width: '46px',
+                  height: '46px',
                   background: 'transparent',
-                  border: '1px solid #C9A227',
+                  border: '1px solid rgba(201,162,39,0.8)',
+                  borderRadius: '14px',
                   color: '#C9A227',
                 }}
                 aria-label="Voltar"
               >
-                <ArrowLeft size={22} strokeWidth={2.5} />
+                <ArrowLeft size={24} strokeWidth={2} />
               </button>
             )}
 
-            {/* Logo com anel brilhante */}
+            {/* Logo */}
             <Link href="/">
-              <div className="flex items-center cursor-pointer transition-all duration-300 group">
-                <div 
-                  className="rounded-full flex items-center justify-center bg-black transition-all duration-300 group-hover:scale-105"
-                  style={{
-                    width: '64px',
-                    height: '64px',
-                    border: '1px solid #C9A227',
-                    boxShadow: '0 0 15px rgba(201, 162, 39, 0.4), inset 0 0 10px rgba(201, 162, 39, 0.2)',
-                    padding: '8px'
+              <div className="flex items-center cursor-pointer transition-all duration-300 hover:scale-105">
+                <img
+                  src={LOGO_URL}
+                  alt="New S'Burguer"
+                  className="object-contain"
+                  style={{ 
+                    width: '68px',
+                    height: '68px',
+                    filter: 'drop-shadow(0 0 12px rgba(201, 162, 39, 0.6))',
+                    borderRadius: '50%'
                   }}
-                >
-                  <img
-                    src={LOGO_URL}
-                    alt="New S'Burguer"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                {/* Removemos o texto lateral da logo para ficar igual à imagem */}
+                />
               </div>
             </Link>
           </div>
