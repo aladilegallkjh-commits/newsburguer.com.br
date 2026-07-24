@@ -77,36 +77,36 @@ export default function Ranking() {
             </button>
           </Link>
           
-          <div className="flex flex-col items-center justify-center text-center mb-8 pt-8">
+          <div className="flex flex-col items-center justify-center text-center mb-6 pt-12">
             <h2 
-              className="text-xl tracking-[0.2em] font-bold mb-1" 
+              className="text-sm sm:text-lg tracking-[0.3em] font-bold mb-1" 
               style={{ color: '#C9A227', textTransform: 'uppercase' }}
             >
               Ranking de
             </h2>
             <h1
-              className="font-display font-black leading-none"
-              style={{ color: '#F5F0E8', fontSize: '5rem', textTransform: 'uppercase', textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+              className="font-sans font-black leading-none text-6xl sm:text-7xl md:text-[5.5rem] tracking-tight"
+              style={{ color: '#F5F0E8', textTransform: 'uppercase', textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
             >
               Clientes
             </h1>
             
             {/* Divider com losango (diamond) */}
-            <div className="flex items-center gap-3 w-64 mt-6 mb-4 justify-center">
+            <div className="flex items-center gap-3 w-48 sm:w-64 mt-5 mb-4 justify-center">
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #C9A227)' }} />
-              <div className="w-2.5 h-2.5 rotate-45" style={{ background: '#C9A227', flexShrink: 0 }} />
+              <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rotate-45" style={{ background: '#C9A227', flexShrink: 0 }} />
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #C9A227)' }} />
             </div>
 
-            <p className="text-lg mt-2 font-medium" style={{ color: '#F5F0E8' }}>
-              Os melhores clientes ganham <br/>
-              <span style={{ color: '#C9A227' }}>prêmios exclusivos!</span>
+            <p className="text-sm sm:text-base mt-2 font-medium" style={{ color: '#F5F0E8' }}>
+              Os melhores clientes ganham <br className="sm:hidden" />
+              <span style={{ color: '#C9A227' }}> prêmios exclusivos!</span>
             </p>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-3 mb-8 flex-wrap">
+        <div className="flex gap-2 sm:gap-3 mb-8 w-full justify-between sm:justify-center">
           {[
             { id: 'month', label: 'Este Mês', icon: '👑' },
             { id: 'all', label: 'Todos os Tempos', icon: '⭐' },
@@ -121,14 +121,15 @@ export default function Ranking() {
                   setActivePeriod(tab.id as any);
                 }
               }}
-              className="px-5 py-3 rounded-xl font-semibold transition-all duration-200 border"
+              className="flex-1 sm:flex-none px-1.5 py-2 sm:px-5 sm:py-3 rounded-xl font-semibold transition-all duration-200 border flex items-center justify-center gap-1 sm:gap-2 text-[11px] sm:text-base leading-tight"
               style={{
                 background: (tab.id === 'prizes' ? showOnlyPrizes : tab.id === activePeriod) ? 'rgba(201,162,39,0.3)' : 'rgba(201,162,39,0.1)',
                 color: '#C9A227',
                 borderColor: (tab.id === 'prizes' ? showOnlyPrizes : tab.id === activePeriod) ? '#C9A227' : 'rgba(201,162,39,0.2)',
               }}
             >
-              {tab.icon} {tab.label}
+              <span className="text-sm sm:text-lg">{tab.icon}</span>
+              <span className="text-center">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -184,17 +185,17 @@ export default function Ranking() {
             <>
               {/* Table Header */}
               <div
-                className="grid grid-cols-12 gap-4 px-6 py-4 border-b font-semibold text-sm"
+                className="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-6 py-4 border-b font-bold text-[10px] sm:text-sm tracking-wider uppercase"
                 style={{
                   background: 'rgba(201,162,39,0.1)',
                   borderColor: 'rgba(201,162,39,0.2)',
                   color: '#C9A227'
                 }}
               >
-                <div className="col-span-2">Rank</div>
-                <div className="col-span-4">Nome</div>
-                <div className="col-span-3">Pontos</div>
-                <div className="col-span-3 text-center">Prêmio / Ação</div>
+                <div className="col-span-2 text-center">RANK</div>
+                <div className="col-span-4">NOME</div>
+                <div className="col-span-3">PONTOS</div>
+                <div className="col-span-3 text-center">PRÊMIO / AÇÃO</div>
               </div>
 
               {/* Table Rows */}
@@ -206,7 +207,7 @@ export default function Ranking() {
                 return (
                   <div
                     key={idx}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 border-b items-center hover:bg-opacity-20 transition-colors"
+                    className="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-6 py-4 border-b items-center hover:bg-opacity-20 transition-colors"
                     style={{
                       background: position <= 3 ? 'rgba(201,162,39,0.05)' : 'transparent',
                       borderColor: 'rgba(201,162,39,0.1)',
@@ -215,38 +216,38 @@ export default function Ranking() {
                   >
                     {/* Rank */}
                     <div className="col-span-2 text-center">
-                      <span className="text-2xl">{medal}</span>
+                      <span className="text-xl sm:text-2xl">{medal}</span>
                     </div>
 
                     {/* Name */}
                     <div className="col-span-4">
-                      <div className="font-semibold">{customer.customerName || 'Cliente'}</div>
-                      <div className="text-xs" style={{ color: '#8A7A5A' }}>
+                      <div className="font-semibold text-sm sm:text-base truncate">{customer.customerName || 'Cliente'}</div>
+                      <div className="text-[10px] sm:text-xs" style={{ color: '#8A7A5A' }}>
                         {customer.orderCount} pedidos
                       </div>
                     </div>
 
                     {/* Points */}
                     <div className="col-span-3">
-                      <div className="font-bold" style={{ color: '#C9A227' }}>
+                      <div className="font-bold text-sm sm:text-base whitespace-nowrap" style={{ color: '#C9A227' }}>
                         R$ {parseFloat(customer.totalSpent || 0).toFixed(2)}
                       </div>
                     </div>
 
                     {/* Prize and Share */}
-                    <div className="col-span-3 flex items-center justify-center gap-3">
+                    <div className="col-span-3 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
                       {hasPrize ? (
-                        <span className="text-lg">🎁</span>
+                        <span className="text-base sm:text-lg">🎁</span>
                       ) : (
                         <span style={{ color: '#8A7A5A' }} className="text-xs w-[28px] text-center">-</span>
                       )}
                       <button
                         onClick={() => handleShareWhatsApp(customer, position)}
-                        className="p-2 rounded-full transition-colors flex items-center justify-center hover:bg-opacity-80"
+                        className="p-1.5 sm:p-2 rounded-full transition-colors flex items-center justify-center hover:bg-opacity-80"
                         style={{ background: 'rgba(201,162,39,0.1)', color: '#C9A227' }}
                         title="Compartilhar no WhatsApp"
                       >
-                        <Share2 size={16} />
+                        <Share2 size={14} className="sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </div>
