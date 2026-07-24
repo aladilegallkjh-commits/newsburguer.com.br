@@ -7,7 +7,9 @@ import { maskPhone, unmaskedPhone } from '@/lib/masks';
 
 export default function Motoboy() {
   const [phone, setPhone] = useState('');
-  const [submittedPhone, setSubmittedPhone] = useState('');
+  const [submittedPhone, setSubmittedPhone] = useState(() => {
+    return localStorage.getItem('motoboyPhone') || '';
+  });
   const [activeDeliveryId, setActiveDeliveryId] = useState<number | null>(null);
   const [isTransmitting, setIsTransmitting] = useState(false);
   const watchIdRef = useRef<number | null>(null);
@@ -112,11 +114,13 @@ export default function Motoboy() {
       toast.error('Telefone inválido');
       return;
     }
+    localStorage.setItem('motoboyPhone', raw);
     setSubmittedPhone(raw);
   };
 
   const handleClear = () => {
     stopTracking();
+    localStorage.removeItem('motoboyPhone');
     setSubmittedPhone('');
     setPhone('');
   };
@@ -175,9 +179,20 @@ export default function Motoboy() {
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h1 className="text-xl font-bold text-white">Olá, {data.driver.name}</h1>
-                <p className="text-sm" style={{ color: '#8A7A5A' }}>{data.orders.length} pedido(s) atribuído(s)</p>
+                <p className="text-sm" style={{ color: '#8A7A5A' }}>
+                  {data.orders.filter((o: any) => o.status !== 'delivered').length} pedido(s) em andamento
+                </p>
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'rgba(201,162,39,0.1)', border: '1px solid rgba(201,162,39,0.3)' }}>
+                  <Package size={14} style={{ color: '#C9A227' }} />
+                  <span className="text-sm font-bold text-[#C9A227]">
+                    {data.orders.filter((o: any) => {
+                      const today = new Date().toDateString();
+                      return o.status === 'delivered' && new Date(o.updatedAt).toDateString() === today;
+                    }).length} entregas hoje
+                  </span>
+                </div>
               </div>
-              <button onClick={handleClear} className="text-xs text-[#C9A227] border border-[#C9A227]/30 px-3 py-1 rounded">
+              <button onClick={handleClear} className="text-xs text-[#C9A227] border border-[#C9A227]/30 px-3 py-1 rounded h-fit">
                 Sair
               </button>
             </div>
@@ -192,14 +207,14 @@ export default function Motoboy() {
               </div>
             )}
 
-            {data.orders.length === 0 ? (
+            {data.orders.filter((o: any) => o.status !== 'delivered').length === 0 ? (
               <div className="text-center py-12 bg-[#111111] rounded-lg border border-[#C9A227]/10">
                 <Package className="mx-auto mb-3" style={{ color: '#8A7A5A' }} size={32} />
-                <p style={{ color: '#8A7A5A' }}>Nenhuma entrega no momento.</p>
+                <p style={{ color: '#8A7A5A' }}>Nenhuma entrega em andamento.</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {data.orders.map((order: any) => {
+                {data.orders.filter((o: any) => o.status !== 'delivered').map((order: any) => {
                   const isActive = activeDeliveryId === order.id;
                   const isPending = !isActive && order.status !== 'out_for_delivery';
                   

@@ -270,8 +270,15 @@ export const appRouter = router({
         const drivers = await db.getDrivers();
         const driver = drivers.find((d: any) => d.phone && d.phone.replace(/\D/g, '') === rawPhone);
         if (!driver) return { driver: null, orders: [] };
-        const allOrders = await db.getRecentOrders(200);
-        const driverOrders = allOrders.filter((o: any) => o.driverId === driver.id && ['confirmed','preparing','ready','out_for_delivery'].includes(o.status));
+        const allOrders = await db.getRecentOrders(500); // Increased limit to ensure we get all today's orders
+        const today = new Date().toDateString();
+        const driverOrders = allOrders.filter((o: any) => {
+          if (o.driverId !== driver.id) return false;
+          if (['confirmed','preparing','ready','out_for_delivery'].includes(o.status)) return true;
+          // Include if delivered today
+          if (o.status === 'delivered' && new Date(o.updatedAt).toDateString() === today) return true;
+          return false;
+        });
         return { driver, orders: driverOrders };
       }),
 
@@ -1115,7 +1122,18 @@ export const appRouter = router({
   drivers: router({
     getAll: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user?.role !== 'admin') throw new Error('Unauthorized');
-      return db.getDrivers();
+      const drivers = await db.getDrivers();
+      const allOrders = await db.getRecentOrders(500);
+      const today = new Date().toDateString();
+      
+      return drivers.map((d: any) => {
+        const todayDeliveries = allOrders.filter((o: any) => 
+          o.driverId === d.id && 
+          o.status === 'delivered' && 
+          new Date(o.updatedAt).toDateString() === today
+        ).length;
+        return { ...d, todayDeliveries };
+      });
     }),
     create: protectedProcedure
       .input(z.object({ name: z.string(), phone: z.string(), vehicleType: z.string().optional() }))

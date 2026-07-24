@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { LogOut, Menu, X, Settings, FileText, Clock, Trophy, ShoppingBag, Plus, Trash2, Edit2, Download, Bike, Ticket, Printer, Bell, Power, MapPin } from 'lucide-react';
+import { LogOut, Menu, X, Settings, FileText, Clock, Trophy, ShoppingBag, Plus, Trash2, Edit2, Download, Bike, Ticket, Printer, Bell, Power, MapPin, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import { maskPhone, unmaskedPhone } from '@/lib/masks';
@@ -2066,13 +2066,20 @@ function EntregadoresTab() {
         <button type="submit" className="bg-[#C9A227] text-black px-4 py-2 rounded font-bold">Adicionar</button>
       </form>
       <div className="grid gap-4">
-        {drivers?.map(d => (
+        {drivers?.map((d: any) => (
           <div key={d.id} className="p-4 rounded-lg bg-[#111] border border-[#C9A227]/20 flex justify-between items-center">
             <div>
-              <p className="font-bold text-[#F5F0E8]">{d.name}</p>
-              <div className="text-xs text-[#8A7A5A]">Veículo: {d.vehicleType || 'Não informado'}</div>
+              <p className="font-bold text-[#F5F0E8] text-lg">{d.name}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <div className="text-xs text-[#8A7A5A] bg-[#0A0A0A] px-2 py-1 rounded border border-[#C9A227]/10">
+                  Veículo: {d.vehicleType || 'Não informado'}
+                </div>
+                <div className="text-xs font-bold text-[#C9A227] bg-[#C9A227]/10 px-2 py-1 rounded border border-[#C9A227]/30 flex items-center gap-1">
+                  <Package size={12} /> {d.todayDeliveries || 0} entregas hoje
+                </div>
+              </div>
             </div>
-            <button onClick={async () => { await deleteDriver.mutateAsync({ id: d.id }); refetch(); }} className="text-red-500 hover:text-red-400">
+            <button onClick={async () => { await deleteDriver.mutateAsync({ id: d.id }); refetch(); }} className="text-red-500 hover:text-red-400 p-2 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-colors">
               <Trash2 size={20} />
             </button>
           </div>
