@@ -80,10 +80,10 @@ export default function Menu() {
   }
 
   return (
-    <div className="min-h-screen text-[#F5F0E8] relative bg-[#070b08]">
+    <div className="min-h-screen text-[#F5F0E8] relative bg-[#050505]">
       {/* Global Texture Background */}
       <div 
-        className="fixed inset-0 z-0 pointer-events-none opacity-[0.04]"
+        className="fixed inset-0 z-0 pointer-events-none opacity-40 mix-blend-overlay"
         style={{
           backgroundImage: `url(${MENU_BG})`,
           backgroundSize: 'cover',
@@ -107,7 +107,7 @@ export default function Menu() {
       <div
         className="relative pt-24 pb-12 px-4 overflow-hidden flex flex-col items-center justify-center"
         style={{
-          background: 'radial-gradient(circle, rgba(13,38,25,0.4) 0%, #070b08 100%)'
+          background: 'radial-gradient(circle, rgba(201,162,39,0.1) 0%, transparent 100%)'
         }}
       >
         <div
