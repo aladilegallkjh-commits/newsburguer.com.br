@@ -80,24 +80,23 @@ export default function Menu() {
   }
 
   return (
-    <div className="min-h-screen text-[#F5F0E8] relative bg-[#050505]">
-      {/* Global Texture Background */}
+    <div className="min-h-screen text-[#F5F0E8] relative" style={{ background: '#0A0A0A' }}>
+      {/* Imagem de fundo em tela cheia - bem visível */}
       <div 
-        className="fixed inset-0 z-0 pointer-events-none opacity-40 mix-blend-overlay"
+        className="fixed inset-0 z-0 pointer-events-none"
         style={{
           backgroundImage: `url(${MENU_BG})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed',
+          opacity: 0.55,
         }}
       />
-      
-      {/* Ambient Glows */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#C9A227] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.07]" />
-        <div className="absolute top-[40%] right-[-20%] w-[600px] h-[600px] bg-[#0A3A20] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.15]" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[400px] h-[400px] bg-[#C9A227] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.05]" />
-      </div>
+      {/* Overlay escuro para manter legibilidade */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, rgba(5,5,5,0.55) 0%, rgba(5,5,5,0.45) 50%, rgba(5,5,5,0.6) 100%)' }}
+      />
 
       {/* Main Content */}
       <div className="relative z-10">
@@ -180,36 +179,20 @@ export default function Menu() {
                 key={item.id}
                 className="relative rounded-2xl cursor-pointer flex flex-row items-stretch p-3 sm:p-4 hover:scale-[1.01] gap-3 group"
                 style={{
-                  border: '4px solid orange',
-                  background: 'rgba(30,10,0,0.9)',
+                  background: 'rgba(10, 10, 10, 0.45)',
+                  border: '1px solid rgba(201,162,39,0.35)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,162,39,0.15)',
                   overflow: 'hidden',
                   transition: 'all 0.3s ease',
                 }}
                 onClick={() => setSelectedProduct(item)}
               >
-                {/* Imagem de fundo do card - efeito vidro real */}
-                <div
-                  className="absolute inset-0 z-0"
-                  style={{
-                    backgroundImage: `url(${MENU_BG})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    opacity: 0.18,
-                    filter: 'blur(2px)',
-                    transform: 'scale(1.05)',
-                  }}
-                />
-                {/* Overlay escuro com toque dourado */}
-                <div
-                  className="absolute inset-0 z-0"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(201,162,39,0.12) 0%, rgba(5,8,5,0.75) 60%, rgba(10,14,11,0.88) 100%)',
-                  }}
-                />
                 {/* Linha de reflexo dourada no topo do card */}
                 <div
                   className="absolute top-0 left-0 right-0 h-px z-0"
-                  style={{ background: 'linear-gradient(to right, transparent, rgba(201,162,39,0.5), transparent)' }}
+                  style={{ background: 'linear-gradient(to right, transparent, rgba(201,162,39,0.6), transparent)' }}
                 />
 
                 {/* Product Info (Left) */}
