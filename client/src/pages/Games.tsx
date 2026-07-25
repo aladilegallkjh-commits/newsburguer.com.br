@@ -68,10 +68,11 @@ export default function Games() {
         <div
           className="fixed inset-0 z-0 pointer-events-none"
           style={{
-            backgroundImage: 'url(/fundo-menu.jpg.jpeg)',
-            backgroundSize: 'cover',
+            backgroundImage: 'url(/logo.png)',
+            backgroundSize: '200px',
             backgroundPosition: 'center',
-            opacity: 0.1,
+            backgroundRepeat: 'no-repeat',
+            opacity: 0.05,
           }}
         />
         <div className="relative z-10 flex-1 flex flex-col pt-4">
@@ -91,6 +92,15 @@ export default function Games() {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: 0.3,
+        }}
+      />
+      <div
+        className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-[0.03]"
+        style={{
+          backgroundImage: 'url(/logo.png)',
+          backgroundSize: '300px',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       />
       <div

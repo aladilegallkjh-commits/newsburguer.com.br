@@ -61,8 +61,15 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
   const [displayMisses, setDisplayMisses] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(1);
   const [coupon, setCoupon] = useState<string | null>(null);
+  const [logoImg, setLogoImg] = useState<HTMLImageElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const levelRef = useRef(1);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/logo.png';
+    img.onload = () => setLogoImg(img);
+  }, []);
 
   const config = LEVELS[currentLevel - 1];
 
@@ -79,6 +86,16 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#0A1220';
     ctx.fillRect(0, 0, W, H);
+
+    // Draw logo faintly
+    if (logoImg) {
+      ctx.save();
+      ctx.globalAlpha = 0.05;
+      const logoW = 200;
+      const logoH = 200;
+      ctx.drawImage(logoImg, W/2 - logoW/2, H/2 - logoH/2, logoW, logoH);
+      ctx.restore();
+    }
 
     // Stars background
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
@@ -164,8 +181,8 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
         if (len > 5) {
           // Trajectory dots
           const power = Math.min(len * 0.12, 14);
-          const vx = -(dx / len) * power * 0.8;
-          const vy = -(dy / len) * power;
+          const vx = (dx / len) * power * 0.8;
+          const vy = (dy / len) * power;
           let px = W / 2, py = SHOOTER_Y;
           let pvx = vx, pvy = vy;
           ctx.fillStyle = 'rgba(201,162,39,0.5)';
@@ -365,8 +382,8 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
       const power = Math.min(len * 0.12, 14);
       s.ball = {
         x: W / 2, y: SHOOTER_Y,
-        vx: -(dx / len) * power * 0.8,
-        vy: -(dy / len) * power,
+        vx: (dx / len) * power * 0.8,
+        vy: (dy / len) * power,
         active: true,
       };
       s.passedBasketY = false;
@@ -404,8 +421,8 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
       const power = Math.min(len * 0.12, 14);
       s.ball = {
         x: W / 2, y: SHOOTER_Y,
-        vx: -(dx / len) * power * 0.8,
-        vy: -(dy / len) * power,
+        vx: (dx / len) * power * 0.8,
+        vy: (dy / len) * power,
         active: true,
       };
       s.passedBasketY = false;
