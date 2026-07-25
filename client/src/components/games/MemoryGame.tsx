@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowLeft, Play, RotateCcw, Trophy, Timer, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { saveGameScore, generateCoupon } from './gameUtils';
+import { trpc } from '@/lib/trpc';
 
 interface Card {
   id: string;
@@ -63,11 +64,24 @@ export default function MemoryGame({ onBack }: { onBack: () => void }) {
   const [coupon, setCoupon] = useState<string | null>(null);
   const lockTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const { data: menuItems = [] } = trpc.menu.getAll.useQuery();
+
   const config = LEVELS[currentLevel - 1];
 
   const initializeGame = useCallback((levelIndex: number) => {
     const cfg = LEVELS[levelIndex];
-    const imagesToUse = FOOD_IMAGES.slice(0, cfg.pairs);
+    
+    // Pegar fotos do cardápio, se houver
+    const dbImages = menuItems.map((m: any) => m.imageUrl).filter(Boolean);
+    let activeImages = dbImages.length > 0 ? dbImages : FOOD_IMAGES;
+    
+    // Repetir imagens se não houver o suficiente para a fase
+    let finalImages = [...activeImages];
+    while (finalImages.length < cfg.pairs) {
+      finalImages = [...finalImages, ...activeImages];
+    }
+    
+    const imagesToUse = finalImages.slice(0, cfg.pairs);
     const gameCards: Card[] = [...imagesToUse, ...imagesToUse]
       .sort(() => Math.random() - 0.5)
       .map((imageUrl, index) => ({

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { ArrowLeft, Play, RotateCcw, Trophy, Star, Timer } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { saveGameScore, generateCoupon } from './gameUtils';
+import { trpc } from '@/lib/trpc';
 
 interface LevelConfig {
   level: number;
@@ -46,9 +47,14 @@ export default function PuzzleTasty({ onBack }: { onBack: () => void }) {
   const [moves, setMoves] = useState(0);
   const [coupon, setCoupon] = useState<string | null>(null);
 
+  const { data: menuItems = [] } = trpc.menu.getAll.useQuery();
+
   const config = LEVELS[currentLevel - 1];
   const totalPieces = config.grid * config.grid;
-  const imageUrl = PUZZLE_IMAGES[imageIndex % PUZZLE_IMAGES.length];
+  
+  const dbImages = menuItems.map((m: any) => m.imageUrl).filter(Boolean);
+  const activeImages = dbImages.length > 0 ? dbImages : PUZZLE_IMAGES;
+  const imageUrl = activeImages[imageIndex % activeImages.length];
 
   const shufflePieces = useCallback((n: number) => {
     const arr = Array.from({ length: n * n }, (_, i) => i);
