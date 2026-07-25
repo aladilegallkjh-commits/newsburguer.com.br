@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ArrowLeft, Play, RotateCcw, Trophy, Star, Timer } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { saveGameScore, generateCoupon } from './gameUtils';
 
 interface LevelConfig {
   level: number;
@@ -43,6 +44,7 @@ export default function PuzzleTasty({ onBack }: { onBack: () => void }) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [imageIndex, setImageIndex] = useState(0);
   const [moves, setMoves] = useState(0);
+  const [coupon, setCoupon] = useState<string | null>(null);
 
   const config = LEVELS[currentLevel - 1];
   const totalPieces = config.grid * config.grid;
@@ -90,7 +92,10 @@ export default function PuzzleTasty({ onBack }: { onBack: () => void }) {
     const isSolved = updatedPieces.every(p => p.id === p.currentPos);
     if (isSolved) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#C9A227', '#F5F0E8'] });
+      saveGameScore('puzzle', currentLevel, timeRemaining);
       if (currentLevel >= LEVELS.length) {
+        const code = generateCoupon('PUZZLE');
+        setCoupon(code);
         setGameState('completed');
       } else {
         setGameState('won');
@@ -274,8 +279,15 @@ export default function PuzzleTasty({ onBack }: { onBack: () => void }) {
               <div className="bg-[#111111] border border-[#C9A227] p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
                 <Trophy className="mx-auto text-[#C9A227] mb-4" size={60} />
                 <h3 className="text-3xl font-bold text-[#F5F0E8] mb-2">PUZZLE MASTER!</h3>
-                <p className="text-[#8A7A5A] mb-6">Você montou todos os 10 quebra-cabeças! Incrível!</p>
-                <button onClick={() => { setCurrentLevel(1); setGameState('start'); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
+                <p className="text-[#8A7A5A] mb-4">Você montou todos os 10 quebra-cabeças! Incrível!</p>
+                {coupon && (
+                  <div className="mb-4 p-3 rounded-xl border-2 border-dashed border-[#C9A227] bg-[#C9A227]/10">
+                    <p className="text-xs text-[#8A7A5A] mb-1">🎁 Cupom de desconto:</p>
+                    <p className="text-lg font-bold text-[#C9A227] tracking-widest">{coupon}</p>
+                    <p className="text-xs text-[#8A7A5A] mt-1">Use no pedido pelo WhatsApp!</p>
+                  </div>
+                )}
+                <button onClick={() => { setCurrentLevel(1); setGameState('start'); setCoupon(null); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
                   <RotateCcw size={18} /> Jogar de Novo
                 </button>
               </div>

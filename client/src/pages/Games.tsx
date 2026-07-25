@@ -5,6 +5,7 @@ import MemoryGame from '@/components/games/MemoryGame';
 import BurgerCatcher from '@/components/games/BurgerCatcher';
 import HoopBurger from '@/components/games/HoopBurger';
 import PuzzleTasty from '@/components/games/PuzzleTasty';
+import GamesRanking from '@/components/games/GamesRanking';
 import { Gamepad2 } from 'lucide-react';
 
 type GameId = 'memory' | 'catcher' | 'hoop' | 'puzzle' | null;
@@ -155,6 +156,9 @@ export default function Games() {
               </div>
             ))}
           </div>
+
+          {/* Game Ranking & Coupons */}
+          <GamesRanking />
 
           {/* Footer note */}
           <p className="text-center text-[#8A7A5A]/60 text-xs mt-8">

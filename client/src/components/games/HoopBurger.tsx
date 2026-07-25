@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowLeft, Play, RotateCcw, Trophy, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { saveGameScore, generateCoupon } from './gameUtils';
 
 interface LevelConfig {
   level: number;
@@ -42,6 +43,7 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
   const [powerLine, setPowerLine] = useState<{ x: number; y: number } | null>(null);
   const [isFlying, setIsFlying] = useState(false);
   const [sineT, setSineT] = useState(0);
+  const [coupon, setCoupon] = useState<string | null>(null);
 
   const config = LEVELS[currentLevel - 1];
   const ballPosRef = useRef(ballPos);
@@ -150,8 +152,11 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
           confetti({ particleCount: 50, spread: 40, origin: { y: 0.7 }, colors: ['#C9A227', '#F5F0E8'] });
           const newScore = scoreRef.current + 1;
           setScore(newScore);
+          saveGameScore('hoop', currentLevel, newScore);
           if (newScore >= LEVELS[currentLevel - 1].requiredScore) {
             if (currentLevel >= LEVELS.length) {
+              const code = generateCoupon('HOOP');
+              setCoupon(code);
               setGameState('completed');
             } else {
               setGameState('won');
@@ -395,8 +400,15 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
               <div className="bg-[#111111] border border-[#C9A227] p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
                 <Trophy className="mx-auto text-[#C9A227] mb-4" size={60} />
                 <h3 className="text-3xl font-bold text-[#F5F0E8] mb-2">MVP! 🏆</h3>
-                <p className="text-[#8A7A5A] mb-6">Você zerou o Hoop Burger! Mira perfeita!</p>
-                <button onClick={() => { setCurrentLevel(1); setGameState('start'); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
+                <p className="text-[#8A7A5A] mb-4">Você zerou o Hoop Burger! Mira perfeita!</p>
+                {coupon && (
+                  <div className="mb-4 p-3 rounded-xl border-2 border-dashed border-[#C9A227] bg-[#C9A227]/10">
+                    <p className="text-xs text-[#8A7A5A] mb-1">🎁 Cupom de desconto:</p>
+                    <p className="text-lg font-bold text-[#C9A227] tracking-widest">{coupon}</p>
+                    <p className="text-xs text-[#8A7A5A] mt-1">Use no pedido pelo WhatsApp!</p>
+                  </div>
+                )}
+                <button onClick={() => { setCurrentLevel(1); setGameState('start'); setCoupon(null); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
                   <RotateCcw size={18} /> Jogar de Novo
                 </button>
               </div>

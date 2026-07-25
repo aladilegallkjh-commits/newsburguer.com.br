@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowLeft, Play, RotateCcw, Trophy, Star, Heart } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { saveGameScore, generateCoupon } from './gameUtils';
 
 interface FallingItem {
   id: number;
@@ -47,6 +48,7 @@ export default function BurgerCatcher({ onBack }: { onBack: () => void }) {
   const [trayX, setTrayX] = useState(GAME_WIDTH / 2 - TRAY_WIDTH / 2);
   const [fallingItems, setFallingItems] = useState<FallingItem[]>([]);
   const [itemIdCounter, setItemIdCounter] = useState(0);
+  const [coupon, setCoupon] = useState<string | null>(null);
 
   const gameRef = useRef<HTMLDivElement>(null);
   const trayXRef = useRef(trayX);
@@ -156,7 +158,10 @@ export default function BurgerCatcher({ onBack }: { onBack: () => void }) {
             const newScore = prev + scoreDelta;
             if (newScore >= LEVELS[currentLevel - 1].targetScore) {
               confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 }, colors: ['#C9A227', '#F5F0E8'] });
+              saveGameScore('catcher', currentLevel, newScore);
               if (currentLevel >= LEVELS.length) {
+                const code = generateCoupon('CATCHER');
+                setCoupon(code);
                 setGameState('completed');
               } else {
                 setGameState('won');
@@ -325,8 +330,15 @@ export default function BurgerCatcher({ onBack }: { onBack: () => void }) {
               <div className="bg-[#111111] border border-[#C9A227] p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
                 <Trophy className="mx-auto text-[#C9A227] mb-4" size={60} />
                 <h3 className="text-3xl font-bold text-[#F5F0E8] mb-2">CAMPEÃO!</h3>
-                <p className="text-[#8A7A5A] mb-6">Você zerou o Burger Catcher! Nenhum lanche escapou!</p>
-                <button onClick={() => { setCurrentLevel(1); setGameState('start'); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold text-lg hover:scale-105 transition-all">
+                <p className="text-[#8A7A5A] mb-4">Você zerou o Burger Catcher! Nenhum lanche escapou!</p>
+                {coupon && (
+                  <div className="mb-4 p-3 rounded-xl border-2 border-dashed border-[#C9A227] bg-[#C9A227]/10">
+                    <p className="text-xs text-[#8A7A5A] mb-1">🎁 Cupom de desconto:</p>
+                    <p className="text-lg font-bold text-[#C9A227] tracking-widest">{coupon}</p>
+                    <p className="text-xs text-[#8A7A5A] mt-1">Use no pedido pelo WhatsApp!</p>
+                  </div>
+                )}
+                <button onClick={() => { setCurrentLevel(1); setGameState('start'); setCoupon(null); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
                   <RotateCcw size={20} /> Jogar de Novo
                 </button>
               </div>
