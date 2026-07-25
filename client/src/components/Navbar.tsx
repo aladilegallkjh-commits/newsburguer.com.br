@@ -113,6 +113,11 @@ export default function Navbar() {
                 🏆 Ranking
               </span>
             </Link>
+            <Link href="/games">
+              <span className="text-sm font-medium transition-colors duration-200 cursor-pointer flex items-center gap-1" style={{ color: location === '/games' ? '#C9A227' : '#8A7A5A' }}>
+                🎮 Games
+              </span>
+            </Link>
           </nav>
 
           {/* Cart + Mobile Menu */}
@@ -175,6 +180,14 @@ export default function Navbar() {
                 style={{ color: location === '/ranking' ? '#C9A227' : '#8A7A5A' }}
               >
                 🏆 Ranking
+              </span>
+            </Link>
+            <Link href="/games" onClick={() => setMenuOpen(false)}>
+              <span
+                className="block text-sm font-medium py-2 cursor-pointer flex items-center gap-2"
+                style={{ color: location === '/games' ? '#C9A227' : '#8A7A5A' }}
+              >
+                🎮 Games
               </span>
             </Link>
           </nav>

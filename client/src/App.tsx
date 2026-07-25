@@ -14,6 +14,7 @@ import Ranking from "./pages/Ranking";
 import TrackOrder from "./pages/TrackOrder";
 import CustomBurger from "./pages/CustomBurger";
 import Motoboy from "./pages/Motoboy";
+import Games from "./pages/Games";
 
 import Ratings from "./pages/Ratings";
 import AdminLogin from "./pages/AdminLogin";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/rastrear" component={TrackOrder} />
       <Route path="/criar-lanche" component={CustomBurger} />
       <Route path="/entregador" component={Motoboy} />
+      <Route path="/games" component={Games} />
 
       <Route path="/avaliacoes" component={Ratings} />
       <Route path="/admin" component={() => {
