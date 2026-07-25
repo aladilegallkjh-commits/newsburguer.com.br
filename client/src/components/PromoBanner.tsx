@@ -1,13 +1,43 @@
-import { openWhatsAppChat } from '@/lib/whatsappUtils';
 import { ArrowRight, Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import ProductCustomizer from './ProductCustomizer';
+import { useCart, CartItemCustomization } from '@/contexts/CartContext';
+import { useLocation } from 'wouter';
 
 export default function PromoBanner() {
-  const { data: promotions = [], isLoading } = trpc.promotions.getActive.useQuery();
+  const { data: promotions = [], isLoading: isLoadingPromos } = trpc.promotions.getActive.useQuery();
+  const { data: menuItems = [] } = trpc.menu.getAll.useQuery(undefined, {
+    staleTime: 1000 * 60 * 5,
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedPromo, setSelectedPromo] = useState<any>(null);
+  const { addItem } = useCart();
+  const [, navigate] = useLocation();
 
-  if (isLoading || promotions.length === 0) {
+  const handleAddWithCustomization = (
+    promo: any,
+    customization: CartItemCustomization,
+    customizationPrice: number,
+    goToCart: boolean
+  ) => {
+    addItem({
+      id: `promo-${promo.id}`,
+      name: promo.title,
+      price: promo.discountValue,
+      emoji: '🎯',
+      customization,
+      customizationPrice,
+    });
+
+    if (goToCart) {
+      setTimeout(() => {
+        navigate('/cart');
+      }, 300);
+    }
+  };
+
+  if (isLoadingPromos || promotions.length === 0) {
     return null; // Não exibe o banner se não houver promoções ativas
   }
 
@@ -58,8 +88,7 @@ export default function PromoBanner() {
       >
         {promotions.map((promo: any) => {
           const handlePromoClick = () => {
-             const promoMessage = `Olá! Gostaria de aproveitar a promoção *${promo.title}* (R$ ${parseFloat(promo.discountValue).toFixed(2).replace('.', ',')}) que vi no cardápio online!`;
-             openWhatsAppChat(promoMessage);
+             setSelectedPromo(promo);
           };
 
           return (
@@ -132,6 +161,41 @@ export default function PromoBanner() {
           );
         })}
       </div>
+
+      {/* Product Customizer Modal for Promotions */}
+      {selectedPromo && (
+        <ProductCustomizer
+          product={(() => {
+            // Try to match the promo with a menu item to get its ingredients and extras
+            const matchedMenuItem = menuItems.find(
+              (m: any) => m.name.toLowerCase() === selectedPromo.title.toLowerCase() ||
+                          selectedPromo.title.toLowerCase().includes(m.name.toLowerCase())
+            );
+
+            return {
+              id: `promo-${selectedPromo.id}`,
+              name: selectedPromo.title,
+              description: selectedPromo.description || '',
+              price: selectedPromo.discountValue,
+              emoji: matchedMenuItem?.emoji || '🎯',
+              category: selectedPromo.type === 'combo' ? 'combos' : 'promotions',
+              ingredients: matchedMenuItem?.ingredients || [],
+              availableExtras: matchedMenuItem?.availableExtras || [],
+              hasRemovableIngredients: matchedMenuItem ? matchedMenuItem.hasRemovableIngredients : false,
+            };
+          })()}
+          isOpen={!!selectedPromo}
+          onClose={() => setSelectedPromo(null)}
+          onAddToCart={(customization, price) => {
+            handleAddWithCustomization(selectedPromo, customization, price, false);
+            setSelectedPromo(null);
+          }}
+          onAddAndGoToCart={(customization, price) => {
+            handleAddWithCustomization(selectedPromo, customization, price, true);
+            setSelectedPromo(null);
+          }}
+        />
+      )}
     </div>
   );
 }
