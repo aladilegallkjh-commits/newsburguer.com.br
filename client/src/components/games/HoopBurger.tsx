@@ -1,419 +1,517 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowLeft, Play, RotateCcw, Trophy, Star } from 'lucide-react';
+import { ArrowLeft, Star, RotateCcw, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { saveGameScore, generateCoupon } from './gameUtils';
 
 interface LevelConfig {
   level: number;
-  basketSpeed: number;
-  ballGravity: number;
   requiredScore: number;
-  movementPattern: 'linear' | 'sine' | 'bounce' | 'random';
-  amplitude: number; // For sine pattern
+  maxMisses: number;
+  basketSpeed: number; // pixels per frame, 0 = stationary
+  basketPattern: 'none' | 'linear' | 'sine' | 'fast';
 }
 
 const LEVELS: LevelConfig[] = [
-  { level: 1, basketSpeed: 0, ballGravity: 0.3, requiredScore: 3, movementPattern: 'linear', amplitude: 0 },
-  { level: 2, basketSpeed: 1.5, ballGravity: 0.35, requiredScore: 3, movementPattern: 'linear', amplitude: 0 },
-  { level: 3, basketSpeed: 2.5, ballGravity: 0.4, requiredScore: 4, movementPattern: 'linear', amplitude: 0 },
-  { level: 4, basketSpeed: 3, ballGravity: 0.45, requiredScore: 4, movementPattern: 'sine', amplitude: 60 },
-  { level: 5, basketSpeed: 3.5, ballGravity: 0.5, requiredScore: 5, movementPattern: 'sine', amplitude: 80 },
-  { level: 6, basketSpeed: 4, ballGravity: 0.55, requiredScore: 5, movementPattern: 'bounce', amplitude: 0 },
-  { level: 7, basketSpeed: 4.5, ballGravity: 0.6, requiredScore: 6, movementPattern: 'bounce', amplitude: 0 },
-  { level: 8, basketSpeed: 5, ballGravity: 0.65, requiredScore: 6, movementPattern: 'random', amplitude: 0 },
-  { level: 9, basketSpeed: 6, ballGravity: 0.7, requiredScore: 7, movementPattern: 'random', amplitude: 0 },
-  { level: 10, basketSpeed: 7, ballGravity: 0.75, requiredScore: 8, movementPattern: 'random', amplitude: 100 },
+  { level: 1,  requiredScore: 3,  maxMisses: 5, basketSpeed: 0,   basketPattern: 'none'   },
+  { level: 2,  requiredScore: 4,  maxMisses: 5, basketSpeed: 1.2, basketPattern: 'linear' },
+  { level: 3,  requiredScore: 4,  maxMisses: 4, basketSpeed: 2,   basketPattern: 'linear' },
+  { level: 4,  requiredScore: 5,  maxMisses: 4, basketSpeed: 2.5, basketPattern: 'sine'   },
+  { level: 5,  requiredScore: 5,  maxMisses: 4, basketSpeed: 3,   basketPattern: 'sine'   },
+  { level: 6,  requiredScore: 6,  maxMisses: 3, basketSpeed: 3.5, basketPattern: 'fast'   },
+  { level: 7,  requiredScore: 6,  maxMisses: 3, basketSpeed: 4,   basketPattern: 'fast'   },
+  { level: 8,  requiredScore: 7,  maxMisses: 3, basketSpeed: 4.5, basketPattern: 'fast'   },
+  { level: 9,  requiredScore: 8,  maxMisses: 3, basketSpeed: 5,   basketPattern: 'fast'   },
+  { level: 10, requiredScore: 10, maxMisses: 3, basketSpeed: 6,   basketPattern: 'fast'   },
 ];
 
-const GAME_WIDTH = 360;
-const GAME_HEIGHT = 500;
-const BASKET_WIDTH = 70;
-const BASKET_Y = GAME_HEIGHT - 80;
-const BALL_RADIUS = 18;
+const W = 360;
+const H = 560;
+const BASKET_W = 80;
+const BASKET_H = 12;
+const BASKET_Y = 130;
+const BALL_R = 20;
+const SHOOTER_Y = H - 60;
+const GRAVITY = 0.45;
+
+interface BallState {
+  x: number; y: number;
+  vx: number; vy: number;
+  active: boolean;
+}
 
 export default function HoopBurger({ onBack }: { onBack: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stateRef = useRef({
+    basketX: W / 2 - BASKET_W / 2,
+    basketDir: 1,
+    sineT: 0,
+    ball: { x: W / 2, y: SHOOTER_Y, vx: 0, vy: 0, active: false } as BallState,
+    score: 0,
+    misses: 0,
+    gameRunning: false,
+    level: 1,
+    aiming: false,
+    touchStart: { x: 0, y: 0 },
+    touchCurrent: { x: 0, y: 0 },
+    passedBasketY: false,
+  });
+
+  const [uiState, setUiState] = useState<'start' | 'playing' | 'won' | 'lost' | 'completed'>('start');
+  const [displayScore, setDisplayScore] = useState(0);
+  const [displayMisses, setDisplayMisses] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(1);
-  const [gameState, setGameState] = useState<'start' | 'playing' | 'aiming' | 'flying' | 'won' | 'lost' | 'completed'>('start');
-  const [score, setScore] = useState(0);
-  const [missCount, setMissCount] = useState(0);
-  const [basketX, setBasketX] = useState(GAME_WIDTH / 2 - BASKET_WIDTH / 2);
-  const [ballPos, setBallPos] = useState({ x: GAME_WIDTH / 2, y: GAME_HEIGHT - 130 });
-  const [ballVel, setBallVel] = useState({ x: 0, y: 0 });
-  const [aimAngle, setAimAngle] = useState<number | null>(null);
-  const [powerLine, setPowerLine] = useState<{ x: number; y: number } | null>(null);
-  const [isFlying, setIsFlying] = useState(false);
-  const [sineT, setSineT] = useState(0);
   const [coupon, setCoupon] = useState<string | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const levelRef = useRef(1);
 
   const config = LEVELS[currentLevel - 1];
-  const ballPosRef = useRef(ballPos);
-  const ballVelRef = useRef(ballVel);
-  const basketXRef = useRef(basketX);
-  const isFlying_ = useRef(isFlying);
-  const scoreRef = useRef(score);
-  const missCountRef = useRef(missCount);
-  const gameStateRef = useRef(gameState);
 
-  useEffect(() => { ballPosRef.current = ballPos; }, [ballPos]);
-  useEffect(() => { ballVelRef.current = ballVel; }, [ballVel]);
-  useEffect(() => { basketXRef.current = basketX; }, [basketX]);
-  useEffect(() => { isFlying_.current = isFlying; }, [isFlying]);
-  useEffect(() => { scoreRef.current = score; }, [score]);
-  useEffect(() => { missCountRef.current = missCount; }, [missCount]);
-  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+  // Draw everything on canvas
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const s = stateRef.current;
+    const cfg = LEVELS[levelRef.current - 1];
 
-  const resetBall = useCallback(() => {
-    setBallPos({ x: GAME_WIDTH / 2, y: GAME_HEIGHT - 130 });
-    setBallVel({ x: 0, y: 0 });
-    setIsFlying(false);
-    setPowerLine(null);
-    setAimAngle(null);
-  }, []);
+    // Background
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0A1220';
+    ctx.fillRect(0, 0, W, H);
 
-  const initGame = useCallback((levelIdx: number) => {
-    setScore(0);
-    setMissCount(0);
-    setBasketX(GAME_WIDTH / 2 - BASKET_WIDTH / 2);
-    setSineT(0);
-    resetBall();
-    setGameState('playing');
-  }, [resetBall]);
-
-  // Basket movement
-  useEffect(() => {
-    if (gameState !== 'playing') return;
-    if (config.basketSpeed === 0) return;
-
-    let dir = 1;
-    let localT = 0;
-    let lastBasketX = GAME_WIDTH / 2 - BASKET_WIDTH / 2;
-    let targetX = Math.random() * (GAME_WIDTH - BASKET_WIDTH);
-
-    const interval = setInterval(() => {
-      localT += 0.05;
-      setSineT(t => t + 0.05);
-
-      switch (config.movementPattern) {
-        case 'linear':
-          setBasketX(prev => {
-            let next = prev + config.basketSpeed * dir;
-            if (next <= 0 || next >= GAME_WIDTH - BASKET_WIDTH) dir *= -1;
-            return Math.max(0, Math.min(next, GAME_WIDTH - BASKET_WIDTH));
-          });
-          break;
-        case 'sine':
-          setBasketX(() => {
-            const center = GAME_WIDTH / 2 - BASKET_WIDTH / 2;
-            return center + Math.sin(localT * config.basketSpeed * 0.2) * config.amplitude;
-          });
-          break;
-        case 'bounce':
-          setBasketX(prev => {
-            let next = prev + config.basketSpeed * dir;
-            if (next <= 0) { dir = 1; next = 0; }
-            if (next >= GAME_WIDTH - BASKET_WIDTH) { dir = -1; next = GAME_WIDTH - BASKET_WIDTH; }
-            return next;
-          });
-          break;
-        case 'random':
-          setBasketX(prev => {
-            const dx = (targetX - prev) * 0.08 * config.basketSpeed;
-            if (Math.abs(targetX - prev) < 5) targetX = Math.random() * (GAME_WIDTH - BASKET_WIDTH);
-            return prev + dx;
-          });
-          break;
-      }
-    }, 16);
-
-    return () => clearInterval(interval);
-  }, [gameState, currentLevel, config.basketSpeed, config.movementPattern, config.amplitude]);
-
-  // Physics loop
-  useEffect(() => {
-    if (!isFlying || gameState !== 'playing') return;
-
-    const loop = setInterval(() => {
-      setBallPos(prev => {
-        const newPos = { x: prev.x + ballVelRef.current.x, y: prev.y + ballVelRef.current.y };
-        setBallVel(v => ({ ...v, y: v.y + config.ballGravity }));
-
-        // Bounce off walls
-        if (newPos.x <= BALL_RADIUS || newPos.x >= GAME_WIDTH - BALL_RADIUS) {
-          setBallVel(v => ({ ...v, x: -v.x * 0.7 }));
-        }
-
-        // Check basket collision
-        const bx = basketXRef.current;
-        const inBasketX = newPos.x >= bx + 5 && newPos.x <= bx + BASKET_WIDTH - 5;
-        const inBasketY = newPos.y >= BASKET_Y - 10 && newPos.y <= BASKET_Y + 20;
-
-        if (inBasketX && inBasketY) {
-          // SCORE!
-          confetti({ particleCount: 50, spread: 40, origin: { y: 0.7 }, colors: ['#C9A227', '#F5F0E8'] });
-          const newScore = scoreRef.current + 1;
-          setScore(newScore);
-          saveGameScore('hoop', currentLevel, newScore);
-          if (newScore >= LEVELS[currentLevel - 1].requiredScore) {
-            if (currentLevel >= LEVELS.length) {
-              const code = generateCoupon('HOOP');
-              setCoupon(code);
-              setGameState('completed');
-            } else {
-              setGameState('won');
-            }
-          } else {
-            resetBall();
-          }
-          return { x: GAME_WIDTH / 2, y: GAME_HEIGHT - 130 };
-        }
-
-        // Ball fell off bottom - miss
-        if (newPos.y > GAME_HEIGHT) {
-          const newMiss = missCountRef.current + 1;
-          setMissCount(newMiss);
-          if (newMiss >= 3) {
-            setGameState('lost');
-          } else {
-            resetBall();
-          }
-          return { x: GAME_WIDTH / 2, y: GAME_HEIGHT - 130 };
-        }
-
-        return newPos;
-      });
-    }, 16);
-
-    return () => clearInterval(loop);
-  }, [isFlying, gameState, currentLevel, config.ballGravity, resetBall]);
-
-  const gameAreaRef = useRef<HTMLDivElement>(null);
-
-  const handleGameAreaClick = (e: React.MouseEvent | React.TouchEvent) => {
-    if (gameState !== 'playing' || isFlying) return;
-
-    const rect = gameAreaRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    let clientX: number, clientY: number;
-    if ('touches' in e) {
-      clientX = e.changedTouches[0].clientX;
-      clientY = e.changedTouches[0].clientY;
-    } else {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
+    // Stars background
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    for (let i = 0; i < 25; i++) {
+      ctx.beginPath();
+      ctx.arc((i * 53 + 11) % W, (i * 37 + 7) % (H * 0.6), 1, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    const clickX = clientX - rect.left;
-    const clickY = clientY - rect.top;
+    // Basket backboard
+    ctx.fillStyle = 'rgba(201,162,39,0.15)';
+    ctx.fillRect(s.basketX + BASKET_W / 2 - 4, BASKET_Y - 50, 8, 50);
 
-    const ballX = ballPosRef.current.x;
-    const ballY = ballPosRef.current.y;
+    // Basket rim (left post)
+    ctx.fillStyle = '#C9A227';
+    ctx.shadowColor = 'rgba(201,162,39,0.8)';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(s.basketX + 6, BASKET_Y, 6, 0, Math.PI * 2);
+    ctx.fill();
 
-    const dx = clickX - ballX;
-    const dy = clickY - ballY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const power = Math.min(dist * 0.05, 8);
+    // Basket rim (right post)
+    ctx.beginPath();
+    ctx.arc(s.basketX + BASKET_W - 6, BASKET_Y, 6, 0, Math.PI * 2);
+    ctx.fill();
 
-    const vx = (dx / dist) * power;
-    const vy = (dy / dist) * power;
+    // Basket top bar
+    ctx.strokeStyle = '#F5D76E';
+    ctx.lineWidth = 4;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(s.basketX + 6, BASKET_Y);
+    ctx.lineTo(s.basketX + BASKET_W - 6, BASKET_Y);
+    ctx.stroke();
 
-    setBallVel({ x: vx, y: vy });
-    setIsFlying(true);
+    // Net lines
+    ctx.strokeStyle = 'rgba(201,162,39,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 0;
+    const netTop = BASKET_Y;
+    const netBottom = BASKET_Y + 45;
+    const netLeft = s.basketX + 8;
+    const netRight = s.basketX + BASKET_W - 8;
+    const netBottomLeft = s.basketX + BASKET_W / 2 - 14;
+    const netBottomRight = s.basketX + BASKET_W / 2 + 14;
+    ctx.beginPath();
+    ctx.moveTo(netLeft, netTop); ctx.lineTo(netBottomLeft, netBottom);
+    ctx.moveTo(netRight, netTop); ctx.lineTo(netBottomRight, netBottom);
+    // Horizontal net lines
+    for (let i = 0; i <= 3; i++) {
+      const t = i / 3;
+      const lx = netLeft + (netBottomLeft - netLeft) * t;
+      const rx = netRight + (netBottomRight - netRight) * t;
+      const y = netTop + (netBottom - netTop) * t;
+      ctx.moveTo(lx, y); ctx.lineTo(rx, y);
+    }
+    ctx.stroke();
+
+    // Ball or shooter
+    if (s.ball.active) {
+      ctx.shadowColor = 'rgba(255,160,50,0.6)';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = '#E8700A';
+      ctx.beginPath();
+      ctx.arc(s.ball.x, s.ball.y, BALL_R, 0, Math.PI * 2);
+      ctx.fill();
+      // Ball lines
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(s.ball.x - BALL_R, s.ball.y);
+      ctx.lineTo(s.ball.x + BALL_R, s.ball.y);
+      ctx.moveTo(s.ball.x, s.ball.y - BALL_R);
+      ctx.arc(s.ball.x, s.ball.y, BALL_R * 0.7, -0.5, Math.PI + 0.5);
+      ctx.stroke();
+    } else {
+      // Draw aim line if aiming
+      if (s.aiming) {
+        const dx = s.touchCurrent.x - s.touchStart.x;
+        const dy = s.touchCurrent.y - s.touchStart.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len > 5) {
+          // Trajectory dots
+          const power = Math.min(len * 0.12, 14);
+          const vx = -(dx / len) * power * 0.8;
+          const vy = -(dy / len) * power;
+          let px = W / 2, py = SHOOTER_Y;
+          let pvx = vx, pvy = vy;
+          ctx.fillStyle = 'rgba(201,162,39,0.5)';
+          for (let i = 0; i < 12; i++) {
+            pvx *= 0.995;
+            pvy += GRAVITY;
+            px += pvx;
+            py += pvy;
+            if (py > H) break;
+            ctx.beginPath();
+            ctx.arc(px, py, 3 - i * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // Shooter (hamburger emoji on a platform)
+      ctx.shadowColor = 'rgba(201,162,39,0.5)';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#C9A227';
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 30, SHOOTER_Y + BALL_R - 8, 60, 12, 6);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.font = `${BALL_R * 1.8}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🍔', W / 2, SHOOTER_Y);
+    }
+
+    // HUD
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, 0, W, 50);
+
+    ctx.fillStyle = '#F5F0E8';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`❤️ ${cfg.maxMisses - s.misses} vidas`, 16, 25);
+
+    ctx.textAlign = 'right';
+    ctx.fillText(`🏀 ${s.score}/${cfg.requiredScore}`, W - 16, 25);
+
+    // Instruction
+    if (!s.ball.active && !s.aiming && s.gameRunning) {
+      ctx.fillStyle = 'rgba(201,162,39,0.7)';
+      ctx.font = '13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Arraste de baixo pra cima para atirar!', W / 2, H - 20);
+    }
+  }, []);
+
+  // Game loop
+  const gameLoop = useCallback(() => {
+    const s = stateRef.current;
+    const cfg = LEVELS[levelRef.current - 1];
+    if (!s.gameRunning) return;
+
+    // Move basket
+    if (cfg.basketSpeed > 0) {
+      if (cfg.basketPattern === 'linear' || cfg.basketPattern === 'fast') {
+        s.basketX += cfg.basketSpeed * s.basketDir;
+        if (s.basketX <= 0 || s.basketX >= W - BASKET_W) s.basketDir *= -1;
+        s.basketX = Math.max(0, Math.min(s.basketX, W - BASKET_W));
+      } else if (cfg.basketPattern === 'sine') {
+        s.sineT += 0.025 * cfg.basketSpeed;
+        s.basketX = (W / 2 - BASKET_W / 2) + Math.sin(s.sineT) * (W / 2 - BASKET_W / 2 - 10);
+      }
+    }
+
+    // Ball physics
+    if (s.ball.active) {
+      s.ball.vx *= 0.999;
+      s.ball.vy += GRAVITY;
+      s.ball.x += s.ball.vx;
+      s.ball.y += s.ball.vy;
+
+      // Wall bounce
+      if (s.ball.x <= BALL_R) { s.ball.x = BALL_R; s.ball.vx = Math.abs(s.ball.vx) * 0.6; }
+      if (s.ball.x >= W - BALL_R) { s.ball.x = W - BALL_R; s.ball.vx = -Math.abs(s.ball.vx) * 0.6; }
+
+      // Check basket
+      const rimLeft = s.basketX + 6;
+      const rimRight = s.basketX + BASKET_W - 6;
+      const inX = s.ball.x > rimLeft + 5 && s.ball.x < rimRight - 5;
+      const crossingY = s.ball.y >= BASKET_Y - 2 && s.ball.y <= BASKET_Y + 20;
+      const goingDown = s.ball.vy > 0;
+
+      if (!s.passedBasketY && s.ball.y > BASKET_Y) s.passedBasketY = true;
+
+      if (s.passedBasketY && crossingY && goingDown && inX) {
+        // SCORE!
+        s.score += 1;
+        s.ball = { x: W / 2, y: SHOOTER_Y, vx: 0, vy: 0, active: false };
+        s.passedBasketY = false;
+        setDisplayScore(s.score);
+
+        confetti({ particleCount: 40, spread: 40, origin: { y: 0.7 }, colors: ['#C9A227', '#fff'] });
+
+        if (s.score >= cfg.requiredScore) {
+          s.gameRunning = false;
+          saveGameScore('hoop', levelRef.current, s.score);
+          if (levelRef.current >= LEVELS.length) {
+            const code = generateCoupon('HOOP');
+            setCoupon(code);
+            setUiState('completed');
+          } else {
+            setUiState('won');
+          }
+          draw();
+          return;
+        }
+      }
+
+      // Ball out of bounds (missed)
+      if (s.ball.y > H + 10 || (s.passedBasketY && s.ball.y > BASKET_Y + 60 && !inX)) {
+        s.misses += 1;
+        s.ball = { x: W / 2, y: SHOOTER_Y, vx: 0, vy: 0, active: false };
+        s.passedBasketY = false;
+        setDisplayMisses(s.misses);
+
+        if (s.misses >= cfg.maxMisses) {
+          s.gameRunning = false;
+          setUiState('lost');
+          draw();
+          return;
+        }
+      }
+    }
+
+    draw();
+    rafRef.current = requestAnimationFrame(gameLoop);
+  }, [draw]);
+
+  const startGame = useCallback((levelIdx: number) => {
+    const cfg = LEVELS[levelIdx];
+    const s = stateRef.current;
+    s.basketX = W / 2 - BASKET_W / 2;
+    s.basketDir = 1;
+    s.sineT = 0;
+    s.ball = { x: W / 2, y: SHOOTER_Y, vx: 0, vy: 0, active: false };
+    s.score = 0;
+    s.misses = 0;
+    s.gameRunning = true;
+    s.aiming = false;
+    s.passedBasketY = false;
+    setDisplayScore(0);
+    setDisplayMisses(0);
+    setUiState('playing');
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(gameLoop);
+  }, [gameLoop]);
+
+  useEffect(() => {
+    levelRef.current = currentLevel;
+  }, [currentLevel]);
+
+  useEffect(() => {
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, []);
+
+  // Touch handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (stateRef.current.ball.active || !stateRef.current.gameRunning) return;
+    e.preventDefault();
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    const t = e.touches[0];
+    stateRef.current.aiming = true;
+    stateRef.current.touchStart = { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY };
+    stateRef.current.touchCurrent = { ...stateRef.current.touchStart };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!stateRef.current.aiming) return;
+    e.preventDefault();
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    const t = e.touches[0];
+    stateRef.current.touchCurrent = { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!stateRef.current.aiming) return;
+    e.preventDefault();
+    const s = stateRef.current;
+    const dx = s.touchCurrent.x - s.touchStart.x;
+    const dy = s.touchCurrent.y - s.touchStart.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len > 8) {
+      const power = Math.min(len * 0.12, 14);
+      s.ball = {
+        x: W / 2, y: SHOOTER_Y,
+        vx: -(dx / len) * power * 0.8,
+        vy: -(dy / len) * power,
+        active: true,
+      };
+      s.passedBasketY = false;
+    }
+    s.aiming = false;
+  };
+
+  // Mouse handlers for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (stateRef.current.ball.active || !stateRef.current.gameRunning) return;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    stateRef.current.aiming = true;
+    stateRef.current.touchStart = { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    stateRef.current.touchCurrent = { ...stateRef.current.touchStart };
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isFlying || gameState !== 'playing') return;
-    const rect = gameAreaRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    setPowerLine({ x: mx, y: my });
+    if (!stateRef.current.aiming) return;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    stateRef.current.touchCurrent = { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    handleTouchEnd({ changedTouches: [] } as any);
+    const s = stateRef.current;
+    if (!s.aiming) return;
+    const dx = s.touchCurrent.x - s.touchStart.x;
+    const dy = s.touchCurrent.y - s.touchStart.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len > 8) {
+      const power = Math.min(len * 0.12, 14);
+      s.ball = {
+        x: W / 2, y: SHOOTER_Y,
+        vx: -(dx / len) * power * 0.8,
+        vy: -(dy / len) * power,
+        active: true,
+      };
+      s.passedBasketY = false;
+    }
+    s.aiming = false;
   };
 
   const handleNextLevel = () => {
-    setCurrentLevel(prev => prev + 1);
-    initGame(currentLevel);
+    const next = currentLevel + 1;
+    setCurrentLevel(next);
+    levelRef.current = next;
+    startGame(next - 1);
   };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-md mx-auto p-4 animate-in fade-in zoom-in duration-300 relative z-10">
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: 480, margin: '0 auto', padding: 16, boxSizing: 'border-box' }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="p-2 rounded-full bg-[#0A0A0A] border border-[#C9A227]/30 text-[#C9A227] hover:bg-[#C9A227] hover:text-[#0A0A0A] transition-colors">
-          <ArrowLeft size={24} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <button onClick={onBack} style={{ width: 40, height: 40, borderRadius: '50%', background: '#0A0A0A', border: '1px solid rgba(201,162,39,0.4)', color: '#C9A227', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <ArrowLeft size={22} />
         </button>
-        <div className="text-center">
-          <h2 className="font-display font-bold text-xl text-[#F5F0E8]">Hoop Burger 🏀</h2>
-          <p className="text-sm text-[#C9A227] flex items-center justify-center gap-1">
-            <Star size={14} className="fill-[#C9A227]" /> Nível {currentLevel} de 10
-          </p>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ color: '#F5F0E8', fontWeight: 700, fontSize: 18 }}>🏀 Hoop Burger</div>
+          <div style={{ color: '#C9A227', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <Star size={12} fill="#C9A227" /> Nível {currentLevel} de 10
+          </div>
         </div>
-        <div className="w-10" />
+        <div style={{ width: 40 }} />
       </div>
 
       {/* Start Screen */}
-      {gameState === 'start' && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 bg-[#0A0A0A]/50 border border-[#C9A227]/20 rounded-2xl p-6 backdrop-blur-sm">
-          <div className="text-6xl">🏀🍔</div>
-          <h3 className="text-2xl font-bold text-[#F5F0E8]">Acerte a Cesta!</h3>
-          <div className="text-left bg-[#0A0A0A]/60 rounded-xl p-4 space-y-2">
-            <p className="text-sm text-[#F5F0E8]">🖱️ <span className="text-[#C9A227]">Clique/Toque</span> na tela para atirar o hambúrguer</p>
-            <p className="text-sm text-[#F5F0E8]">🏀 Acerte a <span className="text-[#C9A227]">cesta dourada</span></p>
-            <p className="text-sm text-[#F5F0E8]">💀 3 erros = <span className="text-red-400">Game Over</span></p>
-            <p className="text-sm text-[#8A7A5A]">A cesta vai ficando mais rápida!</p>
+      {uiState === 'start' && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 20, background: 'rgba(10,10,10,0.7)', borderRadius: 20, padding: 32, border: '1px solid rgba(201,162,39,0.25)' }}>
+          <div style={{ fontSize: 64 }}>🏀</div>
+          <div style={{ color: '#F5F0E8', fontWeight: 700, fontSize: 22 }}>Acerte a Cesta!</div>
+          <div style={{ background: 'rgba(10,10,10,0.6)', borderRadius: 12, padding: 16, textAlign: 'left', width: '100%' }}>
+            <p style={{ color: '#F5F0E8', fontSize: 14, margin: '4px 0' }}>👆 <strong style={{ color: '#C9A227' }}>Arraste o dedo</strong> de baixo pra cima para atirar</p>
+            <p style={{ color: '#F5F0E8', fontSize: 14, margin: '4px 0' }}>🏀 Mande o hambúrguer pela <strong style={{ color: '#C9A227' }}>cesta dourada</strong></p>
+            <p style={{ color: '#F5F0E8', fontSize: 14, margin: '4px 0' }}>❌ A cesta vai se mover em níveis avançados!</p>
           </div>
-          <button
-            onClick={() => initGame(currentLevel - 1)}
-            className="flex items-center gap-2 bg-[#C9A227] text-[#0A0A0A] px-8 py-3 rounded-xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(201,162,39,0.4)]"
-          >
-            <Play fill="currentColor" /> Jogar!
+          <button onClick={() => startGame(currentLevel - 1)} style={{ background: '#C9A227', color: '#0A0A0A', border: 'none', borderRadius: 12, padding: '14px 32px', fontWeight: 700, fontSize: 16, cursor: 'pointer', boxShadow: '0 0 16px rgba(201,162,39,0.4)' }}>
+            Jogar! 🏀
           </button>
         </div>
       )}
 
-      {/* Playing Screen */}
-      {(gameState === 'playing' || gameState === 'won' || gameState === 'lost' || gameState === 'completed') && (
-        <div className="flex flex-col flex-1">
-          {/* HUD */}
-          <div className="flex justify-between items-center mb-3 bg-[#0A0A0A]/80 border border-[#C9A227]/30 rounded-xl p-3">
-            <div className="text-[#F5F0E8] text-sm font-bold">
-              Erros: <span className="text-red-400">{missCount}/3</span>
-            </div>
-            <div className="text-[#F5F0E8] text-sm font-bold">
-              Cestas: <span className="text-[#C9A227]">{score}/{config.requiredScore}</span>
-            </div>
+      {/* Canvas game */}
+      {uiState === 'playing' && (
+        <canvas
+          ref={canvasRef}
+          width={W}
+          height={H}
+          style={{ width: '100%', maxWidth: W, borderRadius: 16, border: '2px solid rgba(201,162,39,0.25)', display: 'block', touchAction: 'none', cursor: 'crosshair' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        />
+      )}
+
+      {/* Result overlays */}
+      {uiState === 'lost' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#111', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 20, padding: 32, textAlign: 'center', maxWidth: 300, width: '90%' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>😢</div>
+            <div style={{ color: '#F5F0E8', fontWeight: 700, fontSize: 20, marginBottom: 8 }}>Sem vidas!</div>
+            <div style={{ color: '#8A7A5A', marginBottom: 20 }}>Você acertou {displayScore} de {config.requiredScore} cestas.</div>
+            <button onClick={() => startGame(currentLevel - 1)} style={{ background: '#C9A227', color: '#0A0A0A', border: 'none', borderRadius: 12, padding: '12px 24px', fontWeight: 700, cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <RotateCcw size={18} /> Tentar de Novo
+            </button>
           </div>
+        </div>
+      )}
 
-          {/* Game Area */}
-          <div
-            ref={gameAreaRef}
-            className="relative overflow-hidden rounded-2xl border border-[#C9A227]/20 select-none touch-none"
-            style={{
-              width: '100%',
-              maxWidth: `${GAME_WIDTH}px`,
-              height: `${GAME_HEIGHT}px`,
-              margin: '0 auto',
-              background: 'linear-gradient(180deg, #0A1628 0%, #050505 100%)',
-              cursor: isFlying ? 'default' : 'crosshair',
-            }}
-            onClick={handleGameAreaClick}
-            onTouchEnd={handleGameAreaClick}
-            onMouseMove={handleMouseMove}
-          >
-            {/* Stars */}
-            {[...Array(20)].map((_, i) => (
-              <div key={i} className="absolute w-1 h-1 rounded-full bg-white opacity-40" style={{
-                left: `${(i * 47 + 13) % 100}%`,
-                top: `${(i * 31 + 7) % 60}%`,
-              }} />
-            ))}
+      {uiState === 'won' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#111', border: '1px solid rgba(201,162,39,0.6)', borderRadius: 20, padding: 32, textAlign: 'center', maxWidth: 300, width: '90%' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🌟</div>
+            <div style={{ color: '#F5F0E8', fontWeight: 700, fontSize: 20, marginBottom: 8 }}>Nível {currentLevel} Concluído!</div>
+            <div style={{ color: '#8A7A5A', marginBottom: 20 }}>{displayScore} cestas certeiras!</div>
+            <button onClick={handleNextLevel} style={{ background: '#C9A227', color: '#0A0A0A', border: 'none', borderRadius: 12, padding: '12px 24px', fontWeight: 700, cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              🏀 Próximo Nível
+            </button>
+          </div>
+        </div>
+      )}
 
-            {/* Aim line */}
-            {!isFlying && powerLine && (
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: 'visible' }}>
-                <line
-                  x1={ballPos.x} y1={ballPos.y}
-                  x2={powerLine.x} y2={powerLine.y}
-                  stroke="rgba(201,162,39,0.4)"
-                  strokeWidth="2"
-                  strokeDasharray="8 4"
-                />
-              </svg>
-            )}
-
-            {/* Basketball (hamburger) */}
-            <div
-              className="absolute flex items-center justify-center text-3xl"
-              style={{
-                left: ballPos.x - BALL_RADIUS,
-                top: ballPos.y - BALL_RADIUS,
-                width: BALL_RADIUS * 2,
-                height: BALL_RADIUS * 2,
-                filter: 'drop-shadow(0 0 8px rgba(201,162,39,0.5))',
-                transition: isFlying ? 'none' : 'none',
-                pointerEvents: 'none',
-              }}
-            >
-              🍔
-            </div>
-
-            {/* Basket */}
-            <div
-              className="absolute"
-              style={{ left: basketX, top: BASKET_Y, width: BASKET_WIDTH }}
-            >
-              {/* Rim posts */}
-              <div className="relative" style={{ height: 36 }}>
-                <div className="absolute left-0 w-3 h-4 rounded-sm" style={{ background: '#C9A227', boxShadow: '0 0 8px rgba(201,162,39,0.6)' }} />
-                <div className="absolute right-0 w-3 h-4 rounded-sm" style={{ background: '#C9A227', boxShadow: '0 0 8px rgba(201,162,39,0.6)' }} />
-                {/* Net */}
-                <div className="absolute left-3 right-3 top-4" style={{
-                  height: 28,
-                  background: 'repeating-linear-gradient(to bottom, transparent 0, transparent 6px, rgba(201,162,39,0.4) 6px, rgba(201,162,39,0.4) 7px)',
-                  borderLeft: '2px solid rgba(201,162,39,0.5)',
-                  borderRight: '2px solid rgba(201,162,39,0.5)',
-                  borderBottom: '2px solid rgba(201,162,39,0.5)',
-                  clipPath: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)',
-                }} />
-                {/* Rim (top horizontal bar) */}
-                <div className="absolute left-0 right-0 top-3 h-1.5 rounded-full" style={{ background: '#F5D76E', boxShadow: '0 0 10px rgba(201,162,39,0.8)' }} />
-              </div>
-            </div>
-
-            {/* Hint text */}
-            {!isFlying && (
-              <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-[#8A7A5A] animate-pulse">
-                Toque na tela para atirar
+      {uiState === 'completed' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflowY: 'auto' }}>
+          <div style={{ background: '#111', border: '2px solid #C9A227', borderRadius: 20, padding: 32, textAlign: 'center', maxWidth: 300, width: '90%', margin: '16px auto' }}>
+            <Trophy size={56} style={{ color: '#C9A227', marginBottom: 12 }} />
+            <div style={{ color: '#F5F0E8', fontWeight: 700, fontSize: 24, marginBottom: 8 }}>MVP! 🏆</div>
+            <div style={{ color: '#8A7A5A', marginBottom: 16 }}>Você zerou o Hoop Burger! Mira incrível!</div>
+            {coupon && (
+              <div style={{ border: '2px dashed #C9A227', borderRadius: 12, padding: 16, marginBottom: 16, background: 'rgba(201,162,39,0.08)' }}>
+                <div style={{ color: '#8A7A5A', fontSize: 12, marginBottom: 4 }}>🎁 Seu cupom:</div>
+                <div style={{ color: '#C9A227', fontWeight: 700, fontSize: 20, letterSpacing: 3, fontFamily: 'monospace' }}>{coupon}</div>
+                <div style={{ color: '#8A7A5A', fontSize: 11, marginTop: 4 }}>Use no pedido pelo WhatsApp!</div>
               </div>
             )}
+            <button onClick={() => { setCurrentLevel(1); levelRef.current = 1; setUiState('start'); setCoupon(null); }} style={{ background: '#C9A227', color: '#0A0A0A', border: 'none', borderRadius: 12, padding: '12px 24px', fontWeight: 700, cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <RotateCcw size={18} /> Jogar de Novo
+            </button>
           </div>
-
-          {/* Overlays */}
-          {gameState === 'lost' && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl">
-              <div className="bg-[#111111] border border-red-500/50 p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
-                <div className="text-5xl mb-4">😢</div>
-                <h3 className="text-2xl font-bold text-[#F5F0E8] mb-2">3 Erros!</h3>
-                <p className="text-[#8A7A5A] mb-6">Você acertou {score} de {config.requiredScore} cestas.</p>
-                <button onClick={() => initGame(currentLevel - 1)} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
-                  <RotateCcw size={18} /> Tentar Novamente
-                </button>
-              </div>
-            </div>
-          )}
-
-          {gameState === 'won' && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl">
-              <div className="bg-[#111111] border border-[#C9A227] p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
-                <div className="text-5xl mb-4">🌟</div>
-                <h3 className="text-2xl font-bold text-[#F5F0E8] mb-2">Nível {currentLevel} Concluído!</h3>
-                <p className="text-[#8A7A5A] mb-6">Parabéns! Próximo nível mais difícil...</p>
-                <button onClick={handleNextLevel} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
-                  <Play fill="currentColor" size={18} /> Próximo Nível
-                </button>
-              </div>
-            </div>
-          )}
-
-          {gameState === 'completed' && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl">
-              <div className="bg-[#111111] border border-[#C9A227] p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
-                <Trophy className="mx-auto text-[#C9A227] mb-4" size={60} />
-                <h3 className="text-3xl font-bold text-[#F5F0E8] mb-2">MVP! 🏆</h3>
-                <p className="text-[#8A7A5A] mb-4">Você zerou o Hoop Burger! Mira perfeita!</p>
-                {coupon && (
-                  <div className="mb-4 p-3 rounded-xl border-2 border-dashed border-[#C9A227] bg-[#C9A227]/10">
-                    <p className="text-xs text-[#8A7A5A] mb-1">🎁 Cupom de desconto:</p>
-                    <p className="text-lg font-bold text-[#C9A227] tracking-widest">{coupon}</p>
-                    <p className="text-xs text-[#8A7A5A] mt-1">Use no pedido pelo WhatsApp!</p>
-                  </div>
-                )}
-                <button onClick={() => { setCurrentLevel(1); setGameState('start'); setCoupon(null); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
-                  <RotateCcw size={18} /> Jogar de Novo
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
