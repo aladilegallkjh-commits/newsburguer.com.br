@@ -274,7 +274,7 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
       const crossingY = s.ball.y >= BASKET_Y - 2 && s.ball.y <= BASKET_Y + 20;
       const goingDown = s.ball.vy > 0;
 
-      if (!s.passedBasketY && s.ball.y > BASKET_Y) s.passedBasketY = true;
+      if (!s.passedBasketY && s.ball.y < BASKET_Y) s.passedBasketY = true;
 
       if (s.passedBasketY && crossingY && goingDown && inX) {
         // SCORE!
