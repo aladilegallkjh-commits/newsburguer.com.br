@@ -269,10 +269,35 @@ export default function PuzzleTasty({ onBack }: { onBack: () => void }) {
 
           {gameState === 'won' && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl">
-              <div className="bg-[#111111] border border-[#C9A227] p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
-                <div className="text-5xl mb-4">🌟</div>
-                <h3 className="text-2xl font-bold text-[#F5F0E8] mb-2">Nível {currentLevel} Concluído!</h3>
-                <p className="text-[#8A7A5A] mb-6">Em {moves} movimentos! Próxima grade maior...</p>
+              <div className="bg-[#111111] border border-[#C9A227] p-6 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
+                <div className="text-4xl mb-3">🌟</div>
+                <h3 className="text-xl font-bold text-[#F5F0E8] mb-1">Nível {currentLevel} Concluído!</h3>
+                <p className="text-[#8A7A5A] text-sm mb-4">Em {moves} movimentos! Veja o lanche completo:</p>
+
+                {/* Full burger image reveal */}
+                <div className="relative mx-auto mb-4" style={{ width: 200, height: 200 }}>
+                  <div
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(201,162,39,0.4), rgba(245,215,110,0.2))',
+                      boxShadow: '0 0 30px rgba(201,162,39,0.6), 0 0 60px rgba(201,162,39,0.2)',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}
+                  />
+                  <img
+                    src={imageUrl}
+                    alt="Lanche completo"
+                    className="w-full h-full object-cover rounded-2xl relative z-10"
+                    style={{
+                      border: '3px solid #C9A227',
+                      boxShadow: '0 0 20px rgba(201,162,39,0.5)',
+                    }}
+                  />
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full border border-[#C9A227]/50">
+                    <span className="text-[#C9A227] text-xs font-bold">😋 Que delícia!</span>
+                  </div>
+                </div>
+
                 <button onClick={() => { setCurrentLevel(l => l + 1); initGame(currentLevel); }} className="w-full flex items-center justify-center gap-2 bg-[#C9A227] text-[#0A0A0A] py-3 rounded-xl font-bold">
                   <Play fill="currentColor" size={18} /> Próximo Nível
                 </button>
@@ -281,11 +306,36 @@ export default function PuzzleTasty({ onBack }: { onBack: () => void }) {
           )}
 
           {gameState === 'completed' && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl">
-              <div className="bg-[#111111] border border-[#C9A227] p-8 rounded-2xl text-center max-w-xs w-full mx-4 animate-in zoom-in">
-                <Trophy className="mx-auto text-[#C9A227] mb-4" size={60} />
-                <h3 className="text-3xl font-bold text-[#F5F0E8] mb-2">PUZZLE MASTER!</h3>
-                <p className="text-[#8A7A5A] mb-4">Você montou todos os 10 quebra-cabeças! Incrível!</p>
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl overflow-y-auto">
+              <div className="bg-[#111111] border border-[#C9A227] p-6 rounded-2xl text-center max-w-xs w-full mx-4 my-4 animate-in zoom-in">
+                <Trophy className="mx-auto text-[#C9A227] mb-3" size={50} />
+                <h3 className="text-2xl font-bold text-[#F5F0E8] mb-1">PUZZLE MASTER!</h3>
+                <p className="text-[#8A7A5A] text-sm mb-4">Você montou todos os 10 lanches! Veja sua conquista:</p>
+
+                {/* Full burger image reveal */}
+                <div className="relative mx-auto mb-4" style={{ width: 200, height: 200 }}>
+                  <div
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(201,162,39,0.4), rgba(245,215,110,0.2))',
+                      boxShadow: '0 0 40px rgba(201,162,39,0.8), 0 0 80px rgba(201,162,39,0.3)',
+                      animation: 'pulse 1.5s ease-in-out infinite',
+                    }}
+                  />
+                  <img
+                    src={imageUrl}
+                    alt="Lanche completo"
+                    className="w-full h-full object-cover rounded-2xl relative z-10"
+                    style={{
+                      border: '3px solid #C9A227',
+                      boxShadow: '0 0 25px rgba(201,162,39,0.7)',
+                    }}
+                  />
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full border border-[#C9A227]/50">
+                    <span className="text-[#C9A227] text-xs font-bold">🏆 MESTRE DO LANCHE!</span>
+                  </div>
+                </div>
+
                 {coupon && (
                   <div className="mb-4 p-3 rounded-xl border-2 border-dashed border-[#C9A227] bg-[#C9A227]/10">
                     <p className="text-xs text-[#8A7A5A] mb-1">🎁 Cupom de desconto:</p>

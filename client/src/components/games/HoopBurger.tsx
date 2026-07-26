@@ -180,20 +180,20 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
         const len = Math.sqrt(dx * dx + dy * dy);
         if (len > 5) {
           // Trajectory dots
-          const power = Math.min(len * 0.12, 14);
+          const power = Math.min(len * 0.16, 22);
           const vx = (dx / len) * power * 0.8;
           const vy = (dy / len) * power;
           let px = W / 2, py = SHOOTER_Y;
           let pvx = vx, pvy = vy;
           ctx.fillStyle = 'rgba(201,162,39,0.5)';
-          for (let i = 0; i < 12; i++) {
-            pvx *= 0.995;
+          for (let i = 0; i < 20; i++) {
+            pvx *= 0.999;
             pvy += GRAVITY;
             px += pvx;
             py += pvy;
             if (py > H) break;
             ctx.beginPath();
-            ctx.arc(px, py, 3 - i * 0.2, 0, Math.PI * 2);
+            ctx.arc(px, py, 3 - i * 0.12, 0, Math.PI * 2);
             ctx.fill();
           }
         }
@@ -379,7 +379,7 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
     const dy = s.touchCurrent.y - s.touchStart.y;
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len > 8) {
-      const power = Math.min(len * 0.12, 14);
+      const power = Math.min(len * 0.16, 22);
       s.ball = {
         x: W / 2, y: SHOOTER_Y,
         vx: (dx / len) * power * 0.8,
@@ -410,15 +410,14 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
     stateRef.current.touchCurrent = { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
-    handleTouchEnd({ changedTouches: [] } as any);
+  const handleMouseUp = (_e: React.MouseEvent) => {
     const s = stateRef.current;
     if (!s.aiming) return;
     const dx = s.touchCurrent.x - s.touchStart.x;
     const dy = s.touchCurrent.y - s.touchStart.y;
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len > 8) {
-      const power = Math.min(len * 0.12, 14);
+      const power = Math.min(len * 0.16, 22);
       s.ball = {
         x: W / 2, y: SHOOTER_Y,
         vx: (dx / len) * power * 0.8,
@@ -470,20 +469,26 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
       )}
 
       {/* Canvas game */}
-      {uiState === 'playing' && (
-        <canvas
-          ref={canvasRef}
-          width={W}
-          height={H}
-          style={{ width: '100%', maxWidth: W, borderRadius: 16, border: '2px solid rgba(201,162,39,0.25)', display: 'block', touchAction: 'none', cursor: 'crosshair' }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        />
-      )}
+      <canvas
+        ref={canvasRef}
+        width={W}
+        height={H}
+        style={{
+          width: '100%',
+          maxWidth: W,
+          borderRadius: 16,
+          border: '2px solid rgba(201,162,39,0.25)',
+          display: uiState === 'playing' ? 'block' : 'none',
+          touchAction: 'none',
+          cursor: 'crosshair',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      />
 
       {/* Result overlays */}
       {uiState === 'lost' && (
