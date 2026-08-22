@@ -12,7 +12,7 @@ import { trpc } from '@/lib/trpc';
 import { maskPhone, maskCep, unmaskedPhone } from '@/lib/masks';
 import PixQRCode from '@/components/PixQRCode';
 
-const LOGO_URL = '/logo.png';
+
 
 function CartItemRow({ item }: { item: CartItem }) {
   const { updateQuantity, removeItem } = useCart();
@@ -421,7 +421,7 @@ export default function Cart() {
               >
                 {/* Logo */}
                 <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4" style={{ borderBottom: '1px solid rgba(201,162,39,0.15)' }}>
-                  <img src={LOGO_URL} alt="New S'Burguer" className="w-6 sm:w-8 h-6 sm:h-8 object-contain rounded-full" />
+
                   <span className="font-display font-bold text-xs sm:text-sm" style={{ color: '#C9A227' }}>
                     New S'Burguer
                   </span>

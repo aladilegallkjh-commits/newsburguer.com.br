@@ -1,6 +1,6 @@
 import { MapPin, Phone, Clock, Instagram, Facebook } from 'lucide-react';
 
-const LOGO_URL = '/logo.png';
+
 
 // Configurações da loja - Customize aqui
 const STORE_INFO = {
@@ -30,7 +30,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 sm:gap-3 mb-4">
-              <img src={LOGO_URL} alt={STORE_INFO.name} className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+
               <h3 className="font-display font-bold text-sm sm:text-base" style={{ color: '#C9A227' }}>
                 {STORE_INFO.name}
               </h3>

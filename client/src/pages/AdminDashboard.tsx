@@ -12,7 +12,7 @@ import AdminPromocoesTab from '@/components/AdminPromocoesTab';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 
-const LOGO_URL = '/logo.png';
+
 
 interface MenuItem {
   id: string;
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
         {/* Logo */}
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="New S'Burguer" className="w-10 h-10 object-contain" />
+
             {sidebarOpen && (
               <div className="leading-tight">
                 <span className="font-bold text-[#C9A227] tracking-wider text-sm block">NEWS</span>

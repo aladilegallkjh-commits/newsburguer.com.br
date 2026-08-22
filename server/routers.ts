@@ -250,7 +250,7 @@ export const appRouter = router({
             const message = `🏍️ *Nova entrega atribuída a você!*\n\n` +
               `Pedido: *${order.orderNumber}*\n` +
               `Cliente: ${order.customerName}\n` +
-              `Valor: R$ ${parseFloat(order.finalAmount).toFixed(2)}${mapsUrl}\n\n` +
+              `Valor: R$ ${Number(order.finalAmount).toFixed(2)}${mapsUrl}\n\n` +
               `👉 *Acesse o portal do entregador:*\n${portalUrl}\n\n` +
               `_New S'Burguer 🍔_`;
             await sendWhatsAppMessage(driver.phone, message);

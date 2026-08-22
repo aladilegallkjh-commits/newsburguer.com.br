@@ -66,9 +66,7 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
   const levelRef = useRef(1);
 
   useEffect(() => {
-    const img = new Image();
-    img.src = '/logo.png';
-    img.onload = () => setLogoImg(img);
+    // logo loading removed
   }, []);
 
   const config = LEVELS[currentLevel - 1];
@@ -87,15 +85,7 @@ export default function HoopBurger({ onBack }: { onBack: () => void }) {
     ctx.fillStyle = '#0A1220';
     ctx.fillRect(0, 0, W, H);
 
-    // Draw logo faintly
-    if (logoImg) {
-      ctx.save();
-      ctx.globalAlpha = 0.05;
-      const logoW = 200;
-      const logoH = 200;
-      ctx.drawImage(logoImg, W/2 - logoW/2, H/2 - logoH/2, logoW, logoH);
-      ctx.restore();
-    }
+
 
     // Stars background
     ctx.fillStyle = 'rgba(255,255,255,0.3)';

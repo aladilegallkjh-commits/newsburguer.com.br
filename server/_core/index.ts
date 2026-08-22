@@ -11,6 +11,120 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
+const app = express();
+
+// Configure body parser with larger size limit for file uploads
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+registerStorageProxy(app);
+registerOAuthRoutes(app);
+
+// REST endpoint for image update (more reliable than TRPC for large payloads)
+app.post("/api/menu/:id/image", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { imageUrl } = req.body;
+    if (!id || !imageUrl) {
+      return res.status(400).json({ error: "id and imageUrl are required" });
+    }
+    const { updateMenuItem } = await import("../db");
+    await updateMenuItem(id, { imageUrl } as any);
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error("[image update error]", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// DEBUG ENDPOINT
+app.get("/api/test-db", async (req, res) => {
+  try {
+    const { getDb } = await import("../db");
+    const { adminUsers } = await import("../../drizzle/schema");
+    const db = await getDb();
+    if (!db) {
+      return res.json({ error: "Database not available", url: process.env.DATABASE_URL, token: !!process.env.DATABASE_AUTH_TOKEN });
+    }
+    const result = await db.select().from(adminUsers);
+    return res.json({ success: true, count: result.length, url: process.env.DATABASE_URL, token: !!process.env.DATABASE_AUTH_TOKEN });
+  } catch (error: any) {
+    return res.json({ 
+      error: error.message, 
+      cause: error.cause?.message || error.cause,
+      code: error.code,
+      url: process.env.DATABASE_URL, 
+      token: !!process.env.DATABASE_AUTH_TOKEN 
+    });
+  }
+});
+
+// TEMPORARY: Fix customer names endpoint
+app.get("/api/fix-names", async (req, res) => {
+  try {
+    const { getDb } = await import("../db");
+    const { customers, orders, customerRankings } = await import("../../drizzle/schema");
+    const { eq, desc, sql, and } = await import("drizzle-orm");
+    const db = await getDb();
+    if (!db) return res.json({ error: "DB not available" });
+
+    const fixed: string[] = [];
+    const allCustomers = await db.select().from(customers);
+
+    for (const customer of allCustomers) {
+      if (customer.name === 'Cliente' || !customer.name) {
+        const latestOrders = await db
+          .select({ customerName: orders.customerName })
+          .from(orders)
+          .where(eq(orders.customerPhone, customer.phone))
+          .orderBy(desc(orders.createdAt))
+          .limit(1);
+
+        if (latestOrders.length > 0 && latestOrders[0].customerName) {
+          const realName = latestOrders[0].customerName;
+          await db.update(customers).set({ name: realName }).where(eq(customers.id, customer.id));
+          fixed.push(`${customer.phone} → ${realName}`);
+        }
+      }
+    }
+
+    // Recalculate rankings
+    await db.delete(customerRankings);
+    const top = await db.all(
+      sql`SELECT c.id as customerId, c.phone, c.name, COUNT(o.id) as orderCount, SUM(o.finalAmount) as totalSpent
+          FROM customers c
+          LEFT JOIN orders o ON o.customerPhone = c.phone AND o.status != 'cancelled'
+          GROUP BY c.id
+          ORDER BY COUNT(o.id) DESC, SUM(o.finalAmount) DESC
+          LIMIT 5`
+    );
+
+    for (let i = 0; i < top.length; i++) {
+      const c = top[i] as any;
+      await db.insert(customerRankings).values([
+        { customerId: c.customerId, period: 'week' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'hamburger_kids' : 'none') as any },
+        { customerId: c.customerId, period: 'month' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'combo_free' : 'none') as any }
+      ]);
+      fixed.push(`Ranking: ${i + 1}º ${c.name || c.phone} (${c.orderCount} pedidos)`);
+    }
+
+    return res.json({ success: true, fixed, ranking: top });
+  } catch (error: any) {
+    return res.json({ error: error.message });
+  }
+});
+
+// tRPC API
+app.use(
+  "/api/trpc",
+  createExpressMiddleware({
+    router: appRouter,
+    createContext,
+  })
+);
+
+// Export for Serverless environments (like Vercel)
+export default app;
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
@@ -31,118 +145,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
-  const app = express();
   const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  registerStorageProxy(app);
-  registerOAuthRoutes(app);
-
-  // REST endpoint for image update (more reliable than TRPC for large payloads)
-  app.post("/api/menu/:id/image", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { imageUrl } = req.body;
-      if (!id || !imageUrl) {
-        return res.status(400).json({ error: "id and imageUrl are required" });
-      }
-      const { updateMenuItem } = await import("../db");
-      await updateMenuItem(id, { imageUrl } as any);
-      return res.json({ success: true });
-    } catch (error: any) {
-      console.error("[image update error]", error);
-      return res.status(500).json({ error: error.message });
-    }
-  });
-
-
-  // DEBUG ENDPOINT
-  app.get("/api/test-db", async (req, res) => {
-    try {
-      const { getDb } = await import("../db");
-      const { adminUsers } = await import("../../drizzle/schema");
-      const db = await getDb();
-      if (!db) {
-        return res.json({ error: "Database not available", url: process.env.DATABASE_URL, token: !!process.env.DATABASE_AUTH_TOKEN });
-      }
-      const result = await db.select().from(adminUsers);
-      return res.json({ success: true, count: result.length, url: process.env.DATABASE_URL, token: !!process.env.DATABASE_AUTH_TOKEN });
-    } catch (error: any) {
-      return res.json({ 
-        error: error.message, 
-        cause: error.cause?.message || error.cause,
-        code: error.code,
-        url: process.env.DATABASE_URL, 
-        token: !!process.env.DATABASE_AUTH_TOKEN 
-      });
-    }
-  });
-
-  // TEMPORARY: Fix customer names endpoint
-  app.get("/api/fix-names", async (req, res) => {
-    try {
-      const { getDb } = await import("../db");
-      const { customers, orders, customerRankings } = await import("../../drizzle/schema");
-      const { eq, desc, sql, and } = await import("drizzle-orm");
-      const db = await getDb();
-      if (!db) return res.json({ error: "DB not available" });
-
-      const fixed: string[] = [];
-      const allCustomers = await db.select().from(customers);
-
-      for (const customer of allCustomers) {
-        if (customer.name === 'Cliente' || !customer.name) {
-          const latestOrders = await db
-            .select({ customerName: orders.customerName })
-            .from(orders)
-            .where(eq(orders.customerPhone, customer.phone))
-            .orderBy(desc(orders.createdAt))
-            .limit(1);
-
-          if (latestOrders.length > 0 && latestOrders[0].customerName) {
-            const realName = latestOrders[0].customerName;
-            await db.update(customers).set({ name: realName }).where(eq(customers.id, customer.id));
-            fixed.push(`${customer.phone} → ${realName}`);
-          }
-        }
-      }
-
-      // Recalculate rankings
-      await db.delete(customerRankings);
-      const top = await db.all(
-        sql`SELECT c.id as customerId, c.phone, c.name, COUNT(o.id) as orderCount, SUM(o.finalAmount) as totalSpent
-            FROM customers c
-            LEFT JOIN orders o ON o.customerPhone = c.phone AND o.status != 'cancelled'
-            GROUP BY c.id
-            ORDER BY COUNT(o.id) DESC, SUM(o.finalAmount) DESC
-            LIMIT 5`
-      );
-
-      for (let i = 0; i < top.length; i++) {
-        const c = top[i] as any;
-        await db.insert(customerRankings).values([
-          { customerId: c.customerId, period: 'week' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'hamburger_kids' : 'none') as any },
-          { customerId: c.customerId, period: 'month' as any, position: i + 1, orderCount: c.orderCount || 0, totalSpent: parseFloat(c.totalSpent || '0'), prizeWon: (i === 0 ? 'combo_free' : 'none') as any }
-        ]);
-        fixed.push(`Ranking: ${i + 1}º ${c.name || c.phone} (${c.orderCount} pedidos)`);
-      }
-
-      return res.json({ success: true, fixed, ranking: top });
-    } catch (error: any) {
-      return res.json({ error: error.message });
-    }
-  });
-
-
-  // tRPC API
-  app.use(
-    "/api/trpc",
-    createExpressMiddleware({
-      router: appRouter,
-      createContext,
-    })
-  );
 
   // Serve uploads explicitly - path differs between dev and production
   const _dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -170,4 +173,8 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+// Only start the server if not in a Vercel Serverless environment
+if (process.env.VERCEL !== "1") {
+  startServer().catch(console.error);
+}
+

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 
-const LOGO_URL = '/logo.png';
+
 
 interface AdminLoginProps {
   onLogin: (user: any) => void;
@@ -81,7 +81,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src={LOGO_URL} alt="New S'Burguer" className="w-20 h-20 mx-auto mb-4 rounded-lg" />
+
           <h1 className="text-3xl font-bold" style={{ color: '#C9A227' }}>
             New S'Burguer
           </h1>

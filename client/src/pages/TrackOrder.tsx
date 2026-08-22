@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import GPSMap from '@/components/GPSMap';
 
-const LOGO_URL = '/logo.png';
+
 
 const statusSteps = [
   { key: 'pending', label: 'Pedido Recebido', icon: '📋' },

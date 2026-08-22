@@ -68,7 +68,7 @@ export default function Games() {
         <div
           className="fixed inset-0 z-0 pointer-events-none"
           style={{
-            backgroundImage: 'url(/logo.png)',
+            backgroundImage: 'none',
             backgroundSize: '200px',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -97,7 +97,7 @@ export default function Games() {
       <div
         className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-[0.03]"
         style={{
-          backgroundImage: 'url(/logo.png)',
+          backgroundImage: 'none',
           backgroundSize: '300px',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

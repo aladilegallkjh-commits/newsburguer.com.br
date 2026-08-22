@@ -4,7 +4,7 @@ import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { Lock, AlertCircle } from 'lucide-react';
 
-const LOGO_URL = '/logo.png';
+
 
 export default function AdminLogin() {
   const [, setLocation] = useLocation();
@@ -59,9 +59,7 @@ export default function AdminLogin() {
         style={{ background: '#111111', border: '1px solid rgba(201,162,39,0.2)' }}
       >
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src={LOGO_URL} alt="New S'Burguer" className="w-16 h-16 object-contain" />
-        </div>
+
 
         {/* Title */}
         <h1

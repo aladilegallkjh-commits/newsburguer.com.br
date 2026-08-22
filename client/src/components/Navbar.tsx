@@ -3,7 +3,7 @@ import { ShoppingCart, Menu, X, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useState, useEffect } from 'react';
 
-const LOGO_URL = '/logo.png';
+
 
 // Mapa de rota → rota anterior (fallback caso não tenha histórico)
 const BACK_ROUTES: Record<string, string> = {
@@ -81,17 +81,9 @@ export default function Navbar() {
             {/* Logo */}
             <Link href="/">
               <div className="flex items-center cursor-pointer transition-all duration-300 hover:scale-105">
-                <img
-                  src={LOGO_URL}
-                  alt="New S'Burguer"
-                  className="object-contain"
-                  style={{ 
-                    width: '68px',
-                    height: '68px',
-                    filter: 'drop-shadow(0 0 12px rgba(201, 162, 39, 0.6))',
-                    borderRadius: '50%'
-                  }}
-                />
+                <span className="font-display font-bold text-xl" style={{ color: '#C9A227' }}>
+                  New S'Burguer
+                </span>
               </div>
             </Link>
           </div>

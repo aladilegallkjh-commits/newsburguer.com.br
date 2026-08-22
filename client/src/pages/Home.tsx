@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PromoBanner from '@/components/PromoBanner';
 
-const LOGO_URL = '/logo.png';
+
 const HERO_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663785681503/hw2XZYFpsWbStHSB92WGwu/hero-bg-5ZMaG7H6TSsgzEUvPhS5fs.webp';
 
 export default function Home() {
@@ -69,12 +69,6 @@ export default function Home() {
                   background: 'radial-gradient(circle, rgba(201, 162, 39, 0.3) 0%, transparent 70%)',
                   animation: 'pulse 3s ease-in-out infinite',
                 }}
-              />
-              <img
-                src={LOGO_URL}
-                alt="New S'Burguer"
-                className="w-36 h-36 md:w-48 md:h-48 object-contain mx-auto drop-shadow-2xl relative z-10 animate-glow"
-                style={{ filter: 'drop-shadow(0 0 40px rgba(201, 162, 39, 0.3))' }}
               />
             </div>
           </div>

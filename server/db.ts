@@ -10,6 +10,9 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db) {
     try {
+      if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL) {
+        throw new Error("DATABASE_URL is required in production environment");
+      }
       const client = createClient({ 
         url: process.env.DATABASE_URL || "file:./local.db",
         authToken: process.env.DATABASE_AUTH_TOKEN,
